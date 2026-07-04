@@ -6,18 +6,51 @@ data to a **file** — a **full** load or a **timestamp-based delta** (changes s
 Companion to [`sap-dex2odata`](../sap-dex2odata) (which exposes the same views as OData services);
 this one extracts straight to a file instead.
 
-## How delta works (and its limits)
+## How delta works
 
-Delta is **timestamp-based**, not true CDC: for a view that has a change-timestamp element
-(annotated `@Semantics.systemDateTime.lastChangedAt`), a delta run selects rows whose timestamp is
-newer than the **last run's high-water**, which the tool stores per view.
+Delta is **timestamp-based** (not true CDC). It rests on one idea: for each view, remember the
+**high-water timestamp** of the last extraction, and next time only pull rows changed after it.
 
-- ✅ No dependency on the ODP replication API (`RODPS_REPL_ODP_*`), which **SAP Note 3255746
-  restricts** for custom use.
-- ⚠️ Needs a change-timestamp field (views without one are full-only).
-- ⚠️ Does **not** capture deletes.
-- The high-water is captured at the **start** of a run, so concurrent changes are re-read next
-  time (never silently lost).
+### 1. Finding the change-timestamp field
+On discovery (`ZCL_DXF_CATALOG`), the tool looks up each view's **change-timestamp element** — the
+field annotated **`@Semantics.systemDateTime.lastChangedAt`** — by reading the field-annotation
+table `DDFIELDANNO`. If such a field exists, the view is **delta-capable** (shown in the grid's
+*Delta?* / *Delta field* columns); if not, delta isn't possible for it.
+
+### 2. The high-water store
+The last extracted position per view is kept in table **`ZDXF_DELTA`**
+(`VIEWNAME → LAST_TS`, plus who/when), read & written by `ZCL_DXF_DELTA_STORE`.
+
+### 3. A run
+When you extract with **Mode = Delta** (`ZCL_DXF_EXTRACTOR`):
+
+1. Read the stored high-water `LAST_TS` for the view (a view never extracted → `0`).
+2. Capture **"now"** at the *start* of the run — this becomes the **new** high-water.
+3. `SELECT * FROM (entity) WHERE <ts field> > <LAST_TS>` — i.e. only rows changed since last time.
+   *(First delta run, `LAST_TS = 0` → selects everything = an initial load.)*
+4. Write the file. **Only after a successful write**, store the new high-water (step 2) back to
+   `ZDXF_DELTA`. If the write fails, the marker is **not** advanced, so nothing is lost.
+
+Because the new high-water is "now-at-start" (not the max timestamp seen), rows changed *during*
+the run are simply re-read next time — safer than risking a gap.
+
+A **Full** run also advances the marker (to "now"), so a subsequent **Delta** continues cleanly
+from the full-load point.
+
+### Resetting delta
+- **Re-baseline:** run a **Full** load — it resets the marker to now; the next delta returns only
+  later changes.
+- **Re-extract everything as delta:** delete the view's row in `ZDXF_DELTA` (`SE16N`) → next delta
+  sees `LAST_TS = 0` and selects all.
+
+### Limits (be aware)
+- ⚠️ **No deletes.** A timestamp filter only sees inserts/updates; deleted rows are not reported.
+- ⚠️ **Needs a change-timestamp field.** Views without `@Semantics.systemDateTime.lastChangedAt`
+  are **full-only** (Delta is skipped with a reason).
+- ✅ **No ODP RFC.** Deliberately avoids the ODP replication API (`RODPS_REPL_ODP_*`), which
+  **SAP Note 3255746** restricts for custom use — so no gray-area dependency.
+- The change-timestamp field's data type governs the `WHERE` literal; if a view's delta returns
+  nothing or errors, its timestamp type may need a small tweak in `ZCL_DXF_EXTRACTOR`.
 
 ## Objects
 
