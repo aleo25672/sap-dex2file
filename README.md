@@ -61,11 +61,48 @@ Selection screen:
 - Release dependencies to confirm: tables `IXTRCTNENBLDVW`, `DDFIELDANNO`; and the exact annotation
   `NAME` for `Semantics.systemDateTime.lastChangedAt`.
 
-## Deploy
+## Installing & importing with abapGit
 
-Import via [abapGit](https://abapgit.org) (`src/` layout) into a package. **Activate `ZDXF_DELTA`
-first** (table), then the classes, then the report (mass-activate to resolve order). See
-`sap-dex2odata`'s README for the full abapGit setup (install, STRUST, PAT).
+This repo is serialized in [abapGit](https://abapgit.org) format (`src/` layout, prefix folder
+logic).
+
+### 1. One-time prerequisites
+
+- **abapGit installed** — report `ZABAPGIT_STANDALONE` (paste the standalone source, activate, run).
+- **GitHub TLS trusted** in `STRUST` (SSL Client Standard) and a **Personal Access Token** (this is
+  a private repo). See the [`sap-dex2odata` README](../sap-dex2odata/README.md#installing--importing-with-abapgit)
+  for the detailed one-time steps (cert import + PAT).
+
+### 2. Create a target package
+
+- **Local / testing:** create a `$`-prefixed package, e.g. **`$DEX2FILE`** (`SE80` → dropdown
+  *Package* → type the name → *Create*). `$` packages are local — no software component, no
+  transport prompt. *(abapGit blocks the literal `$TMP`, so use a named `$…` package.)*
+- **Transportable:** a normal `Z…` package with software component **`HOME`** and a transport
+  request.
+
+### 3. Clone the repo
+
+In abapGit: **+ New Online** →
+- URL: `https://github.com/aleo25672/sap-dex2file.git`
+- Branch: `main`
+- Package: your package from step 2
+- Credentials when prompted: **User** = your GitHub user, **Password** = your **PAT**.
+
+### 4. Pull & activate
+
+After clone, the objects show as new → **Pull**. Then **activate**, in this order (or select all
+and mass-activate so dependencies resolve):
+
+1. **`ZDXF_DELTA`** (table) — first, because the classes reference it.
+2. `ZCL_DXF_*` classes.
+3. `Z_DEX2FILE` (report).
+
+Then run `Z_DEX2FILE` in `SE38` / `SA38`.
+
+### 5. Getting later updates
+
+When the repo changes: open it in abapGit → **Pull** → mass-activate the changed objects.
 
 ## License
 
