@@ -41,15 +41,39 @@
     </item>
     <item>
      <ID>I</ID>
+     <KEY>B05</KEY>
+     <ENTRY>View family</ENTRY>
+     <LENGTH>11</LENGTH>
+    </item>
+    <item>
+     <ID>I</ID>
      <KEY>M01</KEY>
      <ENTRY>No released DEX CDS views found for the filter</ENTRY>
      <LENGTH>46</LENGTH>
     </item>
     <item>
      <ID>S</ID>
+     <KEY>P_ALL</KEY>
+     <ENTRY>All DEX views</ENTRY>
+     <LENGTH>13</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_CDEX</KEY>
+     <ENTRY>C_*DEX (transactional)</ENTRY>
+     <LENGTH>22</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
      <KEY>P_CSV</KEY>
      <ENTRY>CSV (delimiter)</ENTRY>
      <LENGTH>15</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_IDEX</KEY>
+     <ENTRY>I_* (master data)</ENTRY>
+     <LENGTH>17</LENGTH>
     </item>
     <item>
      <ID>S</ID>

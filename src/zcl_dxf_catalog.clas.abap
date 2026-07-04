@@ -12,6 +12,7 @@ CLASS zcl_dxf_catalog DEFINITION
       BEGIN OF ty_view,
         entity_name    TYPE c LENGTH 60,
         description    TYPE c LENGTH 60,
+        family         TYPE c LENGTH 13,   " TRANSACTIONAL / MASTER DATA / OTHER
         is_cdc_enabled TYPE abap_bool,
         delta_field    TYPE c LENGTH 30,   " @Semantics.systemDateTime.lastChangedAt element
         delta_capable  TYPE abap_bool,     " a change-timestamp field exists
@@ -22,9 +23,11 @@ CLASS zcl_dxf_catalog DEFINITION
 
     " @parameter iv_name_pattern | optional entity filter; plain text = contains, '*' = wildcard
     " @parameter io_delta_store  | optional, fills the stored high-water per view
+    " @parameter iv_family | family filter: ' ' = all, 'C' = C_*DEX, 'I' = I_*
     METHODS get_views
       IMPORTING
         iv_name_pattern TYPE clike OPTIONAL
+        iv_family       TYPE clike DEFAULT space
         io_delta_store  TYPE REF TO zcl_dxf_delta_store OPTIONAL
       RETURNING
         VALUE(rt_views) TYPE ty_views.
@@ -75,6 +78,20 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
         entity_name    = ls_view-dataextractionviewname
         description    = ls_view-dataextractionviewdescription
         is_cdc_enabled = ls_view-deltachgdatacaptureissupported ).
+
+      " family classification + optional filter
+      IF ls_view-dataextractionviewname CP 'C_*DEX'.
+        ls_out-family = 'TRANSACTIONAL'.
+      ELSEIF ls_view-dataextractionviewname CP 'I_*'.
+        ls_out-family = 'MASTER DATA'.
+      ELSE.
+        ls_out-family = 'OTHER'.
+      ENDIF.
+
+      IF ( iv_family = 'C' AND ls_out-family <> 'TRANSACTIONAL' )
+      OR ( iv_family = 'I' AND ls_out-family <> 'MASTER DATA' ).
+        CONTINUE.
+      ENDIF.
 
       READ TABLE lt_tsmap INTO DATA(ls_m)
            WITH KEY ent_up = to_upper( ls_view-dataextractionviewname ).

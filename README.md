@@ -39,6 +39,7 @@ Selection screen:
 | Field | Meaning |
 |-------|---------|
 | **CDS entity pattern** | case-sensitive; plain text = contains, `*` = wildcard, blank = all |
+| **View family** | *All* / *C_\*DEX (transactional)* / *I_\* (master data)* |
 | **Action** | *Display list only* / *Extract to file* — runs on the filtered set |
 | **Mode** | *Full load* / *Delta (change timestamp)* |
 | **Format** | *CSV* / *Tab (.txt)* / *Excel (tab, .xls)* |

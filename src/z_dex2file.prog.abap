@@ -17,6 +17,12 @@ SELECTION-SCREEN BEGIN OF BLOCK b_sel WITH FRAME TITLE TEXT-b01.
 PARAMETERS p_name TYPE c LENGTH 40 LOWER CASE.  " entity pattern (case-sensitive), * = wildcard
 SELECTION-SCREEN END OF BLOCK b_sel.
 
+SELECTION-SCREEN BEGIN OF BLOCK b_fam WITH FRAME TITLE TEXT-b05.
+PARAMETERS p_all  RADIOBUTTON GROUP fam DEFAULT 'X'.  " all DEX views
+PARAMETERS p_cdex RADIOBUTTON GROUP fam.              " C_*DEX transactional
+PARAMETERS p_idex RADIOBUTTON GROUP fam.              " I_* master data
+SELECTION-SCREEN END OF BLOCK b_fam.
+
 SELECTION-SCREEN BEGIN OF BLOCK b_act WITH FRAME TITLE TEXT-b02.
 PARAMETERS p_disp RADIOBUTTON GROUP act DEFAULT 'X'.  " display list only
 PARAMETERS p_ext  RADIOBUTTON GROUP act.              " extract to file
@@ -72,8 +78,12 @@ CLASS lcl_app IMPLEMENTATION.
 
   METHOD run.
     DATA(lo_store) = NEW zcl_dxf_delta_store( ).
+    DATA(lv_fam) = COND string( WHEN p_cdex = abap_true THEN `C`
+                                WHEN p_idex = abap_true THEN `I`
+                                ELSE ` ` ).
     mt_views = NEW zcl_dxf_catalog( )->get_views(
       iv_name_pattern = p_name
+      iv_family       = lv_fam
       io_delta_store  = lo_store ).
 
     IF mt_views IS INITIAL.
@@ -104,6 +114,7 @@ CLASS lcl_app IMPLEMENTATION.
     lo_cols->set_optimize( abap_true ).
     set_col_text( io_cols = lo_cols iv_col = 'ENTITY_NAME'    iv_text = 'CDS Entity' ).
     set_col_text( io_cols = lo_cols iv_col = 'DESCRIPTION'    iv_text = 'Description' ).
+    set_col_text( io_cols = lo_cols iv_col = 'FAMILY'         iv_text = 'Family' ).
     set_col_text( io_cols = lo_cols iv_col = 'IS_CDC_ENABLED' iv_text = 'CDC' ).
     set_col_text( io_cols = lo_cols iv_col = 'DELTA_FIELD'    iv_text = 'Delta field' ).
     set_col_text( io_cols = lo_cols iv_col = 'DELTA_CAPABLE'  iv_text = 'Delta?' ).
