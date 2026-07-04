@@ -1,4 +1,5 @@
-" Serialize a dynamic (CDS-typed) table to a delimited text file on the frontend.
+" Serialize a dynamic (CDS-typed) table to a delimited text file, either on the
+" local frontend (gui_download) or the application server (OPEN DATASET).
 " The caller chooses the separator (`;`/`,`/tab) and the file name + extension
 " (.csv / .txt / .xls), so this class is format-agnostic: header row from the
 " component names, one delimited line per record, minimal CSV quoting.
@@ -7,14 +8,17 @@ CLASS zcl_dxf_file_writer DEFINITION
   CREATE PUBLIC.
 
   PUBLIC SECTION.
-    " @parameter ir_table | ref to the extracted (CDS-typed) internal table
-    " @parameter iv_path  | full frontend path incl. file name + extension
-    " @parameter iv_sep   | field separator (`;`, `,`, or a tab)
-    METHODS download
+    " @parameter ir_table  | ref to the extracted (CDS-typed) internal table
+    " @parameter iv_path   | full path incl. file name + extension
+    " @parameter iv_sep    | field separator (`;`, `,`, or a tab)
+    " @parameter iv_server | abap_true = application server (OPEN DATASET),
+    "                        else local frontend (gui_download)
+    METHODS save
       IMPORTING
         ir_table     TYPE REF TO data
         iv_path      TYPE string
         iv_sep       TYPE clike
+        iv_server    TYPE abap_bool DEFAULT abap_false
       RETURNING
         VALUE(rv_ok) TYPE abap_bool.
 
@@ -30,19 +34,32 @@ ENDCLASS.
 
 CLASS zcl_dxf_file_writer IMPLEMENTATION.
 
-  METHOD download.
+  METHOD save.
     DATA(lt_lines) = build_text( ir_table = ir_table iv_sep = iv_sep ).
 
-    cl_gui_frontend_services=>gui_download(
-      EXPORTING
-        filename = iv_path
-        filetype = 'ASC'
-      CHANGING
-        data_tab = lt_lines
-      EXCEPTIONS
-        OTHERS   = 1 ).
-
-    rv_ok = xsdbool( sy-subrc = 0 ).
+    IF iv_server = abap_true.
+      " application-server file (AL11) - needs S_DATASET authorization
+      OPEN DATASET iv_path FOR OUTPUT IN TEXT MODE ENCODING UTF-8.
+      IF sy-subrc <> 0.
+        rv_ok = abap_false.
+        RETURN.
+      ENDIF.
+      LOOP AT lt_lines INTO DATA(lv_line).
+        TRANSFER lv_line TO iv_path.
+      ENDLOOP.
+      CLOSE DATASET iv_path.
+      rv_ok = abap_true.
+    ELSE.
+      cl_gui_frontend_services=>gui_download(
+        EXPORTING
+          filename = iv_path
+          filetype = 'ASC'
+        CHANGING
+          data_tab = lt_lines
+        EXCEPTIONS
+          OTHERS   = 1 ).
+      rv_ok = xsdbool( sy-subrc = 0 ).
+    ENDIF.
   ENDMETHOD.
 
   METHOD build_text.

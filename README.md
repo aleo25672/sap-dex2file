@@ -42,9 +42,10 @@ Selection screen:
 | **View family** | *All* / *C_\*DEX (transactional)* / *I_\* (master data)* |
 | **Action** | *Display list only* / *Extract to file* — runs on the filtered set |
 | **Mode** | *Full load* / *Delta (change timestamp)* |
+| **Target** | *Local frontend (download)* / *Application server (AL11)* |
 | **Format** | *CSV* / *Tab (.txt)* / *Excel (tab, .xls)* |
 | **CSV delimiter** | separator for CSV (default `;`) |
-| **Download folder** | frontend folder (e.g. `C:\temp\`) |
+| **Folder / server dir** | frontend folder (e.g. `C:\temp\`) or an app-server path (e.g. `/tmp/`) |
 | **Max rows** | cap per view (`0` = unlimited) — guard for frontend download limits |
 
 - **Display** → grid of views: entity, description, CDC flag, delta timestamp field, delta-capable,
@@ -57,6 +58,9 @@ Selection screen:
 
 - **Format**: CSV and tab are native. "Excel" writes **tab-delimited** content with an `.xls`
   extension (Excel opens it) — a true `.xlsx` would need a library like abap2xlsx.
+- **Target**: *Local frontend* uses `gui_download` (dialog only). *Application server* uses
+  `OPEN DATASET` — it writes to the given AL11 directory, works in **background jobs**, and needs
+  `S_DATASET` authorization.
 - **Parameterized views** can't be `SELECT`ed without parameter values; extraction of such a view
   returns an error row rather than dumping (caught in `ZCL_DXF_EXTRACTOR`).
 - Release dependencies to confirm: tables `IXTRCTNENBLDVW`, `DDFIELDANNO`; and the exact annotation

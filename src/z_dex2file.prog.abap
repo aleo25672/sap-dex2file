@@ -34,6 +34,8 @@ PARAMETERS p_delta RADIOBUTTON GROUP mod.             " delta (change-timestamp)
 SELECTION-SCREEN END OF BLOCK b_mod.
 
 SELECTION-SCREEN BEGIN OF BLOCK b_out WITH FRAME TITLE TEXT-b04.
+PARAMETERS p_local  RADIOBUTTON GROUP tgt DEFAULT 'X'." download to local frontend
+PARAMETERS p_srv    RADIOBUTTON GROUP tgt.            " write to application server (AL11)
 PARAMETERS p_csv    RADIOBUTTON GROUP fmt DEFAULT 'X'." CSV  (.csv, delimiter)
 PARAMETERS p_tab    RADIOBUTTON GROUP fmt.            " tab  (.txt)
 PARAMETERS p_xls    RADIOBUTTON GROUP fmt.            " Excel (tab-delimited .xls)
@@ -141,10 +143,16 @@ CLASS lcl_app IMPLEMENTATION.
       lv_ext = 'csv'.
     ENDIF.
 
-    " target folder (ensure trailing backslash)
+    DATA(lv_srv) = xsdbool( p_srv = abap_true ).
+
+    " target folder (ensure trailing path separator: '/' on server, '\' on frontend)
     DATA(lv_folder) = condense( |{ p_folder }| ).
-    IF lv_folder IS NOT INITIAL AND NOT lv_folder CP '*\'.
-      lv_folder = |{ lv_folder }\\|.
+    IF lv_folder IS NOT INITIAL.
+      IF lv_srv = abap_true.
+        IF NOT lv_folder CP '*/'.  lv_folder = |{ lv_folder }/|.  ENDIF.
+      ELSE.
+        IF NOT lv_folder CP '*\'.  lv_folder = |{ lv_folder }\\|. ENDIF.
+      ENDIF.
     ENDIF.
 
     DATA lt_res TYPE ty_res_tab.
@@ -168,15 +176,18 @@ CLASS lcl_app IMPLEMENTATION.
         DATA(lv_file) = |{ lv_folder }{ ls_v-entity_name }_| &&
                         |{ COND string( WHEN lv_delta = abap_true THEN `delta` ELSE `full` ) }_| &&
                         |{ sy-datum }_{ sy-uzeit }.{ lv_ext }|.
-        IF lo_wr->download( ir_table = ls_ex-data_ref
-                            iv_path  = lv_file
-                            iv_sep   = lv_sep ) = abap_true.
+        IF lo_wr->save( ir_table  = ls_ex-data_ref
+                        iv_path   = lv_file
+                        iv_sep    = lv_sep
+                        iv_server = lv_srv ) = abap_true.
           ls_r-file = lv_file.
-          " advance the delta marker only after a successful download
+          " advance the delta marker only after a successful save
           io_store->set_last( iv_view = ls_v-entity_name iv_last = ls_ex-new_high ).
         ELSE.
           ls_r-status  = 'E'.
-          ls_r-message = 'Download failed / cancelled'.
+          ls_r-message = COND #( WHEN lv_srv = abap_true
+                                 THEN 'Server write failed (path / S_DATASET auth?)'
+                                 ELSE 'Download failed / cancelled' ).
         ENDIF.
       ENDIF.
 

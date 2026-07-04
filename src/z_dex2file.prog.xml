@@ -102,8 +102,20 @@
     <item>
      <ID>S</ID>
      <KEY>P_FOLDER</KEY>
-     <ENTRY>Download folder</ENTRY>
-     <LENGTH>15</LENGTH>
+     <ENTRY>Folder / server dir</ENTRY>
+     <LENGTH>19</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_LOCAL</KEY>
+     <ENTRY>Local frontend (download)</ENTRY>
+     <LENGTH>25</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_SRV</KEY>
+     <ENTRY>Application server (AL11)</ENTRY>
+     <LENGTH>24</LENGTH>
     </item>
     <item>
      <ID>S</ID>
