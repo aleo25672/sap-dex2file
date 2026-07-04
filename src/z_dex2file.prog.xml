@@ -107,6 +107,12 @@
     </item>
     <item>
      <ID>S</ID>
+     <KEY>P_LFN</KEY>
+     <ENTRY>Logical file name (FILE)</ENTRY>
+     <LENGTH>24</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
      <KEY>P_LOCAL</KEY>
      <ENTRY>Local frontend (download)</ENTRY>
      <LENGTH>25</LENGTH>

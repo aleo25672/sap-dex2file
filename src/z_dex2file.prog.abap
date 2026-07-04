@@ -41,6 +41,7 @@ PARAMETERS p_tab    RADIOBUTTON GROUP fmt.            " tab  (.txt)
 PARAMETERS p_xls    RADIOBUTTON GROUP fmt.            " Excel (tab-delimited .xls)
 PARAMETERS p_delim  TYPE c LENGTH 1 DEFAULT ';'.      " CSV delimiter
 PARAMETERS p_folder TYPE string LOWER CASE DEFAULT 'C:\temp\'.
+PARAMETERS p_lfn    TYPE c LENGTH 40.                 " logical file name (tx FILE) - overrides folder, implies server
 PARAMETERS p_max    TYPE i DEFAULT 100000.            " 0 = unlimited
 SELECTION-SCREEN END OF BLOCK b_out.
 
@@ -143,7 +144,8 @@ CLASS lcl_app IMPLEMENTATION.
       lv_ext = 'csv'.
     ENDIF.
 
-    DATA(lv_srv) = xsdbool( p_srv = abap_true ).
+    " a logical file name (transaction FILE) resolves to a server path -> server write
+    DATA(lv_srv) = xsdbool( p_srv = abap_true OR p_lfn IS NOT INITIAL ).
 
     " target folder (ensure trailing path separator: '/' on server, '\' on frontend)
     DATA(lv_folder) = condense( |{ p_folder }| ).
@@ -161,6 +163,32 @@ CLASS lcl_app IMPLEMENTATION.
         entity = ls_v-entity_name
         mode   = COND #( WHEN lv_delta = abap_true THEN 'DELTA' ELSE 'FULL' ) ).
 
+      " target path: logical file name (transaction FILE) or built folder path
+      DATA lv_file TYPE string.
+      CLEAR lv_file.
+      IF p_lfn IS NOT INITIAL.
+        CALL FUNCTION 'FILE_GET_NAME'
+          EXPORTING
+            logical_filename = p_lfn
+            parameter_1      = ls_v-entity_name
+            parameter_2      = COND string( WHEN lv_delta = abap_true THEN `DELTA` ELSE `FULL` )
+          IMPORTING
+            file_name        = lv_file
+          EXCEPTIONS
+            file_not_found   = 1
+            OTHERS           = 2.
+        IF sy-subrc <> 0.
+          ls_r-status  = 'E'.
+          ls_r-message = |Logical file name { p_lfn } not resolved (transaction FILE)|.
+          APPEND ls_r TO lt_res.
+          CONTINUE.
+        ENDIF.
+      ELSE.
+        lv_file = |{ lv_folder }{ ls_v-entity_name }_| &&
+                  |{ COND string( WHEN lv_delta = abap_true THEN `delta` ELSE `full` ) }_| &&
+                  |{ sy-datum }_{ sy-uzeit }.{ lv_ext }|.
+      ENDIF.
+
       DATA(ls_ex) = lo_ext->extract(
         iv_entity   = ls_v-entity_name
         iv_delta    = lv_delta
@@ -173,9 +201,6 @@ CLASS lcl_app IMPLEMENTATION.
       ls_r-message = ls_ex-message.
 
       IF ls_ex-status = 'S'.
-        DATA(lv_file) = |{ lv_folder }{ ls_v-entity_name }_| &&
-                        |{ COND string( WHEN lv_delta = abap_true THEN `delta` ELSE `full` ) }_| &&
-                        |{ sy-datum }_{ sy-uzeit }.{ lv_ext }|.
         IF lo_wr->save( ir_table  = ls_ex-data_ref
                         iv_path   = lv_file
                         iv_sep    = lv_sep

@@ -46,6 +46,7 @@ Selection screen:
 | **Format** | *CSV* / *Tab (.txt)* / *Excel (tab, .xls)* |
 | **CSV delimiter** | separator for CSV (default `;`) |
 | **Folder / server dir** | frontend folder (e.g. `C:\temp\`) or an app-server path (e.g. `/tmp/`) |
+| **Logical file name** | a logical file name from transaction **`FILE`**; when set, it resolves the path via `FILE_GET_NAME` (server) and **overrides** the folder |
 | **Max rows** | cap per view (`0` = unlimited) — guard for frontend download limits |
 
 - **Display** → grid of views: entity, description, CDC flag, delta timestamp field, delta-capable,
@@ -61,6 +62,10 @@ Selection screen:
 - **Target**: *Local frontend* uses `gui_download` (dialog only). *Application server* uses
   `OPEN DATASET` — it writes to the given AL11 directory, works in **background jobs**, and needs
   `S_DATASET` authorization.
+- **Logical file name** (transaction `FILE`): configure a logical file name once (its physical
+  path/name can use `<PARAM_1>` = entity, `<PARAM_2>` = FULL/DELTA, plus `<DATE>`/`<TIME>`/`<SYSID>`
+  etc.). The report resolves it per view with `FILE_GET_NAME`. This is the recommended way to keep
+  paths out of the code / consistent across systems; it implies the app-server target.
 - **Parameterized views** can't be `SELECT`ed without parameter values; extraction of such a view
   returns an error row rather than dumping (caught in `ZCL_DXF_EXTRACTOR`).
 - Release dependencies to confirm: tables `IXTRCTNENBLDVW`, `DDFIELDANNO`; and the exact annotation
