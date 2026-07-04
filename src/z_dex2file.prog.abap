@@ -260,5 +260,39 @@ CLASS lcl_app IMPLEMENTATION.
 ENDCLASS.
 
 *----------------------------------------------------------------------*
+* F4 value help for the logical file name (transaction FILE)
+*----------------------------------------------------------------------*
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR p_lfn.
+  TYPES: BEGIN OF ty_lfn,
+           fileintern TYPE filenameci-fileintern,
+         END OF ty_lfn.
+  DATA lt_lfn TYPE STANDARD TABLE OF ty_lfn.
+  DATA lt_ret TYPE STANDARD TABLE OF ddshretval.
+
+  SELECT fileintern FROM filenameci
+    ORDER BY fileintern
+    INTO TABLE @lt_lfn.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield        = 'FILEINTERN'
+      dynpprog        = sy-repid
+      dynpnr          = sy-dynnr
+      dynprofield     = 'P_LFN'
+      value_org       = 'S'
+    TABLES
+      value_tab       = lt_lfn
+      return_tab      = lt_ret
+    EXCEPTIONS
+      parameter_error = 1
+      no_values_found = 2
+      OTHERS          = 3.
+
+  READ TABLE lt_ret INTO DATA(ls_ret) INDEX 1.
+  IF sy-subrc = 0.
+    p_lfn = ls_ret-fieldval.
+  ENDIF.
+
+*----------------------------------------------------------------------*
 START-OF-SELECTION.
   NEW lcl_app( )->run( ).
