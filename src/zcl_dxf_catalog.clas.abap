@@ -12,7 +12,7 @@ CLASS zcl_dxf_catalog DEFINITION
       BEGIN OF ty_view,
         entity_name    TYPE c LENGTH 60,
         description    TYPE c LENGTH 60,
-        family         TYPE c LENGTH 13,   " TRANSACTIONAL / MASTER DATA / OTHER
+        family         TYPE c LENGTH 20,   " data class (@ObjectModel.usageType.dataClass)
         is_cdc_enabled TYPE abap_bool,
         delta_field    TYPE c LENGTH 30,   " @Semantics.systemDateTime.lastChangedAt element
         delta_capable  TYPE abap_bool,     " a change-timestamp field exists
@@ -23,11 +23,11 @@ CLASS zcl_dxf_catalog DEFINITION
 
     " @parameter iv_name_pattern | optional entity filter; plain text = contains, '*' = wildcard
     " @parameter io_delta_store  | optional, fills the stored high-water per view
-    " @parameter iv_family | family filter: ' ' = all, 'C' = C_*DEX, 'I' = I_*
+    " @parameter iv_dataclass | data-class filter: ' ' = all, 'M' = MASTER, 'T' = TRANSACTIONAL
     METHODS get_views
       IMPORTING
         iv_name_pattern TYPE clike OPTIONAL
-        iv_family       TYPE clike DEFAULT space
+        iv_dataclass    TYPE clike DEFAULT space
         io_delta_store  TYPE REF TO zcl_dxf_delta_store OPTIONAL
       RETURNING
         VALUE(rt_views) TYPE ty_views.
@@ -73,23 +73,44 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
                       field  = ls_ts-lfieldname ) INTO TABLE lt_tsmap.
     ENDLOOP.
 
+    " Data class per view (@ObjectModel.usageType.dataClass, header annotation in
+    " DDHEADANNO). The I_/C_ prefix does NOT indicate the category - read the real
+    " annotation. VALUE looks like '#TRANSACTIONAL'; strip the leading '#'.
+    SELECT strucobjn, value AS dclass
+      FROM ddheadanno
+      WHERE upper( name ) = 'OBJECTMODEL.USAGETYPE.DATACLASS'
+      INTO TABLE @DATA(lt_dc).
+
+    TYPES: BEGIN OF ty_dc,
+             ent_up TYPE string,
+             dclass TYPE c LENGTH 20,
+           END OF ty_dc.
+    DATA lt_dcmap TYPE SORTED TABLE OF ty_dc WITH NON-UNIQUE KEY ent_up.
+    LOOP AT lt_dc INTO DATA(ls_dc).
+      DATA(lv_dc) = to_upper( CONV string( ls_dc-dclass ) ).
+      REPLACE ALL OCCURRENCES OF `#` IN lv_dc WITH ``.
+      REPLACE ALL OCCURRENCES OF `'` IN lv_dc WITH ``.
+      CONDENSE lv_dc.
+      INSERT VALUE #( ent_up = to_upper( ls_dc-strucobjn )
+                      dclass = lv_dc ) INTO TABLE lt_dcmap.
+    ENDLOOP.
+
     LOOP AT lt_views INTO DATA(ls_view).
       DATA(ls_out) = VALUE ty_view(
         entity_name    = ls_view-dataextractionviewname
         description    = ls_view-dataextractionviewdescription
         is_cdc_enabled = ls_view-deltachgdatacaptureissupported ).
 
-      " family classification + optional filter
-      IF ls_view-dataextractionviewname CP 'C_*DEX'.
-        ls_out-family = 'TRANSACTIONAL'.
-      ELSEIF ls_view-dataextractionviewname CP 'I_*'.
-        ls_out-family = 'MASTER DATA'.
-      ELSE.
-        ls_out-family = 'OTHER'.
+      " real data class from @ObjectModel.usageType.dataClass (MASTER / TRANSACTIONAL / ...)
+      READ TABLE lt_dcmap INTO DATA(ls_dcm)
+           WITH KEY ent_up = to_upper( ls_view-dataextractionviewname ).
+      IF sy-subrc = 0.
+        ls_out-family = ls_dcm-dclass.
       ENDIF.
 
-      IF ( iv_family = 'C' AND ls_out-family <> 'TRANSACTIONAL' )
-      OR ( iv_family = 'I' AND ls_out-family <> 'MASTER DATA' ).
+      " optional data-class filter
+      IF ( iv_dataclass = 'M' AND ls_out-family <> 'MASTER' )
+      OR ( iv_dataclass = 'T' AND ls_out-family <> 'TRANSACTIONAL' ).
         CONTINUE.
       ENDIF.
 

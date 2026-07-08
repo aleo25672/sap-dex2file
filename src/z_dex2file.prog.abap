@@ -18,9 +18,9 @@ PARAMETERS p_name TYPE c LENGTH 40 LOWER CASE.  " entity pattern (case-sensitive
 SELECTION-SCREEN END OF BLOCK b_sel.
 
 SELECTION-SCREEN BEGIN OF BLOCK b_fam WITH FRAME TITLE TEXT-b05.
-PARAMETERS p_all  RADIOBUTTON GROUP fam DEFAULT 'X'.  " all DEX views
-PARAMETERS p_cdex RADIOBUTTON GROUP fam.              " C_*DEX transactional
-PARAMETERS p_idex RADIOBUTTON GROUP fam.              " I_* master data
+PARAMETERS p_all  RADIOBUTTON GROUP fam DEFAULT 'X'.  " all data classes
+PARAMETERS p_mast RADIOBUTTON GROUP fam.              " master data
+PARAMETERS p_tran RADIOBUTTON GROUP fam.              " transactional
 SELECTION-SCREEN END OF BLOCK b_fam.
 
 SELECTION-SCREEN BEGIN OF BLOCK b_act WITH FRAME TITLE TEXT-b02.
@@ -81,12 +81,12 @@ CLASS lcl_app IMPLEMENTATION.
 
   METHOD run.
     DATA(lo_store) = NEW zcl_dxf_delta_store( ).
-    DATA(lv_fam) = COND string( WHEN p_cdex = abap_true THEN `C`
-                                WHEN p_idex = abap_true THEN `I`
-                                ELSE ` ` ).
+    DATA(lv_dc) = COND string( WHEN p_mast = abap_true THEN `M`
+                               WHEN p_tran = abap_true THEN `T`
+                               ELSE ` ` ).
     mt_views = NEW zcl_dxf_catalog( )->get_views(
       iv_name_pattern = p_name
-      iv_family       = lv_fam
+      iv_dataclass    = lv_dc
       io_delta_store  = lo_store ).
 
     IF mt_views IS INITIAL.
@@ -117,7 +117,7 @@ CLASS lcl_app IMPLEMENTATION.
     lo_cols->set_optimize( abap_true ).
     set_col_text( io_cols = lo_cols iv_col = 'ENTITY_NAME'    iv_text = 'CDS Entity' ).
     set_col_text( io_cols = lo_cols iv_col = 'DESCRIPTION'    iv_text = 'Description' ).
-    set_col_text( io_cols = lo_cols iv_col = 'FAMILY'         iv_text = 'Family' ).
+    set_col_text( io_cols = lo_cols iv_col = 'FAMILY'         iv_text = 'Data class' ).
     set_col_text( io_cols = lo_cols iv_col = 'IS_CDC_ENABLED' iv_text = 'CDC' ).
     set_col_text( io_cols = lo_cols iv_col = 'DELTA_FIELD'    iv_text = 'Delta field' ).
     set_col_text( io_cols = lo_cols iv_col = 'DELTA_CAPABLE'  iv_text = 'Delta?' ).

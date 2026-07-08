@@ -42,8 +42,8 @@
     <item>
      <ID>I</ID>
      <KEY>B05</KEY>
-     <ENTRY>View family</ENTRY>
-     <LENGTH>11</LENGTH>
+     <ENTRY>Data class</ENTRY>
+     <LENGTH>10</LENGTH>
     </item>
     <item>
      <ID>I</ID>
@@ -54,14 +54,14 @@
     <item>
      <ID>S</ID>
      <KEY>P_ALL</KEY>
-     <ENTRY>All DEX views</ENTRY>
-     <LENGTH>13</LENGTH>
+     <ENTRY>All classes</ENTRY>
+     <LENGTH>11</LENGTH>
     </item>
     <item>
      <ID>S</ID>
-     <KEY>P_CDEX</KEY>
-     <ENTRY>C_*DEX (transactional)</ENTRY>
-     <LENGTH>22</LENGTH>
+     <KEY>P_MAST</KEY>
+     <ENTRY>Master data</ENTRY>
+     <LENGTH>11</LENGTH>
     </item>
     <item>
      <ID>S</ID>
@@ -71,9 +71,9 @@
     </item>
     <item>
      <ID>S</ID>
-     <KEY>P_IDEX</KEY>
-     <ENTRY>I_* (master data)</ENTRY>
-     <LENGTH>17</LENGTH>
+     <KEY>P_TRAN</KEY>
+     <ENTRY>Transactional</ENTRY>
+     <LENGTH>13</LENGTH>
     </item>
     <item>
      <ID>S</ID>

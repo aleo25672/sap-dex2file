@@ -72,7 +72,7 @@ Selection screen:
 | Field | Meaning |
 |-------|---------|
 | **CDS entity pattern** | case-sensitive; plain text = contains, `*` = wildcard, blank = all |
-| **View family** | *All* / *C_\*DEX (transactional)* / *I_\* (master data)* |
+| **Data class** | *All* / *Master data* / *Transactional* — the real category from `@ObjectModel.usageType.dataClass`, **not** the `I_`/`C_` prefix (which doesn't indicate the category) |
 | **Action** | *Display list only* / *Extract to file* — runs on the filtered set |
 | **Mode** | *Full load* / *Delta (change timestamp)* |
 | **Target** | *Local frontend (download)* / *Application server (AL11)* |
