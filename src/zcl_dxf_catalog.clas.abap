@@ -67,11 +67,8 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
              ddl_up TYPE c LENGTH 40,
              obj_up TYPE c LENGTH 40,
            END OF ty_dep.
-    " VRSD-OBJNAME length is release-dependent (often 40 or 110).
-    " FAE requires LT_ENTS-NAME_UP to match VRSD-OBJNAME exactly.
-    TYPES: BEGIN OF ty_ent,
-             name_up TYPE vrsd-objname,
-           END OF ty_ent.
+    " Last-changed via VRSD. Use RANGE (not FOR ALL ENTRIES) to avoid
+    " release-dependent OBJNAME length mismatches.
     TYPES: BEGIN OF ty_vrs,
              objname TYPE vrsd-objname,
              versno  TYPE vrsd-versno,
@@ -83,23 +80,23 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
     DATA lt_dcmap    TYPE SORTED TABLE OF ty_dc  WITH NON-UNIQUE KEY ent_up.
     DATA lt_labmap   TYPE SORTED TABLE OF ty_lab WITH NON-UNIQUE KEY ent_up.
     DATA lt_depmap   TYPE SORTED TABLE OF ty_dep WITH NON-UNIQUE KEY ddl_up.
-    DATA lt_ents     TYPE SORTED TABLE OF ty_ent WITH UNIQUE KEY name_up.
     DATA lt_latest   TYPE SORTED TABLE OF ty_vrs WITH UNIQUE KEY objname.
     DATA lt_vrsd     TYPE STANDARD TABLE OF ty_vrs WITH DEFAULT KEY.
     DATA lt_dfies    TYPE STANDARD TABLE OF dfies WITH DEFAULT KEY.
     DATA lt_api_sel  TYPE ty_entity_range.
     DATA lt_name_sel TYPE ty_entity_range.
+    DATA lt_obj_rng  TYPE RANGE OF vrsd-objname.
 
     DATA ls_out    TYPE ty_view.
     DATA ls_m      TYPE ty_map.
     DATA ls_dcm    TYPE ty_dc.
     DATA ls_lbl    TYPE ty_lab.
     DATA ls_dep    TYPE ty_dep.
-    DATA ls_ent    TYPE ty_ent.
     DATA ls_latest TYPE ty_vrs.
     DATA ls_vrsd   TYPE ty_vrs.
     DATA ls_dfies  TYPE dfies.
-    DATA ls_range  TYPE LINE OF ty_entity_range.
+    DATA ls_range   TYPE LINE OF ty_entity_range.
+    DATA ls_obj_rng LIKE LINE OF lt_obj_rng.
 
     DATA lv_source  TYPE c LENGTH 1.
     DATA lv_ent_up  TYPE c LENGTH 40.
@@ -441,23 +438,27 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
 
     " ------------------------------------------------------------------
     " Repository last-changed (VRSD) - compare A_* vs A_*_2 etc.
+    " Use IN range (no FOR ALL ENTRIES) so OBJNAME length cannot mismatch.
     " ------------------------------------------------------------------
     IF rt_views IS NOT INITIAL.
-      CLEAR: lt_ents, lt_latest, lt_vrsd.
+      CLEAR: lt_obj_rng, lt_latest, lt_vrsd.
 
       LOOP AT rt_views INTO ls_out.
-        CLEAR ls_ent.
-        ls_ent-name_up = to_upper( ls_out-entity_name ).
-        INSERT ls_ent INTO TABLE lt_ents.
+        CLEAR ls_obj_rng.
+        ls_obj_rng-sign   = 'I'.
+        ls_obj_rng-option = 'EQ'.
+        ls_obj_rng-low    = to_upper( ls_out-entity_name ).
+        APPEND ls_obj_rng TO lt_obj_rng.
       ENDLOOP.
+      SORT lt_obj_rng BY low.
+      DELETE ADJACENT DUPLICATES FROM lt_obj_rng COMPARING low.
 
-      IF lt_ents IS NOT INITIAL.
+      IF lt_obj_rng IS NOT INITIAL.
         SELECT objname versno datum zeit
           FROM vrsd
           INTO TABLE lt_vrsd
-          FOR ALL ENTRIES IN lt_ents
           WHERE objtype = 'DDLS'
-            AND objname = lt_ents-name_up.
+            AND objname IN lt_obj_rng.
       ENDIF.
 
       LOOP AT lt_vrsd INTO ls_vrsd.
