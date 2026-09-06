@@ -270,12 +270,18 @@ CLASS lcl_app IMPLEMENTATION.
     IF lv_ok_folder IS INITIAL.
       LOOP AT lt_res INTO DATA(ls_path) WHERE file IS NOT INITIAL.
         DATA(lv_path) = ls_path-file.
-        " strip file name -> directory (server '/' or frontend '\')
-        DATA(lv_pos) = find( val = lv_path sub = `/` occ = -1 ).
-        IF lv_pos < 0.
-          lv_pos = find( val = lv_path sub = `\` occ = -1 ).
-        ENDIF.
-        IF lv_pos >= 0.
+        DATA lv_pos TYPE i.
+        DATA lv_idx TYPE i.
+        CLEAR lv_pos.
+        lv_idx = strlen( lv_path ).
+        WHILE lv_idx > 0.
+          lv_idx = lv_idx - 1.
+          IF lv_path+lv_idx(1) = '/' OR lv_path+lv_idx(1) = '\'.
+            lv_pos = lv_idx.
+            EXIT.
+          ENDIF.
+        ENDWHILE.
+        IF lv_path IS NOT INITIAL AND ( lv_path+lv_pos(1) = '/' OR lv_path+lv_pos(1) = '\' ).
           lv_ok_folder = lv_path( lv_pos + 1 ).
         ENDIF.
         EXIT.
@@ -339,7 +345,8 @@ CLASS lcl_app IMPLEMENTATION.
 
   METHOD write_text_file.
     IF iv_server = abap_true.
-      DATA lv_msg TYPE string.
+      " MESSAGE addition requires a flat C field (not string) on many releases.
+      DATA lv_msg TYPE c LENGTH 255.
       OPEN DATASET iv_path FOR OUTPUT IN TEXT MODE ENCODING UTF-8 MESSAGE lv_msg.
       IF sy-subrc <> 0.
         rv_ok = abap_false.
