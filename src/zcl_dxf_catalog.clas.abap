@@ -18,17 +18,17 @@ CLASS zcl_dxf_catalog DEFINITION
   PUBLIC SECTION.
     TYPES:
       BEGIN OF ty_view,
-        entity_name        TYPE c LENGTH 60,
-        description        TYPE c LENGTH 60,
-        source_type        TYPE c LENGTH 3,
-        family             TYPE c LENGTH 20,
-        is_cdc_enabled     TYPE abap_bool,
-        delta_field        TYPE c LENGTH 30,
-        delta_capable      TYPE abap_bool,
-        last_delta_ts      TYPE timestampl,
-        last_changed_date  TYPE d,
-        last_changed_time  TYPE t,
-        reason             TYPE string,
+        entity_name       TYPE c LENGTH 60,
+        description       TYPE c LENGTH 60,
+        source_type       TYPE c LENGTH 3,
+        family            TYPE c LENGTH 20,
+        is_cdc_enabled    TYPE abap_bool,
+        delta_field       TYPE c LENGTH 30,
+        delta_capable     TYPE abap_bool,
+        last_delta_ts     TYPE timestampl,
+        last_changed_date TYPE d,
+        last_changed_time TYPE t,
+        reason            TYPE string,
       END OF ty_view,
       ty_views TYPE STANDARD TABLE OF ty_view WITH DEFAULT KEY.
 
@@ -52,64 +52,69 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
   METHOD get_views.
 
     TYPES: BEGIN OF ty_map,
-             ent_up TYPE string,
+             ent_up TYPE c LENGTH 40,
              field  TYPE c LENGTH 30,
            END OF ty_map.
     TYPES: BEGIN OF ty_dc,
-             ent_up TYPE string,
+             ent_up TYPE c LENGTH 40,
              dclass TYPE c LENGTH 20,
            END OF ty_dc.
     TYPES: BEGIN OF ty_lab,
-             ent_up TYPE string,
+             ent_up TYPE c LENGTH 40,
              label  TYPE c LENGTH 60,
            END OF ty_lab.
     TYPES: BEGIN OF ty_dep,
-             ddl_up TYPE string,
-             obj_up TYPE string,
+             ddl_up TYPE c LENGTH 40,
+             obj_up TYPE c LENGTH 40,
            END OF ty_dep.
     TYPES: BEGIN OF ty_ent,
              name_up TYPE c LENGTH 40,
            END OF ty_ent.
     TYPES: BEGIN OF ty_vrs,
-             objname TYPE vrsd-objname,
-             versno  TYPE vrsd-versno,
-             datum   TYPE vrsd-datum,
-             zeit    TYPE vrsd-zeit,
+             objname TYPE c LENGTH 40,
+             versno  TYPE n LENGTH 5,
+             datum   TYPE d,
+             zeit    TYPE t,
            END OF ty_vrs.
 
     DATA lt_deltamap TYPE SORTED TABLE OF ty_map WITH UNIQUE KEY ent_up.
     DATA lt_dcmap    TYPE SORTED TABLE OF ty_dc  WITH NON-UNIQUE KEY ent_up.
     DATA lt_labmap   TYPE SORTED TABLE OF ty_lab WITH NON-UNIQUE KEY ent_up.
     DATA lt_depmap   TYPE SORTED TABLE OF ty_dep WITH NON-UNIQUE KEY ddl_up.
+    DATA lt_ents     TYPE SORTED TABLE OF ty_ent WITH UNIQUE KEY name_up.
+    DATA lt_latest   TYPE SORTED TABLE OF ty_vrs WITH UNIQUE KEY objname.
+    DATA lt_vrsd     TYPE STANDARD TABLE OF ty_vrs WITH DEFAULT KEY.
+    DATA lt_dfies    TYPE STANDARD TABLE OF dfies WITH DEFAULT KEY.
+    DATA lt_api_sel  TYPE ty_entity_range.
+    DATA lt_name_sel TYPE ty_entity_range.
 
-    DATA lv_source TYPE string.
-    DATA lv_ent_up TYPE string.
-    DATA lv_name   TYPE string.
-    DATA lv_dc     TYPE string.
-    DATA lv_lab    TYPE string.
     DATA ls_out    TYPE ty_view.
     DATA ls_m      TYPE ty_map.
     DATA ls_dcm    TYPE ty_dc.
     DATA ls_lbl    TYPE ty_lab.
     DATA ls_dep    TYPE ty_dep.
-    DATA lt_api_sel TYPE ty_entity_range.
-    DATA lt_name_sel TYPE ty_entity_range.
-    DATA ls_range TYPE LINE OF ty_entity_range.
-    DATA lt_dfies TYPE STANDARD TABLE OF dfies WITH DEFAULT KEY.
-    DATA ls_dfies TYPE dfies.
-    DATA lt_ents TYPE SORTED TABLE OF ty_ent WITH UNIQUE KEY name_up.
-    DATA ls_ent TYPE ty_ent.
-    DATA lt_latest TYPE SORTED TABLE OF ty_vrs WITH UNIQUE KEY objname.
+    DATA ls_ent    TYPE ty_ent.
     DATA ls_latest TYPE ty_vrs.
-    DATA lv_objname TYPE vrsd-objname.
+    DATA ls_vrsd   TYPE ty_vrs.
+    DATA ls_dfies  TYPE dfies.
+    DATA ls_range  TYPE LINE OF ty_entity_range.
+
+    DATA lv_source  TYPE c LENGTH 1.
+    DATA lv_ent_up  TYPE c LENGTH 40.
+    DATA lv_name    TYPE c LENGTH 40.
+    DATA lv_dc      TYPE c LENGTH 20.
+    DATA lv_lab     TYPE c LENGTH 60.
+    DATA lv_objname TYPE c LENGTH 40.
+    DATA lv_tab     TYPE ddobjname.
+
+    FIELD-SYMBOLS <view> TYPE ty_view.
 
     lv_source = to_upper( condense( CONV string( iv_source ) ) ).
     IF lv_source IS INITIAL.
       lv_source = 'D'.
     ENDIF.
 
-    " Normalize select-options: EQ with * / + -> CP (so wildcards work from the
-    " single selection-screen field; default option would otherwise stay EQ).
+    " Normalize select-options: EQ with * / + -> CP.
     lt_name_sel = it_name_range.
     LOOP AT lt_name_sel INTO ls_range.
       IF ( ls_range-option = 'EQ' OR ls_range-option = 'CP' )
@@ -128,15 +133,13 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
       ENDIF.
     ENDLOOP.
 
-    " --- Build delta-field map (entity -> timestamp field) ---
-
     " 1) @Semantics.systemDateTime.lastChangedAt
     SELECT strucobjn, lfieldname
       FROM ddfieldanno
       WHERE upper( name ) = 'SEMANTICS.SYSTEMDATETIME.LASTCHANGEDAT'
       INTO TABLE @DATA(lt_ts).
-
     LOOP AT lt_ts INTO DATA(ls_ts).
+      CLEAR ls_m.
       ls_m-ent_up = to_upper( ls_ts-strucobjn ).
       ls_m-field  = ls_ts-lfieldname.
       INSERT ls_m INTO TABLE lt_deltamap.
@@ -147,47 +150,46 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
       FROM ddfieldanno
       WHERE upper( name ) = 'SEMANTICS.SYSTEMDATETIME.LOCALINSTANCELASTCHANGEDAT'
       INTO TABLE @DATA(lt_ts_loc).
-
     LOOP AT lt_ts_loc INTO DATA(ls_ts_loc).
+      CLEAR ls_m.
       ls_m-ent_up = to_upper( ls_ts_loc-strucobjn ).
       ls_m-field  = ls_ts_loc-lfieldname.
       INSERT ls_m INTO TABLE lt_deltamap.
     ENDLOOP.
 
-    " 3) Any annotated element named LastChangeDateTime (proves field exists)
+    " 3) Annotated element named LastChangeDateTime
     SELECT strucobjn, lfieldname
       FROM ddfieldanno
       WHERE upper( lfieldname ) = 'LASTCHANGEDATETIME'
       INTO TABLE @DATA(lt_anno_lcdt).
-
     LOOP AT lt_anno_lcdt INTO DATA(ls_anno_lcdt).
+      CLEAR ls_m.
       ls_m-ent_up = to_upper( ls_anno_lcdt-strucobjn ).
       ls_m-field  = ls_anno_lcdt-lfieldname.
       INSERT ls_m INTO TABLE lt_deltamap.
     ENDLOOP.
 
-    " 4) DDIC field LastChangeDateTime (short SQL view / structure names)
+    " 4) DDIC field LastChangeDateTime
     SELECT tabname, fieldname
       FROM dd03l
       WHERE fieldname = 'LASTCHANGEDATETIME'
         AND as4local  = 'A'
       INTO TABLE @DATA(lt_lcdt).
-
     LOOP AT lt_lcdt INTO DATA(ls_lcdt).
+      CLEAR ls_m.
       ls_m-ent_up = to_upper( ls_lcdt-tabname ).
       ls_m-field  = ls_lcdt-fieldname.
       INSERT ls_m INTO TABLE lt_deltamap.
     ENDLOOP.
 
-    " 5) Map CDS DDL name <-> SQL/DDIC object via DDLDEPENDENCY so long CDS
-    "    names (I_*API*, A_* projections) inherit the DD03L hit on the view.
+    " 5) CDS DDL name <-> SQL/DDIC object via DDLDEPENDENCY
     SELECT ddlname, objectname
       FROM ddldependency
       WHERE objecttype = 'VIEW'
          OR objecttype = 'STOB'
       INTO TABLE @DATA(lt_dep).
-
     LOOP AT lt_dep INTO DATA(ls_dep_row).
+      CLEAR ls_dep.
       ls_dep-ddl_up = to_upper( CONV string( ls_dep_row-ddlname ) ).
       ls_dep-obj_up = to_upper( CONV string( ls_dep_row-objectname ) ).
       INSERT ls_dep INTO TABLE lt_depmap.
@@ -209,12 +211,12 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
       FROM ddheadanno
       WHERE upper( name ) = 'OBJECTMODEL.USAGETYPE.DATACLASS'
       INTO TABLE @DATA(lt_dc).
-
     LOOP AT lt_dc INTO DATA(ls_dc).
+      CLEAR ls_dcm.
       lv_dc = to_upper( CONV string( ls_dc-dclass ) ).
-      REPLACE ALL OCCURRENCES OF `#` IN lv_dc WITH ``.
-      REPLACE ALL OCCURRENCES OF `'` IN lv_dc WITH ``.
-      CONDENSE lv_dc.
+      REPLACE ALL OCCURRENCES OF `#` IN lv_dc WITH space.
+      REPLACE ALL OCCURRENCES OF `'` IN lv_dc WITH space.
+      CONDENSE lv_dc NO-GAPS.
       ls_dcm-ent_up = to_upper( ls_dc-strucobjn ).
       ls_dcm-dclass = lv_dc.
       INSERT ls_dcm INTO TABLE lt_dcmap.
@@ -224,10 +226,10 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
       FROM ddheadanno
       WHERE upper( name ) = 'ENDUSERTEXT.LABEL'
       INTO TABLE @DATA(lt_lab).
-
     LOOP AT lt_lab INTO DATA(ls_lab).
+      CLEAR ls_lbl.
       lv_lab = CONV string( ls_lab-label ).
-      REPLACE ALL OCCURRENCES OF `'` IN lv_lab WITH ``.
+      REPLACE ALL OCCURRENCES OF `'` IN lv_lab WITH space.
       CONDENSE lv_lab.
       ls_lbl-ent_up = to_upper( ls_lab-strucobjn ).
       ls_lbl-label  = lv_lab.
@@ -281,11 +283,11 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
           ls_out-delta_field   = ls_m-field.
           ls_out-delta_capable = abap_true.
         ELSE.
-          " Fallback: DDIC field info (CDS entity / SQL view name)
           CLEAR lt_dfies.
+          lv_tab = lv_ent_up.
           CALL FUNCTION 'DDIF_FIELDINFO_GET'
             EXPORTING
-              tabname   = CONV ddobjname( lv_ent_up )
+              tabname   = lv_tab
             TABLES
               dfies_tab = lt_dfies
             EXCEPTIONS
@@ -297,6 +299,7 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
             IF sy-subrc = 0.
               ls_out-delta_field   = ls_dfies-fieldname.
               ls_out-delta_capable = abap_true.
+              CLEAR ls_m.
               ls_m-ent_up = lv_ent_up.
               ls_m-field  = ls_dfies-fieldname.
               INSERT ls_m INTO TABLE lt_deltamap.
@@ -317,7 +320,6 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
     " ------------------------------------------------------------------
     IF lv_source = 'A' OR lv_source = 'B'.
       IF lt_api_sel IS INITIAL.
-        " Default: I_*API*
         APPEND VALUE #( sign = 'I' option = 'CP' low = 'I_*API*' ) TO lt_api_sel.
       ENDIF.
 
@@ -330,7 +332,7 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
         INTO TABLE @DATA(lt_api).
 
       LOOP AT lt_api INTO DATA(ls_api).
-        lv_name = CONV string( ls_api-obj_name ).
+        lv_name = ls_api-obj_name.
         IF to_upper( lv_name ) CP 'API_*'.
           CONTINUE.
         ENDIF.
@@ -371,13 +373,14 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
           ls_out-delta_field   = ls_m-field.
           ls_out-delta_capable = abap_true.
         ELSE.
-          " Try SQL/DDIC object name from DDLDEPENDENCY
           LOOP AT lt_depmap INTO ls_dep WHERE ddl_up = lv_ent_up.
             READ TABLE lt_deltamap INTO ls_m WITH TABLE KEY ent_up = ls_dep-obj_up.
             IF sy-subrc = 0 AND ls_m-field IS NOT INITIAL.
               ls_out-delta_field   = ls_m-field.
               ls_out-delta_capable = abap_true.
+              CLEAR ls_m.
               ls_m-ent_up = lv_ent_up.
+              ls_m-field  = ls_out-delta_field.
               INSERT ls_m INTO TABLE lt_deltamap.
               EXIT.
             ENDIF.
@@ -385,11 +388,11 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
         ENDIF.
 
         IF ls_out-delta_capable = abap_false.
-          " Fallback: DDIF on CDS name, then on dependent SQL object
           CLEAR lt_dfies.
+          lv_tab = lv_ent_up.
           CALL FUNCTION 'DDIF_FIELDINFO_GET'
             EXPORTING
-              tabname   = CONV ddobjname( lv_ent_up )
+              tabname   = lv_tab
             TABLES
               dfies_tab = lt_dfies
             EXCEPTIONS
@@ -398,9 +401,10 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
           IF sy-subrc <> 0.
             LOOP AT lt_depmap INTO ls_dep WHERE ddl_up = lv_ent_up.
               CLEAR lt_dfies.
+              lv_tab = ls_dep-obj_up.
               CALL FUNCTION 'DDIF_FIELDINFO_GET'
                 EXPORTING
-                  tabname   = CONV ddobjname( ls_dep-obj_up )
+                  tabname   = lv_tab
                 TABLES
                   dfies_tab = lt_dfies
                 EXCEPTIONS
@@ -417,6 +421,7 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
             IF sy-subrc = 0.
               ls_out-delta_field   = ls_dfies-fieldname.
               ls_out-delta_capable = abap_true.
+              CLEAR ls_m.
               ls_m-ent_up = lv_ent_up.
               ls_m-field  = ls_dfies-fieldname.
               INSERT ls_m INTO TABLE lt_deltamap.
@@ -433,54 +438,61 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
     ENDIF.
 
     " ------------------------------------------------------------------
-    " Repository last-changed (VRSD) - helps compare A_* vs A_*_2 etc.
+    " Repository last-changed (VRSD) - compare A_* vs A_*_2 etc.
     " ------------------------------------------------------------------
     IF rt_views IS NOT INITIAL.
-      CLEAR: lt_ents, lt_latest.
+      CLEAR: lt_ents, lt_latest, lt_vrsd.
+
       LOOP AT rt_views INTO ls_out.
+        CLEAR ls_ent.
         ls_ent-name_up = to_upper( ls_out-entity_name ).
         INSERT ls_ent INTO TABLE lt_ents.
       ENDLOOP.
 
       IF lt_ents IS NOT INITIAL.
+        " Inline result avoids TYPE vrsd-* (OBJNAME length differs by release).
         SELECT objname, versno, datum, zeit
           FROM vrsd
           FOR ALL ENTRIES IN @lt_ents
           WHERE objtype = 'DDLS'
             AND objname = @lt_ents-name_up
-          INTO TABLE @DATA(lt_vrsd).
+          INTO TABLE @DATA(lt_vrsd_raw).
 
-        LOOP AT lt_vrsd INTO DATA(ls_vrsd).
-          READ TABLE lt_latest INTO ls_latest
-               WITH TABLE KEY objname = ls_vrsd-objname.
-          IF sy-subrc <> 0.
-            CLEAR ls_latest.
-            ls_latest-objname = ls_vrsd-objname.
-            ls_latest-versno  = ls_vrsd-versno.
-            ls_latest-datum   = ls_vrsd-datum.
-            ls_latest-zeit    = ls_vrsd-zeit.
-            INSERT ls_latest INTO TABLE lt_latest.
-          ELSEIF ls_vrsd-datum > ls_latest-datum
-             OR ( ls_vrsd-datum = ls_latest-datum AND ls_vrsd-zeit > ls_latest-zeit )
-             OR ( ls_vrsd-datum = ls_latest-datum AND ls_vrsd-zeit = ls_latest-zeit
-                  AND ls_vrsd-versno > ls_latest-versno ).
-            ls_latest-versno = ls_vrsd-versno.
-            ls_latest-datum  = ls_vrsd-datum.
-            ls_latest-zeit   = ls_vrsd-zeit.
-            MODIFY TABLE lt_latest FROM ls_latest.
-          ENDIF.
-        ENDLOOP.
-
-        LOOP AT rt_views ASSIGNING FIELD-SYMBOL(<view>).
-          lv_objname = to_upper( <view>-entity_name ).
-          READ TABLE lt_latest INTO ls_latest
-               WITH TABLE KEY objname = lv_objname.
-          IF sy-subrc = 0.
-            <view>-last_changed_date = ls_latest-datum.
-            <view>-last_changed_time = ls_latest-zeit.
-          ENDIF.
+        LOOP AT lt_vrsd_raw INTO DATA(ls_raw).
+          CLEAR ls_vrsd.
+          ls_vrsd-objname = ls_raw-objname.
+          ls_vrsd-versno  = ls_raw-versno.
+          ls_vrsd-datum   = ls_raw-datum.
+          ls_vrsd-zeit    = ls_raw-zeit.
+          APPEND ls_vrsd TO lt_vrsd.
         ENDLOOP.
       ENDIF.
+
+      LOOP AT lt_vrsd INTO ls_vrsd.
+        READ TABLE lt_latest INTO ls_latest
+             WITH TABLE KEY objname = ls_vrsd-objname.
+        IF sy-subrc <> 0.
+          INSERT ls_vrsd INTO TABLE lt_latest.
+        ELSEIF ls_vrsd-datum > ls_latest-datum
+           OR ( ls_vrsd-datum = ls_latest-datum
+                AND ls_vrsd-zeit > ls_latest-zeit )
+           OR ( ls_vrsd-datum = ls_latest-datum
+                AND ls_vrsd-zeit = ls_latest-zeit
+                AND ls_vrsd-versno > ls_latest-versno ).
+          DELETE TABLE lt_latest WITH TABLE KEY objname = ls_vrsd-objname.
+          INSERT ls_vrsd INTO TABLE lt_latest.
+        ENDIF.
+      ENDLOOP.
+
+      LOOP AT rt_views ASSIGNING <view>.
+        lv_objname = to_upper( <view>-entity_name ).
+        READ TABLE lt_latest INTO ls_latest
+             WITH TABLE KEY objname = lv_objname.
+        IF sy-subrc = 0.
+          <view>-last_changed_date = ls_latest-datum.
+          <view>-last_changed_time = ls_latest-zeit.
+        ENDIF.
+      ENDLOOP.
     ENDIF.
 
   ENDMETHOD.
