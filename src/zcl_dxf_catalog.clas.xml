@@ -5,7 +5,7 @@
    <VSEOCLASS>
     <CLSNAME>ZCL_DXF_CATALOG</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>DEX2FILE - discover DEX/API CDS + delta (LastChangeDateTime)</DESCRIPT>
+    <DESCRIPT>DEX2FILE - discover DEX/API CDS + delta field</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>

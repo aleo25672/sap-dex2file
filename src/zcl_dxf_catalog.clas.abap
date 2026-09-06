@@ -53,9 +53,9 @@ CLASS zcl_dxf_catalog DEFINITION
     " Prefer @Semantics.systemDateTime.lastChangedAt; else LastChangeDateTime.
     METHODS resolve_delta_field
       IMPORTING
-        iv_entity     TYPE clike
-        it_anno_map   TYPE ty_fmaps
-        it_lcdt_map   TYPE ty_fmaps
+        iv_entity   TYPE clike
+        it_anno_map TYPE ty_fmaps
+        it_lcdt_map TYPE ty_fmaps
       RETURNING
         VALUE(rv_field) TYPE c LENGTH 30.
 ENDCLASS.
@@ -202,7 +202,7 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
         lv_api_pat = |%{ lv_api_pat }%|.
       ENDIF.
 
-      " CDS DDL sources only — OData service bindings are other object types
+      " CDS DDL sources only - OData service bindings are other object types
       " (e.g. SRVB) and must not appear here.
       SELECT obj_name
         FROM tadir
@@ -290,14 +290,15 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
     TRY.
         DATA(lo_type) = cl_abap_typedescr=>describe_by_name( lv_ent_up ).
         DATA(lo_struct) = CAST cl_abap_structdescr( lo_type ).
-        LOOP AT lo_struct->components INTO DATA(ls_comp).
+        DATA(lt_comp) = lo_struct->get_components( ).
+        LOOP AT lt_comp INTO DATA(ls_comp).
           IF ls_comp-name = 'LASTCHANGEDATETIME'.
             rv_field = ls_comp-name.
             RETURN.
           ENDIF.
         ENDLOOP.
       CATCH cx_root.
-        " Entity not describable here — leave non-delta-capable.
+        " Entity not describable here - leave non-delta-capable.
     ENDTRY.
   ENDMETHOD.
 
