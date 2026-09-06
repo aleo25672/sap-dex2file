@@ -101,8 +101,8 @@ Selection screen:
 | Field | Meaning |
 |-------|---------|
 | **Source type** | *DEX* / *API CDS* / *Both* |
-| **DEX entity** | select-options: one entity, multiple entities, or `*` wildcards; blank = all DEX |
-| **API CDS entity** | select-options: one / multiple / `*` wildcards; **blank = `I_*API*`** |
+| **DEX entity** | select-options (**case-sensitive**): one / multiple / `*` wildcards; blank = all DEX |
+| **API CDS entity** | select-options (**case-sensitive**): one / multiple / `*` wildcards; **blank = `I_*API*`** |
 | **Data class** | *All* / *Master data* / *Transactional* - from `@ObjectModel.usageType.dataClass`, **not** the `I_`/`C_` prefix |
 | **Action** | *Display list only* / *Extract to file* - runs on the filtered set |
 | **Mode** | *Full load* / *Delta (change timestamp)* |
