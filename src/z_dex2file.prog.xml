@@ -12,14 +12,14 @@
    <TPOOL>
     <item>
      <ID>R</ID>
-     <ENTRY>Extract DEX CDS views to file (full/delta)</ENTRY>
-     <LENGTH>42</LENGTH>
+     <ENTRY>Extract DEX/API CDS views to file (full/delta)</ENTRY>
+     <LENGTH>46</LENGTH>
     </item>
     <item>
      <ID>I</ID>
      <KEY>B01</KEY>
-     <ENTRY>Discovery filter</ENTRY>
-     <LENGTH>16</LENGTH>
+     <ENTRY>DEX entity filter</ENTRY>
+     <LENGTH>17</LENGTH>
     </item>
     <item>
      <ID>I</ID>
@@ -47,9 +47,15 @@
     </item>
     <item>
      <ID>I</ID>
+     <KEY>B06</KEY>
+     <ENTRY>Source type</ENTRY>
+     <LENGTH>11</LENGTH>
+    </item>
+    <item>
+     <ID>I</ID>
      <KEY>M01</KEY>
-     <ENTRY>No released DEX CDS views found for the filter</ENTRY>
-     <LENGTH>46</LENGTH>
+     <ENTRY>No CDS views found for the source / filter</ENTRY>
+     <LENGTH>42</LENGTH>
     </item>
     <item>
      <ID>S</ID>
@@ -59,21 +65,27 @@
     </item>
     <item>
      <ID>S</ID>
-     <KEY>P_MAST</KEY>
-     <ENTRY>Master data</ENTRY>
-     <LENGTH>11</LENGTH>
+     <KEY>P_API</KEY>
+     <ENTRY>API CDS</ENTRY>
+     <LENGTH>7</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_APIPAT</KEY>
+     <ENTRY>API CDS pattern</ENTRY>
+     <LENGTH>16</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_BOTH</KEY>
+     <ENTRY>Both (DEX + API)</ENTRY>
+     <LENGTH>17</LENGTH>
     </item>
     <item>
      <ID>S</ID>
      <KEY>P_CSV</KEY>
      <ENTRY>CSV (delimiter)</ENTRY>
      <LENGTH>15</LENGTH>
-    </item>
-    <item>
-     <ID>S</ID>
-     <KEY>P_TRAN</KEY>
-     <ENTRY>Transactional</ENTRY>
-     <LENGTH>13</LENGTH>
     </item>
     <item>
      <ID>S</ID>
@@ -86,6 +98,12 @@
      <KEY>P_DELTA</KEY>
      <ENTRY>Delta (change timestamp)</ENTRY>
      <LENGTH>24</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_DEX</KEY>
+     <ENTRY>DEX</ENTRY>
+     <LENGTH>3</LENGTH>
     </item>
     <item>
      <ID>S</ID>
@@ -107,6 +125,12 @@
     </item>
     <item>
      <ID>S</ID>
+     <KEY>P_FULL</KEY>
+     <ENTRY>Full load</ENTRY>
+     <LENGTH>9</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
      <KEY>P_LFN</KEY>
      <ENTRY>Logical file name (FILE)</ENTRY>
      <LENGTH>24</LENGTH>
@@ -119,15 +143,9 @@
     </item>
     <item>
      <ID>S</ID>
-     <KEY>P_SRV</KEY>
-     <ENTRY>Application server (AL11)</ENTRY>
-     <LENGTH>24</LENGTH>
-    </item>
-    <item>
-     <ID>S</ID>
-     <KEY>P_FULL</KEY>
-     <ENTRY>Full load</ENTRY>
-     <LENGTH>9</LENGTH>
+     <KEY>P_MAST</KEY>
+     <ENTRY>Master data</ENTRY>
+     <LENGTH>11</LENGTH>
     </item>
     <item>
      <ID>S</ID>
@@ -138,14 +156,26 @@
     <item>
      <ID>S</ID>
      <KEY>P_NAME</KEY>
-     <ENTRY>CDS entity pattern</ENTRY>
+     <ENTRY>DEX entity pattern</ENTRY>
      <LENGTH>18</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_SRV</KEY>
+     <ENTRY>Application server (AL11)</ENTRY>
+     <LENGTH>24</LENGTH>
     </item>
     <item>
      <ID>S</ID>
      <KEY>P_TAB</KEY>
      <ENTRY>Tab-delimited (.txt)</ENTRY>
      <LENGTH>20</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_TRAN</KEY>
+     <ENTRY>Transactional</ENTRY>
+     <LENGTH>13</LENGTH>
     </item>
     <item>
      <ID>S</ID>

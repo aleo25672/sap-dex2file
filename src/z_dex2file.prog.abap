@@ -1,20 +1,28 @@
 *&---------------------------------------------------------------------*
 *& Report Z_DEX2FILE
 *&---------------------------------------------------------------------*
-*& Search extraction-enabled (DEX) CDS views, then either display them or
-*& extract their data to a frontend file - FULL (SELECT *) or DELTA
-*& (rows whose change-timestamp is newer than the last run).
+*& Discover CDS views (DEX extraction-enabled and/or API CDS named like
+*& I_*API*), then either display them or extract their data to a file -
+*& FULL (SELECT *) or DELTA (rows whose change-timestamp is newer than
+*& the last run).
 *&
 *& The action runs on ALL rows matching the selection-screen filter, so
-*& narrow with the CDS entity pattern to target a subset.
+*& narrow with the entity / API pattern to target a subset.
 *&---------------------------------------------------------------------*
 REPORT z_dex2file.
 
 *----------------------------------------------------------------------*
 * Selection screen
 *----------------------------------------------------------------------*
+SELECTION-SCREEN BEGIN OF BLOCK b_src WITH FRAME TITLE TEXT-b06.
+PARAMETERS p_dex  RADIOBUTTON GROUP src DEFAULT 'X'.  " DEX (extraction-enabled)
+PARAMETERS p_api  RADIOBUTTON GROUP src.              " API CDS (I_*API*)
+PARAMETERS p_both RADIOBUTTON GROUP src.              " Both
+PARAMETERS p_apipat TYPE c LENGTH 40 LOWER CASE.      " API name pattern; empty = I_*API*
+SELECTION-SCREEN END OF BLOCK b_src.
+
 SELECTION-SCREEN BEGIN OF BLOCK b_sel WITH FRAME TITLE TEXT-b01.
-PARAMETERS p_name TYPE c LENGTH 40 LOWER CASE.  " entity pattern (case-sensitive), * = wildcard
+PARAMETERS p_name TYPE c LENGTH 40 LOWER CASE.  " DEX entity pattern (case-sensitive), * = wildcard
 SELECTION-SCREEN END OF BLOCK b_sel.
 
 SELECTION-SCREEN BEGIN OF BLOCK b_fam WITH FRAME TITLE TEXT-b05.
@@ -84,13 +92,18 @@ CLASS lcl_app IMPLEMENTATION.
     DATA(lv_dc) = COND string( WHEN p_mast = abap_true THEN `M`
                                WHEN p_tran = abap_true THEN `T`
                                ELSE ` ` ).
+    DATA(lv_src) = COND string( WHEN p_api  = abap_true THEN `A`
+                                WHEN p_both = abap_true THEN `B`
+                                ELSE `D` ).
     mt_views = NEW zcl_dxf_catalog( )->get_views(
       iv_name_pattern = p_name
+      iv_api_pattern  = p_apipat
+      iv_source       = lv_src
       iv_dataclass    = lv_dc
       io_delta_store  = lo_store ).
 
     IF mt_views IS INITIAL.
-      MESSAGE 'No released DEX CDS views found for the filter'(m01)
+      MESSAGE 'No CDS views found for the source / filter'(m01)
               TYPE 'S' DISPLAY LIKE 'W'.
       RETURN.
     ENDIF.
@@ -117,13 +130,18 @@ CLASS lcl_app IMPLEMENTATION.
     lo_cols->set_optimize( abap_true ).
     set_col_text( io_cols = lo_cols iv_col = 'ENTITY_NAME'    iv_text = 'CDS Entity' ).
     set_col_text( io_cols = lo_cols iv_col = 'DESCRIPTION'    iv_text = 'Description' ).
+    set_col_text( io_cols = lo_cols iv_col = 'SOURCE_TYPE'    iv_text = 'Source' ).
     set_col_text( io_cols = lo_cols iv_col = 'FAMILY'         iv_text = 'Data class' ).
     set_col_text( io_cols = lo_cols iv_col = 'IS_CDC_ENABLED' iv_text = 'CDC' ).
     set_col_text( io_cols = lo_cols iv_col = 'DELTA_FIELD'    iv_text = 'Delta field' ).
     set_col_text( io_cols = lo_cols iv_col = 'DELTA_CAPABLE'  iv_text = 'Delta?' ).
     set_col_text( io_cols = lo_cols iv_col = 'LAST_DELTA_TS'  iv_text = 'Last delta pos' ).
+    DATA(lv_hdr) = COND string(
+      WHEN p_api  = abap_true THEN `API CDS views`
+      WHEN p_both = abap_true THEN `DEX + API CDS views`
+      ELSE `DEX CDS views` ).
     lo_alv->get_display_settings( )->set_list_header(
-      |DEX CDS views - { lines( mt_views ) } rows| ).
+      |{ lv_hdr } - { lines( mt_views ) } rows| ).
     lo_alv->display( ).
   ENDMETHOD.
 

@@ -5,7 +5,7 @@
    <VSEOCLASS>
     <CLSNAME>ZCL_DXF_CATALOG</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>DEX2FILE - discover DEX CDS views + delta field</DESCRIPT>
+    <DESCRIPT>DEX2FILE - discover DEX/API CDS views + delta field</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>

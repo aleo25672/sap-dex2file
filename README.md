@@ -1,15 +1,35 @@
 # sap-dex2file
 
-ABAP tool for **S/4HANA** that discovers **data-extraction (DEX) CDS views** and downloads their
-data to a **file** — a **full** load or a **timestamp-based delta** (changes since the last run).
+ABAP tool for **S/4HANA** that discovers **CDS views** — **DEX** (data-extraction enabled)
+and/or **API CDS** entities named like `I_*API*` — and downloads their data to a **file**:
+a **full** load (`SELECT *`) or a **timestamp-based delta** (changes since the last run).
 
-Companion to [`sap-dex2odata`](../sap-dex2odata) (which exposes the same views as OData services);
+Companion to [`sap-dex2odata`](../sap-dex2odata) (which exposes views as OData services);
 this one extracts straight to a file instead.
+
+## Source types
+
+On the selection screen, **Source type** chooses what to discover:
+
+| Option | What is listed |
+|--------|----------------|
+| **DEX** | Released extraction-enabled views from `IXTRCTNENBLDVW` (unchanged behaviour) |
+| **API CDS** | CDS DDL sources (`TADIR` object `DDLS`) whose names match the API pattern (default `I_*API*`, e.g. `I_PurchaseOrderAPI01`) |
+| **Both** | Union of the two (DEX wins if the same entity appears in both) |
+
+**Not listed:** OData service bindings such as `API_PURCHASEORDER_2` — those are not `DDLS`
+objects, and names matching `API_*` are skipped as an extra guard.
+
+Empty **API CDS pattern** defaults to `I_*API*`. The **DEX entity pattern** still filters DEX
+views (and is ignored for API-only runs).
+
+File extract (`SELECT *`) works for **both** DEX and API CDS. When a view has
+`@Semantics.systemDateTime.lastChangedAt`, it is **delta-capable** and can be run in delta mode.
 
 ## How delta works
 
-Delta is **timestamp-based** (not true CDC). It rests on one idea: for each view, remember the
-**high-water timestamp** of the last extraction, and next time only pull rows changed after it.
+Delta is **timestamp-based** (not true CDC). For each view, remember the **high-water timestamp**
+of the last extraction, and next time only pull rows changed after it.
 
 ### 1. Finding the change-timestamp field
 On discovery (`ZCL_DXF_CATALOG`), the tool looks up each view's **change-timestamp element** — the
@@ -57,9 +77,9 @@ from the full-load point.
 | Object | Type | Purpose |
 |--------|------|---------|
 | `Z_DEX2FILE` | report | selection screen + `CL_SALV_TABLE` grid + extract/download |
-| `ZCL_DXF_CATALOG` | class | discover DEX views (`IXTRCTNENBLDVW`) + detect the delta timestamp field (`DDFIELDANNO`) |
+| `ZCL_DXF_CATALOG` | class | discover DEX (`IXTRCTNENBLDVW`) and/or API CDS (`TADIR`/`DDLS`) + detect the delta timestamp field (`DDFIELDANNO`) |
 | `ZCL_DXF_EXTRACTOR` | class | dynamic `SELECT * FROM (entity)` — full, or delta `WHERE ts > last` |
-| `ZCL_DXF_FILE_WRITER` | class | serialize the table → delimited text → `gui_download` |
+| `ZCL_DXF_FILE_WRITER` | class | serialize the table → delimited text → `gui_download` / `OPEN DATASET` |
 | `ZCL_DXF_DELTA_STORE` | class | read/update the last-run high-water per view |
 | `ZDXF_DELTA` | table | delta high-water per view (`VIEWNAME` → `LAST_TS`) |
 
@@ -71,8 +91,10 @@ Selection screen:
 
 | Field | Meaning |
 |-------|---------|
-| **CDS entity pattern** | case-sensitive; plain text = contains, `*` = wildcard, blank = all |
-| **Data class** | *All* / *Master data* / *Transactional* — the real category from `@ObjectModel.usageType.dataClass`, **not** the `I_`/`C_` prefix (which doesn't indicate the category) |
+| **Source type** | *DEX* / *API CDS* / *Both* |
+| **API CDS pattern** | name filter for API CDS (`*` = wildcard); **empty = `I_*API*`** |
+| **DEX entity pattern** | case-sensitive filter for DEX views; plain text = contains, `*` = wildcard, blank = all |
+| **Data class** | *All* / *Master data* / *Transactional* — from `@ObjectModel.usageType.dataClass`, **not** the `I_`/`C_` prefix |
 | **Action** | *Display list only* / *Extract to file* — runs on the filtered set |
 | **Mode** | *Full load* / *Delta (change timestamp)* |
 | **Target** | *Local frontend (download)* / *Application server (AL11)* |
@@ -82,8 +104,9 @@ Selection screen:
 | **Logical file name** | a logical file name from transaction **`FILE`**; when set, it resolves the path via `FILE_GET_NAME` (server) and **overrides** the folder |
 | **Max rows** | cap per view (`0` = unlimited) — guard for frontend download limits |
 
-- **Display** → grid of views: entity, description, CDC flag, delta timestamp field, delta-capable,
-  last delta position. (ALV **Export** is enabled via `set_all`.)
+- **Display** → grid of views: entity, description, **source (DEX/API)**, data class, CDC flag,
+  delta timestamp field, delta-capable, last delta position. (ALV **Export** is enabled via
+  `set_all`.)
 - **Extract** → per view: extract (full/delta) → download `<entity>_<full|delta>_<date>_<time>.<ext>`
   → advance the delta marker (only after a successful download) → **results grid** (entity, mode,
   rows, file, status, message). Delta requested but no timestamp field → skipped (`K`).
@@ -101,8 +124,8 @@ Selection screen:
   paths out of the code / consistent across systems; it implies the app-server target.
 - **Parameterized views** can't be `SELECT`ed without parameter values; extraction of such a view
   returns an error row rather than dumping (caught in `ZCL_DXF_EXTRACTOR`).
-- Release dependencies to confirm: tables `IXTRCTNENBLDVW`, `DDFIELDANNO`; and the exact annotation
-  `NAME` for `Semantics.systemDateTime.lastChangedAt`.
+- Release dependencies to confirm: tables `IXTRCTNENBLDVW`, `DDFIELDANNO`, `TADIR`; and the exact
+  annotation `NAME` for `Semantics.systemDateTime.lastChangedAt`.
 
 ## Installing & importing with abapGit
 
