@@ -268,41 +268,11 @@ Activate in this order (or select all and mass-activate so dependencies resolve)
 
 Then run `Z_CDS_EXPLORER_2_FILE` in `SE38` / `SA38`.
 
-### 7. Getting later updates
+If activation says **"The REPORT/PROGRAM statement is missing, or the program type is INCLUDE"**:
 
-When the repo changes: open it in abapGit → **Pull** → mass-activate the changed objects.
-
-abapGit, when credentials are requested:
-- **Username** = your GitHub username
-- **Password** = the **PAT** (not your GitHub login password)
-
-### 4. Create a target package
-
-- **Local / testing:** create a `$`-prefixed package, e.g. **`$DEX2FILE`** (`SE80` → dropdown
-  *Package* → type the name → *Create*). `$` packages are local - no software component, no
-  transport prompt. *(abapGit blocks the literal `$TMP`, so use a named `$…` package.)*
-- **Transportable:** a normal `Z…` package with software component **`HOME`** and a transport
-  request.
-
-### 5. Clone / pull from GitHub
-
-In abapGit: **+ New Online** →
-- **URL:** `https://github.com/aleo25672/sap-dex2file.git`
-- **Branch:** `main`
-- **Package:** your package from step 4
-- Credentials when prompted: GitHub user + **PAT**
-
-After clone, objects appear as new → **Pull**.
-
-### 6. Activate
-
-Activate in this order (or select all and mass-activate so dependencies resolve):
-
-1. **`ZDXF_DELTA`** (table) - first, because the classes reference it.
-2. `ZCL_DXF_*` classes.
-3. `Z_CDS_EXPLORER_2_FILE` (report).
-
-Then run `Z_CDS_EXPLORER_2_FILE` in `SE38` / `SA38`.
+1. `SE38` → `Z_CDS_EXPLORER_2_FILE` → **Attributes** → **Type** must be **Executable program (1)**, not Include.
+2. Open the source and confirm the first statement is `REPORT Z_CDS_EXPLORER_2_FILE.`
+3. If type/source still wrong after a rename or partial pull: **delete** the program in `SE80`/`SE38`, then abapGit **Pull** again so it is recreated as type 1 with full source.
 
 ### 7. Getting later updates
 

@@ -9,7 +9,7 @@
 *& The action runs on ALL rows matching the selection-screen filter, so
 *& narrow with the entity select-options (single / multiple / * wildcards).
 *&---------------------------------------------------------------------*
-REPORT z_cds_explorer_2_file.
+REPORT Z_CDS_EXPLORER_2_FILE.
 
 *----------------------------------------------------------------------*
 * Selection screen
