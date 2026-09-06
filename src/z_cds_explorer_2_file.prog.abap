@@ -1,5 +1,5 @@
 *&---------------------------------------------------------------------*
-*& Report Z_DEX2FILE
+*& Report Z_CDS_EXPLORER_2_FILE
 *&---------------------------------------------------------------------*
 *& Discover CDS views (DEX extraction-enabled and/or API CDS named like
 *& I_*API*), then either display them or extract their data to a file -
@@ -9,7 +9,7 @@
 *& The action runs on ALL rows matching the selection-screen filter, so
 *& narrow with the entity select-options (single / multiple / * wildcards).
 *&---------------------------------------------------------------------*
-REPORT z_dex2file.
+REPORT z_cds_explorer_2_file.
 
 *----------------------------------------------------------------------*
 * Selection screen

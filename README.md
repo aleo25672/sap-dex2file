@@ -85,14 +85,14 @@ from the full-load point.
 
 | Object | Type | Purpose |
 |--------|------|---------|
-| `Z_DEX2FILE` | report | selection screen + `CL_SALV_TABLE` grid + extract/download |
+| `Z_CDS_EXPLORER_2_FILE` | report | selection screen + `CL_SALV_TABLE` grid + extract/download |
 | `ZCL_DXF_CATALOG` | class | discover DEX (`IXTRCTNENBLDVW`) and/or API CDS (`TADIR`/`DDLS`) + resolve delta field (annotation or `LastChangeDateTime`) |
 | `ZCL_DXF_EXTRACTOR` | class | dynamic `SELECT * FROM (entity)` - full, or delta `WHERE ts > last` |
 | `ZCL_DXF_FILE_WRITER` | class | serialize the table → delimited text → `gui_download` / `OPEN DATASET` |
 | `ZCL_DXF_DELTA_STORE` | class | read/update the last-run high-water per view |
 | `ZDXF_DELTA` | table | delta high-water per view (`VIEWNAME` → `LAST_TS`) |
 
-## Using `Z_DEX2FILE`
+## Using `Z_CDS_EXPLORER_2_FILE`
 
 Run in SAP GUI (`SE38` / `SA38`).
 
@@ -173,9 +173,9 @@ and mass-activate so dependencies resolve):
 
 1. **`ZDXF_DELTA`** (table) - first, because the classes reference it.
 2. `ZCL_DXF_*` classes.
-3. `Z_DEX2FILE` (report).
+3. `Z_CDS_EXPLORER_2_FILE` (report).
 
-Then run `Z_DEX2FILE` in `SE38` / `SA38`.
+Then run `Z_CDS_EXPLORER_2_FILE` in `SE38` / `SA38`.
 
 ### 5. Getting later updates
 
