@@ -1,6 +1,10 @@
 # Vendored tooling (not part of the abapGit project)
 tools/
 
+# Node-based dev tooling (abaplint)
+node_modules/
+npm-debug.log*
+
 # OS / editor
 .DS_Store
 Thumbs.db

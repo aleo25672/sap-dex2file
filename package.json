@@ -1,0 +1,14 @@
+{
+  "name": "sap-dex2file",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dev tooling for the sap-dex2file abapGit project (abaplint static analysis).",
+  "scripts": {
+    "lint": "abaplint",
+    "lint:json": "abaplint -f json",
+    "lint:summary": "abaplint -f summary"
+  },
+  "devDependencies": {
+    "@abaplint/cli": "2.120.42"
+  }
+}

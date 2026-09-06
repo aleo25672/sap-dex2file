@@ -10,6 +10,8 @@
     <item>/LICENSE</item>
     <item>/README.md</item>
     <item>/package.json</item>
+    <item>/package-lock.json</item>
+    <item>/abaplint.json</item>
    </IGNORE>
   </DATA>
  </asx:values>
