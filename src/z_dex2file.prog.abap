@@ -18,11 +18,11 @@ SELECTION-SCREEN BEGIN OF BLOCK b_src WITH FRAME TITLE TEXT-b06.
 PARAMETERS p_dex  RADIOBUTTON GROUP src DEFAULT 'X'.  " DEX (extraction-enabled)
 PARAMETERS p_api  RADIOBUTTON GROUP src.              " API CDS (I_*API*)
 PARAMETERS p_both RADIOBUTTON GROUP src.              " Both
-PARAMETERS p_apipat TYPE c LENGTH 40 LOWER CASE.      " API name pattern; empty = I_*API*
 SELECTION-SCREEN END OF BLOCK b_src.
 
 SELECTION-SCREEN BEGIN OF BLOCK b_sel WITH FRAME TITLE TEXT-b01.
-PARAMETERS p_name TYPE c LENGTH 40 LOWER CASE.  " DEX entity pattern (case-sensitive), * = wildcard
+PARAMETERS p_name   TYPE c LENGTH 40 LOWER CASE.  " DEX entity pattern (case-sensitive), * = wildcard
+PARAMETERS p_apipat TYPE c LENGTH 40 LOWER CASE.  " API CDS pattern; empty = I_*API*
 SELECTION-SCREEN END OF BLOCK b_sel.
 
 SELECTION-SCREEN BEGIN OF BLOCK b_fam WITH FRAME TITLE TEXT-b05.

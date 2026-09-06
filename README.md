@@ -96,8 +96,8 @@ Selection screen:
 | Field | Meaning |
 |-------|---------|
 | **Source type** | *DEX* / *API CDS* / *Both* |
-| **API CDS pattern** | name filter for API CDS (`*` = wildcard); **empty = `I_*API*`** |
 | **DEX entity pattern** | case-sensitive filter for DEX views; plain text = contains, `*` = wildcard, blank = all |
+| **API CDS pattern** | name filter for API CDS (`*` = wildcard); **empty = `I_*API*`** |
 | **Data class** | *All* / *Master data* / *Transactional* - from `@ObjectModel.usageType.dataClass`, **not** the `I_`/`C_` prefix |
 | **Action** | *Display list only* / *Extract to file* - runs on the filtered set |
 | **Mode** | *Full load* / *Delta (change timestamp)* |
@@ -130,7 +130,7 @@ Selection screen:
   returns an error row rather than dumping (caught in `ZCL_DXF_EXTRACTOR`).
 - Release dependencies to confirm: tables `IXTRCTNENBLDVW`, `DDFIELDANNO`, `DD03L`, `TADIR`; the
   exact annotation `NAME` for `Semantics.systemDateTime.lastChangedAt`; and that API entities expose
-  `LastChangeDateTime` in DDIC/RTTI when the annotation is absent.
+  `LastChangeDateTime` in DDIC (`DD03L`) when the annotation is absent.
 
 ## Installing & importing with abapGit
 
