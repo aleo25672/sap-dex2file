@@ -73,7 +73,7 @@ CLASS lcl_app DEFINITION CREATE PUBLIC.
         status  TYPE c LENGTH 1,   " S ok | E error | K skipped
         message TYPE string,
       END OF ty_res,
-      ty_res_tab TYPE STANDARD TABLE OF ty_res WITH DEFAULT KEY.
+      ty_res_tab TYPE STANDARD TABLE OF ty_res WITH DEFAULT KEY,
       ty_lines   TYPE STANDARD TABLE OF string WITH DEFAULT KEY.
 
     DATA mt_views TYPE zcl_dxf_catalog=>ty_views.
