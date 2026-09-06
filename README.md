@@ -21,7 +21,9 @@ On the selection screen, **Source type** chooses what to discover:
 objects, and names matching `API_*` are skipped as an extra guard.
 
 Empty **API CDS** selection defaults to pattern `I_*API*`. Use select-options to pick
-single entities, multiple values, or `*` wildcards (option CP).
+single entities, multiple values, or `*` wildcards (option CP). Entity select-options are
+**case-sensitive** (`LOWER CASE` - no automatic uppercase); enter the CDS name in the same
+case as in the system (TADIR / API names are usually uppercase).
 
 File extract (`SELECT *`) works for **both** DEX and API CDS. A view is **delta-capable** when a
 change-timestamp field can be resolved (see below) and can then be run in delta mode.

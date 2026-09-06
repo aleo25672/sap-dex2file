@@ -21,10 +21,11 @@ PARAMETERS p_both RADIOBUTTON GROUP src.              " Both
 SELECTION-SCREEN END OF BLOCK b_src.
 
 SELECTION-SCREEN BEGIN OF BLOCK b_sel WITH FRAME TITLE TEXT-b01.
-" Select-options: enter one entity, multiple values, or patterns with * / +
+" Select-options: one entity, multiple values, or * / + patterns.
+" LOWER CASE = case-sensitive (no automatic uppercase conversion).
 DATA gv_entity TYPE c LENGTH 40.
-SELECT-OPTIONS s_name FOR gv_entity NO INTERVALS.  " DEX entities
-SELECT-OPTIONS s_api  FOR gv_entity NO INTERVALS.  " API CDS; empty = I_*API*
+SELECT-OPTIONS s_name FOR gv_entity NO INTERVALS LOWER CASE.  " DEX entities
+SELECT-OPTIONS s_api  FOR gv_entity NO INTERVALS LOWER CASE.  " API CDS; empty = I_*API*
 SELECTION-SCREEN END OF BLOCK b_sel.
 
 SELECTION-SCREEN BEGIN OF BLOCK b_fam WITH FRAME TITLE TEXT-b05.
