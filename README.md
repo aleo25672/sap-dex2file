@@ -127,6 +127,40 @@ Selection screen:
 - Release dependencies to confirm: tables `IXTRCTNENBLDVW`, `DDFIELDANNO`, `TADIR`; and the exact
   annotation `NAME` for `Semantics.systemDateTime.lastChangedAt`.
 
+## Development environment (abaplint)
+
+ABAP runs on an SAP system, so the code can't execute on a plain workstation/CI runner.
+For local development and CI this repo uses [**abaplint**](https://abaplint.org) — a
+Node.js static analyzer that **parses** and **syntax-checks** the ABAP source (and applies
+code-quality rules) **without** a SAP system.
+
+### Prerequisites
+- **Node.js** ≥ 18 (includes `npm`).
+
+### Install & run
+```bash
+npm install          # installs abaplint (dev dependency, pinned in package.json)
+npm run lint         # parse + syntax-check + rules over src/**  (exit 0 = clean)
+npm run lint:summary # same, condensed summary output
+npm run lint:json    # machine-readable JSON (for CI)
+```
+
+`npm install` writes to `node_modules/` (git-ignored); `package.json`, `package-lock.json`
+and `abaplint.json` are tracked but listed in `.abapgit.xml` `IGNORE`, so abapGit never tries
+to serialize them as ABAP objects.
+
+### Configuration (`abaplint.json`)
+- **Target release:** `v754` (S/4HANA on-premise), `language: Normal`.
+- 163 rules stay active — including `parser_error` and `check_syntax`, which resolve the repo's
+  own objects (`Z_DEX2FILE`, `ZCL_DXF_*`, `ZDXF_DELTA`). Standard SAP artifacts
+  (`cl_salv_table`, `IXTRCTNENBLDVW`, `DDFIELDANNO`, …) are treated as *voids*, so no SAP
+  library is required.
+- 28 rules are **deliberately disabled** because they conflict with this tool's design or
+  conventions, e.g. `select_performance`/`select_add_order_by`/`dangerous_statement`/
+  `no_dynamic_stuff` (dynamic `SELECT *` is the whole point), `no_prefixes`/`local_variable_names`
+  (SAP Hungarian notation is intentional), `xml_bom` (abapGit writes no BOM), plus subjective
+  formatting rules. See the `false` entries in `abaplint.json` for the full list.
+
 ## Installing & importing with abapGit
 
 This repo is serialized in [abapGit](https://abapgit.org) format (`src/` layout, prefix folder
