@@ -131,9 +131,9 @@ Selection screen:
   paths out of the code / consistent across systems; it implies the app-server target.
 - **Parameterized views** can't be `SELECT`ed without parameter values; extraction of such a view
   returns an error row rather than dumping (caught in `ZCL_DXF_EXTRACTOR`).
-- Release dependencies to confirm: tables `IXTRCTNENBLDVW`, `DDFIELDANNO`, `DD03L`, `TADIR`; the
-  exact annotation `NAME` for `Semantics.systemDateTime.lastChangedAt`; and that API entities expose
-  `LastChangeDateTime` in DDIC (`DD03L`) when the annotation is absent.
+- Release dependencies to confirm: tables `IXTRCTNENBLDVW`, `DDFIELDANNO`, `DD03L`, `DDLDEPENDENCY`,
+  `TADIR`; FM `DDIF_FIELDINFO_GET`; the exact annotation `NAME` values for last-changed semantics;
+  and that API / `A_*` entities expose `LastChangeDateTime` when the annotation is absent.
 
 ## Installing & importing with abapGit
 
