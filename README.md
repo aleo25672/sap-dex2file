@@ -114,8 +114,9 @@ Selection screen:
 | **Max rows** | cap per view (`0` = unlimited) - guard for frontend download limits |
 
 - **Display** → grid of views: entity, description, **source (DEX/API)**, data class, CDC flag,
-  **LastChangeDateTime** (field name when present), **Has change TS**, last delta position.
-  (ALV **Export** is enabled via `set_all`.)
+  **LastChangeDateTime** (field name when present), **Has change TS**,
+  **Last changed on/at** (from `VRSD` version directory — useful to compare `A_*` vs `A_*_2`),
+  last delta position. (ALV **Export** is enabled via `set_all`.)
 - **Extract** → per view: extract (full/delta) → download `<entity>_<full|delta>_<date>_<time>.<ext>`
   → advance the delta marker (only after a successful download) → **results grid** (entity, mode,
   rows, file, status, message). Delta requested but no timestamp field → skipped (`K`).

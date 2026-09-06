@@ -136,9 +136,11 @@ CLASS lcl_app IMPLEMENTATION.
     set_col_text( io_cols = lo_cols iv_col = 'SOURCE_TYPE'    iv_text = 'Source' ).
     set_col_text( io_cols = lo_cols iv_col = 'FAMILY'         iv_text = 'Data class' ).
     set_col_text( io_cols = lo_cols iv_col = 'IS_CDC_ENABLED' iv_text = 'CDC' ).
-    set_col_text( io_cols = lo_cols iv_col = 'DELTA_FIELD'    iv_text = 'LastChangeDateTime' ).
-    set_col_text( io_cols = lo_cols iv_col = 'DELTA_CAPABLE'  iv_text = 'Has change TS' ).
-    set_col_text( io_cols = lo_cols iv_col = 'LAST_DELTA_TS'  iv_text = 'Last delta pos' ).
+    set_col_text( io_cols = lo_cols iv_col = 'DELTA_FIELD'        iv_text = 'LastChangeDateTime' ).
+    set_col_text( io_cols = lo_cols iv_col = 'DELTA_CAPABLE'      iv_text = 'Has change TS' ).
+    set_col_text( io_cols = lo_cols iv_col = 'LAST_CHANGED_DATE'  iv_text = 'Last changed on' ).
+    set_col_text( io_cols = lo_cols iv_col = 'LAST_CHANGED_TIME'  iv_text = 'Last changed at' ).
+    set_col_text( io_cols = lo_cols iv_col = 'LAST_DELTA_TS'      iv_text = 'Last delta pos' ).
     DATA(lv_hdr) = COND string(
       WHEN p_api  = abap_true THEN `API CDS views`
       WHEN p_both = abap_true THEN `DEX + API CDS views`

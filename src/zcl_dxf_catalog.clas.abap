@@ -10,6 +10,7 @@
 "       3. field named LastChangeDateTime (DDFIELDANNO / DD03L /
 "          DDLDEPENDENCY SQL view / DDIF_FIELDINFO_GET fallback)
 "   - Entity filters are select-option ranges (single values and CP wildcards).
+"   - Last changed date/time comes from VRSD (DDLS version directory).
 CLASS zcl_dxf_catalog DEFINITION
   PUBLIC
   CREATE PUBLIC.
@@ -17,15 +18,17 @@ CLASS zcl_dxf_catalog DEFINITION
   PUBLIC SECTION.
     TYPES:
       BEGIN OF ty_view,
-        entity_name    TYPE c LENGTH 60,
-        description    TYPE c LENGTH 60,
-        source_type    TYPE c LENGTH 3,
-        family         TYPE c LENGTH 20,
-        is_cdc_enabled TYPE abap_bool,
-        delta_field    TYPE c LENGTH 30,
-        delta_capable  TYPE abap_bool,
-        last_delta_ts  TYPE timestampl,
-        reason         TYPE string,
+        entity_name        TYPE c LENGTH 60,
+        description        TYPE c LENGTH 60,
+        source_type        TYPE c LENGTH 3,
+        family             TYPE c LENGTH 20,
+        is_cdc_enabled     TYPE abap_bool,
+        delta_field        TYPE c LENGTH 30,
+        delta_capable      TYPE abap_bool,
+        last_delta_ts      TYPE timestampl,
+        last_changed_date  TYPE d,
+        last_changed_time  TYPE t,
+        reason             TYPE string,
       END OF ty_view,
       ty_views TYPE STANDARD TABLE OF ty_view WITH DEFAULT KEY.
 
@@ -64,6 +67,15 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
              ddl_up TYPE string,
              obj_up TYPE string,
            END OF ty_dep.
+    TYPES: BEGIN OF ty_ent,
+             name_up TYPE c LENGTH 40,
+           END OF ty_ent.
+    TYPES: BEGIN OF ty_vrs,
+             objname TYPE vrsd-objname,
+             versno  TYPE vrsd-versno,
+             datum   TYPE vrsd-datum,
+             zeit    TYPE vrsd-zeit,
+           END OF ty_vrs.
 
     DATA lt_deltamap TYPE SORTED TABLE OF ty_map WITH UNIQUE KEY ent_up.
     DATA lt_dcmap    TYPE SORTED TABLE OF ty_dc  WITH NON-UNIQUE KEY ent_up.
@@ -85,6 +97,11 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
     DATA ls_range TYPE LINE OF ty_entity_range.
     DATA lt_dfies TYPE STANDARD TABLE OF dfies WITH DEFAULT KEY.
     DATA ls_dfies TYPE dfies.
+    DATA lt_ents TYPE SORTED TABLE OF ty_ent WITH UNIQUE KEY name_up.
+    DATA ls_ent TYPE ty_ent.
+    DATA lt_latest TYPE SORTED TABLE OF ty_vrs WITH UNIQUE KEY objname.
+    DATA ls_latest TYPE ty_vrs.
+    DATA lv_objname TYPE vrsd-objname.
 
     lv_source = to_upper( condense( CONV string( iv_source ) ) ).
     IF lv_source IS INITIAL.
@@ -413,6 +430,57 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
 
         APPEND ls_out TO rt_views.
       ENDLOOP.
+    ENDIF.
+
+    " ------------------------------------------------------------------
+    " Repository last-changed (VRSD) - helps compare A_* vs A_*_2 etc.
+    " ------------------------------------------------------------------
+    IF rt_views IS NOT INITIAL.
+      CLEAR: lt_ents, lt_latest.
+      LOOP AT rt_views INTO ls_out.
+        ls_ent-name_up = to_upper( ls_out-entity_name ).
+        INSERT ls_ent INTO TABLE lt_ents.
+      ENDLOOP.
+
+      IF lt_ents IS NOT INITIAL.
+        SELECT objname, versno, datum, zeit
+          FROM vrsd
+          FOR ALL ENTRIES IN @lt_ents
+          WHERE objtype = 'DDLS'
+            AND objname = @lt_ents-name_up
+          INTO TABLE @DATA(lt_vrsd).
+
+        LOOP AT lt_vrsd INTO DATA(ls_vrsd).
+          READ TABLE lt_latest INTO ls_latest
+               WITH TABLE KEY objname = ls_vrsd-objname.
+          IF sy-subrc <> 0.
+            CLEAR ls_latest.
+            ls_latest-objname = ls_vrsd-objname.
+            ls_latest-versno  = ls_vrsd-versno.
+            ls_latest-datum   = ls_vrsd-datum.
+            ls_latest-zeit    = ls_vrsd-zeit.
+            INSERT ls_latest INTO TABLE lt_latest.
+          ELSEIF ls_vrsd-datum > ls_latest-datum
+             OR ( ls_vrsd-datum = ls_latest-datum AND ls_vrsd-zeit > ls_latest-zeit )
+             OR ( ls_vrsd-datum = ls_latest-datum AND ls_vrsd-zeit = ls_latest-zeit
+                  AND ls_vrsd-versno > ls_latest-versno ).
+            ls_latest-versno = ls_vrsd-versno.
+            ls_latest-datum  = ls_vrsd-datum.
+            ls_latest-zeit   = ls_vrsd-zeit.
+            MODIFY TABLE lt_latest FROM ls_latest.
+          ENDIF.
+        ENDLOOP.
+
+        LOOP AT rt_views ASSIGNING FIELD-SYMBOL(<view>).
+          lv_objname = to_upper( <view>-entity_name ).
+          READ TABLE lt_latest INTO ls_latest
+               WITH TABLE KEY objname = lv_objname.
+          IF sy-subrc = 0.
+            <view>-last_changed_date = ls_latest-datum.
+            <view>-last_changed_time = ls_latest-zeit.
+          ENDIF.
+        ENDLOOP.
+      ENDIF.
     ENDIF.
 
   ENDMETHOD.
