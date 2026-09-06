@@ -36,10 +36,13 @@ On discovery (`ZCL_DXF_CATALOG`), the tool resolves each view's **change-timesta
 this order (first match wins):
 
 1. Field annotated **`@Semantics.systemDateTime.lastChangedAt`** (`DDFIELDANNO`) - common on DEX
-2. Field named **`LastChangeDateTime`** (`DD03L`) - common on API CDS views
+2. Field annotated **`@Semantics.systemDateTime.localInstanceLastChangedAt`**
+3. Field named **`LastChangeDateTime`** via annotations, `DD03L`, CDS→SQL mapping
+   (`DDLDEPENDENCY`), or `DDIF_FIELDINFO_GET` - common on API / `A_*` projection views
 
-If either is found, the view is **delta-capable** (grid columns *Delta?* / *Delta field*); otherwise
-delta isn't possible for it.
+If found, the view is **delta-capable**. The display list shows the field name in column
+**LastChangeDateTime** and marks **Has change TS**; otherwise those columns stay empty and
+delta isn't possible for that view.
 
 ### 2. The high-water store
 The last extracted position per view is kept in table **`ZDXF_DELTA`**
@@ -69,7 +72,7 @@ from the full-load point.
 
 ### Limits (be aware)
 - ⚠️ **No deletes.** A timestamp filter only sees inserts/updates; deleted rows are not reported.
-- ⚠️ **Needs a change-timestamp field.** Views with neither `@Semantics.systemDateTime.lastChangedAt`
+- ⚠️ **Needs a change-timestamp field.** Views with neither a last-changed annotation
   nor a `LastChangeDateTime` field are **full-only** (Delta is skipped with a reason).
 - ✅ **No ODP RFC.** Deliberately avoids the ODP replication API (`RODPS_REPL_ODP_*`), which
   **SAP Note 3255746** restricts for custom use - so no gray-area dependency.
@@ -109,8 +112,8 @@ Selection screen:
 | **Max rows** | cap per view (`0` = unlimited) - guard for frontend download limits |
 
 - **Display** → grid of views: entity, description, **source (DEX/API)**, data class, CDC flag,
-  delta timestamp field, delta-capable, last delta position. (ALV **Export** is enabled via
-  `set_all`.)
+  **LastChangeDateTime** (field name when present), **Has change TS**, last delta position.
+  (ALV **Export** is enabled via `set_all`.)
 - **Extract** → per view: extract (full/delta) → download `<entity>_<full|delta>_<date>_<time>.<ext>`
   → advance the delta marker (only after a successful download) → **results grid** (entity, mode,
   rows, file, status, message). Delta requested but no timestamp field → skipped (`K`).
