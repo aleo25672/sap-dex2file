@@ -276,7 +276,7 @@ CLASS lcl_app IMPLEMENTATION.
           lv_pos = find( val = lv_path sub = `\` occ = -1 ).
         ENDIF.
         IF lv_pos >= 0.
-          lv_ok_folder = lv_path(lv_pos + 1).
+          lv_ok_folder = lv_path( lv_pos + 1 ).
         ENDIF.
         EXIT.
       ENDLOOP.
@@ -339,7 +339,8 @@ CLASS lcl_app IMPLEMENTATION.
 
   METHOD write_text_file.
     IF iv_server = abap_true.
-      OPEN DATASET iv_path FOR OUTPUT IN TEXT MODE ENCODING UTF-8.
+      DATA lv_msg TYPE string.
+      OPEN DATASET iv_path FOR OUTPUT IN TEXT MODE ENCODING UTF-8 MESSAGE lv_msg.
       IF sy-subrc <> 0.
         rv_ok = abap_false.
         RETURN.

@@ -39,7 +39,8 @@ CLASS zcl_dxf_file_writer IMPLEMENTATION.
 
     IF iv_server = abap_true.
       " application-server file (AL11) - needs S_DATASET authorization
-      OPEN DATASET iv_path FOR OUTPUT IN TEXT MODE ENCODING UTF-8.
+      DATA lv_msg TYPE string.
+      OPEN DATASET iv_path FOR OUTPUT IN TEXT MODE ENCODING UTF-8 MESSAGE lv_msg.
       IF sy-subrc <> 0.
         rv_ok = abap_false.
         RETURN.
