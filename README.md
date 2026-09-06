@@ -20,8 +20,8 @@ On the selection screen, **Source type** chooses what to discover:
 **Not listed:** OData service bindings such as `API_PURCHASEORDER_2` - those are not `DDLS`
 objects, and names matching `API_*` are skipped as an extra guard.
 
-Empty **API CDS pattern** defaults to `I_*API*`. The **DEX entity pattern** still filters DEX
-views (and is ignored for API-only runs).
+Empty **API CDS** selection defaults to pattern `I_*API*`. Use select-options to pick
+single entities, multiple values, or `*` wildcards (option CP).
 
 File extract (`SELECT *`) works for **both** DEX and API CDS. A view is **delta-capable** when a
 change-timestamp field can be resolved (see below) and can then be run in delta mode.
@@ -96,8 +96,8 @@ Selection screen:
 | Field | Meaning |
 |-------|---------|
 | **Source type** | *DEX* / *API CDS* / *Both* |
-| **DEX entity pattern** | case-sensitive filter for DEX views; plain text = contains, `*` = wildcard, blank = all |
-| **API CDS pattern** | name filter for API CDS (`*` = wildcard); **empty = `I_*API*`** |
+| **DEX entity** | select-options: one entity, multiple entities, or `*` wildcards; blank = all DEX |
+| **API CDS entity** | select-options: one / multiple / `*` wildcards; **blank = `I_*API*`** |
 | **Data class** | *All* / *Master data* / *Transactional* - from `@ObjectModel.usageType.dataClass`, **not** the `I_`/`C_` prefix |
 | **Action** | *Display list only* / *Extract to file* - runs on the filtered set |
 | **Mode** | *Full load* / *Delta (change timestamp)* |

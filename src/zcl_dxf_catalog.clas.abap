@@ -7,6 +7,7 @@
 "   - Delta field (first match wins):
 "       1. @Semantics.systemDateTime.lastChangedAt (DDFIELDANNO)
 "       2. field named LastChangeDateTime (DD03L)
+"   - Entity filters are select-option ranges (single values and CP wildcards).
 CLASS zcl_dxf_catalog DEFINITION
   PUBLIC
   CREATE PUBLIC.
@@ -26,13 +27,16 @@ CLASS zcl_dxf_catalog DEFINITION
       END OF ty_view,
       ty_views TYPE STANDARD TABLE OF ty_view WITH DEFAULT KEY.
 
+    TYPES ty_entity TYPE c LENGTH 40.
+    TYPES ty_entity_range TYPE RANGE OF ty_entity.
+
     METHODS get_views
       IMPORTING
-        iv_name_pattern TYPE clike OPTIONAL
-        iv_api_pattern  TYPE clike OPTIONAL
-        iv_source       TYPE clike DEFAULT 'D'
-        iv_dataclass    TYPE clike DEFAULT space
-        io_delta_store  TYPE REF TO zcl_dxf_delta_store OPTIONAL
+        it_name_range  TYPE ty_entity_range OPTIONAL
+        it_api_range   TYPE ty_entity_range OPTIONAL
+        iv_source      TYPE clike DEFAULT 'D'
+        iv_dataclass   TYPE clike DEFAULT space
+        io_delta_store TYPE REF TO zcl_dxf_delta_store OPTIONAL
       RETURNING
         VALUE(rt_views) TYPE ty_views.
 ENDCLASS.
@@ -60,22 +64,43 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
     DATA lt_dcmap   TYPE SORTED TABLE OF ty_dc  WITH NON-UNIQUE KEY ent_up.
     DATA lt_labmap  TYPE SORTED TABLE OF ty_lab WITH NON-UNIQUE KEY ent_up.
 
-    DATA lv_source  TYPE string.
-    DATA lv_dex_pat TYPE string.
-    DATA lv_api_pat TYPE string.
-    DATA lv_ent_up  TYPE string.
-    DATA lv_name    TYPE string.
-    DATA lv_dc      TYPE string.
-    DATA lv_lab     TYPE string.
-    DATA ls_out     TYPE ty_view.
-    DATA ls_m       TYPE ty_map.
-    DATA ls_dcm     TYPE ty_dc.
-    DATA ls_lbl     TYPE ty_lab.
+    DATA lv_source TYPE string.
+    DATA lv_ent_up TYPE string.
+    DATA lv_name   TYPE string.
+    DATA lv_dc     TYPE string.
+    DATA lv_lab    TYPE string.
+    DATA ls_out    TYPE ty_view.
+    DATA ls_m      TYPE ty_map.
+    DATA ls_dcm    TYPE ty_dc.
+    DATA ls_lbl    TYPE ty_lab.
+    DATA lt_api_sel TYPE ty_entity_range.
+    DATA lt_name_sel TYPE ty_entity_range.
+    DATA ls_range TYPE LINE OF ty_entity_range.
 
     lv_source = to_upper( condense( CONV string( iv_source ) ) ).
     IF lv_source IS INITIAL.
       lv_source = 'D'.
     ENDIF.
+
+    " Normalize select-options: EQ with * / + -> CP (so wildcards work from the
+    " single selection-screen field; default option would otherwise stay EQ).
+    lt_name_sel = it_name_range.
+    LOOP AT lt_name_sel INTO ls_range.
+      IF ( ls_range-option = 'EQ' OR ls_range-option = 'CP' )
+         AND ( ls_range-low CS '*' OR ls_range-low CS '+' ).
+        ls_range-option = 'CP'.
+        MODIFY lt_name_sel FROM ls_range.
+      ENDIF.
+    ENDLOOP.
+
+    lt_api_sel = it_api_range.
+    LOOP AT lt_api_sel INTO ls_range.
+      IF ( ls_range-option = 'EQ' OR ls_range-option = 'CP' )
+         AND ( ls_range-low CS '*' OR ls_range-low CS '+' ).
+        ls_range-option = 'CP'.
+        MODIFY lt_api_sel FROM ls_range.
+      ENDIF.
+    ENDLOOP.
 
     " Annotation: @Semantics.systemDateTime.lastChangedAt
     SELECT strucobjn, lfieldname
@@ -135,23 +160,24 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
     " DEX
     " ------------------------------------------------------------------
     IF lv_source = 'D' OR lv_source = 'B'.
-      lv_dex_pat = condense( CONV string( iv_name_pattern ) ).
-      IF lv_dex_pat IS INITIAL.
-        lv_dex_pat = '%'.
-      ELSEIF lv_dex_pat CA '*'.
-        REPLACE ALL OCCURRENCES OF '*' IN lv_dex_pat WITH '%'.
+      IF lt_name_sel IS INITIAL.
+        SELECT dataextractionviewname,
+               dataextractionviewdescription,
+               deltachgdatacaptureissupported
+          FROM ixtrctnenbldvw
+          WHERE issapreleasedview = @abap_true
+          ORDER BY dataextractionviewname
+          INTO TABLE @DATA(lt_dex).
       ELSE.
-        lv_dex_pat = |%{ lv_dex_pat }%|.
+        SELECT dataextractionviewname,
+               dataextractionviewdescription,
+               deltachgdatacaptureissupported
+          FROM ixtrctnenbldvw
+          WHERE issapreleasedview = @abap_true
+            AND dataextractionviewname IN @lt_name_sel
+          ORDER BY dataextractionviewname
+          INTO TABLE @lt_dex.
       ENDIF.
-
-      SELECT dataextractionviewname,
-             dataextractionviewdescription,
-             deltachgdatacaptureissupported
-        FROM ixtrctnenbldvw
-        WHERE issapreleasedview = @abap_true
-          AND dataextractionviewname LIKE @lv_dex_pat
-        ORDER BY dataextractionviewname
-        INTO TABLE @DATA(lt_dex).
 
       LOOP AT lt_dex INTO DATA(ls_dex).
         CLEAR ls_out.
@@ -196,21 +222,16 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
     " API CDS
     " ------------------------------------------------------------------
     IF lv_source = 'A' OR lv_source = 'B'.
-      lv_api_pat = condense( CONV string( iv_api_pattern ) ).
-      IF lv_api_pat IS INITIAL.
-        lv_api_pat = 'I_*API*'.
-      ENDIF.
-      IF lv_api_pat CA '*'.
-        REPLACE ALL OCCURRENCES OF '*' IN lv_api_pat WITH '%'.
-      ELSE.
-        lv_api_pat = |%{ lv_api_pat }%|.
+      IF lt_api_sel IS INITIAL.
+        " Default: I_*API*
+        APPEND VALUE #( sign = 'I' option = 'CP' low = 'I_*API*' ) TO lt_api_sel.
       ENDIF.
 
       SELECT obj_name
         FROM tadir
         WHERE pgmid  = 'R3TR'
           AND object = 'DDLS'
-          AND obj_name LIKE @lv_api_pat
+          AND obj_name IN @lt_api_sel
         ORDER BY obj_name
         INTO TABLE @DATA(lt_api).
 

@@ -18,8 +18,8 @@
     <item>
      <ID>I</ID>
      <KEY>B01</KEY>
-     <ENTRY>Entity pattern</ENTRY>
-     <LENGTH>14</LENGTH>
+     <ENTRY>Entity selection</ENTRY>
+     <LENGTH>16</LENGTH>
     </item>
     <item>
      <ID>I</ID>
@@ -71,9 +71,15 @@
     </item>
     <item>
      <ID>S</ID>
-     <KEY>P_APIPAT</KEY>
-     <ENTRY>API CDS pattern</ENTRY>
-     <LENGTH>16</LENGTH>
+     <KEY>S_API</KEY>
+     <ENTRY>API CDS entity</ENTRY>
+     <LENGTH>14</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>S_NAME</KEY>
+     <ENTRY>DEX entity</ENTRY>
+     <LENGTH>11</LENGTH>
     </item>
     <item>
      <ID>S</ID>
@@ -151,12 +157,6 @@
      <ID>S</ID>
      <KEY>P_MAX</KEY>
      <ENTRY>Max rows (0 = all)</ENTRY>
-     <LENGTH>18</LENGTH>
-    </item>
-    <item>
-     <ID>S</ID>
-     <KEY>P_NAME</KEY>
-     <ENTRY>DEX entity pattern</ENTRY>
      <LENGTH>18</LENGTH>
     </item>
     <item>

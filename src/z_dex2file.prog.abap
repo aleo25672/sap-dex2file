@@ -7,7 +7,7 @@
 *& the last run).
 *&
 *& The action runs on ALL rows matching the selection-screen filter, so
-*& narrow with the entity / API pattern to target a subset.
+*& narrow with the entity select-options (single / multiple / * wildcards).
 *&---------------------------------------------------------------------*
 REPORT z_dex2file.
 
@@ -21,8 +21,10 @@ PARAMETERS p_both RADIOBUTTON GROUP src.              " Both
 SELECTION-SCREEN END OF BLOCK b_src.
 
 SELECTION-SCREEN BEGIN OF BLOCK b_sel WITH FRAME TITLE TEXT-b01.
-PARAMETERS p_name   TYPE c LENGTH 40 LOWER CASE.  " DEX entity pattern (case-sensitive), * = wildcard
-PARAMETERS p_apipat TYPE c LENGTH 40 LOWER CASE.  " API CDS pattern; empty = I_*API*
+" Select-options: enter one entity, multiple values, or patterns with * / +
+DATA gv_entity TYPE c LENGTH 40.
+SELECT-OPTIONS s_name FOR gv_entity NO INTERVALS.  " DEX entities
+SELECT-OPTIONS s_api  FOR gv_entity NO INTERVALS.  " API CDS; empty = I_*API*
 SELECTION-SCREEN END OF BLOCK b_sel.
 
 SELECTION-SCREEN BEGIN OF BLOCK b_fam WITH FRAME TITLE TEXT-b05.
@@ -96,11 +98,11 @@ CLASS lcl_app IMPLEMENTATION.
                                 WHEN p_both = abap_true THEN `B`
                                 ELSE `D` ).
     mt_views = NEW zcl_dxf_catalog( )->get_views(
-      iv_name_pattern = p_name
-      iv_api_pattern  = p_apipat
-      iv_source       = lv_src
-      iv_dataclass    = lv_dc
-      io_delta_store  = lo_store ).
+      it_name_range  = s_name[]
+      it_api_range   = s_api[]
+      iv_source      = lv_src
+      iv_dataclass   = lv_dc
+      io_delta_store = lo_store ).
 
     IF mt_views IS INITIAL.
       MESSAGE 'No CDS views found for the source / filter'(m01)
