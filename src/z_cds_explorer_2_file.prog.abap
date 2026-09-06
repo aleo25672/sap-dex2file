@@ -259,21 +259,25 @@ CLASS lcl_app IMPLEMENTATION.
     " Sidecar run summary for external pickup (same stamp as data files)
     DATA(lv_ok_folder) = lv_folder.
     IF lv_ok_folder IS INITIAL.
+      DATA: lv_path TYPE string,
+            lv_pos  TYPE i,
+            lv_idx  TYPE i,
+            lv_ch   TYPE c LENGTH 1.
       LOOP AT lt_res INTO DATA(ls_path) WHERE file IS NOT INITIAL.
-        DATA(lv_path) = ls_path-file.
-        DATA lv_pos TYPE i.
-        DATA lv_idx TYPE i.
-        CLEAR lv_pos.
+        lv_path = ls_path-file.
+        CLEAR: lv_pos, lv_ch.
         lv_idx = strlen( lv_path ).
         WHILE lv_idx > 0.
           lv_idx = lv_idx - 1.
-          IF lv_path+lv_idx(1) = '/' OR lv_path+lv_idx(1) = '\'.
+          lv_ch = lv_path+lv_idx(1).
+          IF lv_ch = '/' OR lv_ch = '\'.
             lv_pos = lv_idx.
             EXIT.
           ENDIF.
         ENDWHILE.
-        IF lv_path IS NOT INITIAL AND ( lv_path+lv_pos(1) = '/' OR lv_path+lv_pos(1) = '\' ).
-          lv_ok_folder = lv_path( lv_pos + 1 ).
+        IF lv_ch = '/' OR lv_ch = '\'.
+          " Use substring( ) — lv_path( len ) is parsed as a method call.
+          lv_ok_folder = substring( val = lv_path len = lv_pos + 1 ).
         ENDIF.
         EXIT.
       ENDLOOP.
