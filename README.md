@@ -23,8 +23,8 @@ objects, and names matching `API_*` are skipped as an extra guard.
 Empty **API CDS pattern** defaults to `I_*API*`. The **DEX entity pattern** still filters DEX
 views (and is ignored for API-only runs).
 
-File extract (`SELECT *`) works for **both** DEX and API CDS. When a view has
-`@Semantics.systemDateTime.lastChangedAt`, it is **delta-capable** and can be run in delta mode.
+File extract (`SELECT *`) works for **both** DEX and API CDS. A view is **delta-capable** when a
+change-timestamp field can be resolved (see below) and can then be run in delta mode.
 
 ## How delta works
 
@@ -32,10 +32,14 @@ Delta is **timestamp-based** (not true CDC). For each view, remember the **high-
 of the last extraction, and next time only pull rows changed after it.
 
 ### 1. Finding the change-timestamp field
-On discovery (`ZCL_DXF_CATALOG`), the tool looks up each view's **change-timestamp element** — the
-field annotated **`@Semantics.systemDateTime.lastChangedAt`** — by reading the field-annotation
-table `DDFIELDANNO`. If such a field exists, the view is **delta-capable** (shown in the grid's
-*Delta?* / *Delta field* columns); if not, delta isn't possible for it.
+On discovery (`ZCL_DXF_CATALOG`), the tool resolves each view's **change-timestamp element** in
+this order (first match wins):
+
+1. Field annotated **`@Semantics.systemDateTime.lastChangedAt`** (`DDFIELDANNO`) — common on DEX
+2. Field named **`LastChangeDateTime`** (`DD03L`, then RTTI) — common on API CDS views
+
+If either is found, the view is **delta-capable** (grid columns *Delta?* / *Delta field*); otherwise
+delta isn't possible for it.
 
 ### 2. The high-water store
 The last extracted position per view is kept in table **`ZDXF_DELTA`**
@@ -65,8 +69,8 @@ from the full-load point.
 
 ### Limits (be aware)
 - ⚠️ **No deletes.** A timestamp filter only sees inserts/updates; deleted rows are not reported.
-- ⚠️ **Needs a change-timestamp field.** Views without `@Semantics.systemDateTime.lastChangedAt`
-  are **full-only** (Delta is skipped with a reason).
+- ⚠️ **Needs a change-timestamp field.** Views with neither `@Semantics.systemDateTime.lastChangedAt`
+  nor a `LastChangeDateTime` field are **full-only** (Delta is skipped with a reason).
 - ✅ **No ODP RFC.** Deliberately avoids the ODP replication API (`RODPS_REPL_ODP_*`), which
   **SAP Note 3255746** restricts for custom use — so no gray-area dependency.
 - The change-timestamp field's data type governs the `WHERE` literal; if a view's delta returns
@@ -77,7 +81,7 @@ from the full-load point.
 | Object | Type | Purpose |
 |--------|------|---------|
 | `Z_DEX2FILE` | report | selection screen + `CL_SALV_TABLE` grid + extract/download |
-| `ZCL_DXF_CATALOG` | class | discover DEX (`IXTRCTNENBLDVW`) and/or API CDS (`TADIR`/`DDLS`) + detect the delta timestamp field (`DDFIELDANNO`) |
+| `ZCL_DXF_CATALOG` | class | discover DEX (`IXTRCTNENBLDVW`) and/or API CDS (`TADIR`/`DDLS`) + resolve delta field (annotation or `LastChangeDateTime`) |
 | `ZCL_DXF_EXTRACTOR` | class | dynamic `SELECT * FROM (entity)` — full, or delta `WHERE ts > last` |
 | `ZCL_DXF_FILE_WRITER` | class | serialize the table → delimited text → `gui_download` / `OPEN DATASET` |
 | `ZCL_DXF_DELTA_STORE` | class | read/update the last-run high-water per view |
@@ -124,8 +128,9 @@ Selection screen:
   paths out of the code / consistent across systems; it implies the app-server target.
 - **Parameterized views** can't be `SELECT`ed without parameter values; extraction of such a view
   returns an error row rather than dumping (caught in `ZCL_DXF_EXTRACTOR`).
-- Release dependencies to confirm: tables `IXTRCTNENBLDVW`, `DDFIELDANNO`, `TADIR`; and the exact
-  annotation `NAME` for `Semantics.systemDateTime.lastChangedAt`.
+- Release dependencies to confirm: tables `IXTRCTNENBLDVW`, `DDFIELDANNO`, `DD03L`, `TADIR`; the
+  exact annotation `NAME` for `Semantics.systemDateTime.lastChangedAt`; and that API entities expose
+  `LastChangeDateTime` in DDIC/RTTI when the annotation is absent.
 
 ## Installing & importing with abapGit
 

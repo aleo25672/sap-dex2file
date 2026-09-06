@@ -4,8 +4,10 @@
 "   - API : CDS DDL sources (TADIR object DDLS) named like I_*API*
 "           (e.g. I_PurchaseOrderAPI01). OData service bindings such as
 "           API_PURCHASEORDER_2 are not listed (not DDLS / name-filtered).
-"   - The delta field is the element annotated @Semantics.systemDateTime.lastChangedAt,
-"     read from DDFIELDANNO. delta_capable = such a field exists.
+"   - Delta field resolution (first match wins):
+"       1. element annotated @Semantics.systemDateTime.lastChangedAt (DDFIELDANNO)
+"       2. element named LastChangeDateTime (DD03L / RTTI), common on API CDS
+"     delta_capable = a delta field was found.
 CLASS zcl_dxf_catalog DEFINITION
   PUBLIC
   CREATE PUBLIC.
@@ -18,7 +20,7 @@ CLASS zcl_dxf_catalog DEFINITION
         source_type    TYPE c LENGTH 3,    " DEX | API
         family         TYPE c LENGTH 20,   " data class (@ObjectModel.usageType.dataClass)
         is_cdc_enabled TYPE abap_bool,
-        delta_field    TYPE c LENGTH 30,   " @Semantics.systemDateTime.lastChangedAt element
+        delta_field    TYPE c LENGTH 30,   " change-timestamp element used for delta
         delta_capable  TYPE abap_bool,     " a change-timestamp field exists
         last_delta_ts  TYPE timestampl,    " stored high-water (last extracted up to)
         reason         TYPE string,
@@ -39,6 +41,23 @@ CLASS zcl_dxf_catalog DEFINITION
         io_delta_store  TYPE REF TO zcl_dxf_delta_store OPTIONAL
       RETURNING
         VALUE(rt_views) TYPE ty_views.
+
+  PRIVATE SECTION.
+    TYPES:
+      BEGIN OF ty_fmap,
+        ent_up TYPE string,
+        field  TYPE c LENGTH 30,
+      END OF ty_fmap,
+      ty_fmaps TYPE SORTED TABLE OF ty_fmap WITH NON-UNIQUE KEY ent_up.
+
+    " Prefer @Semantics.systemDateTime.lastChangedAt; else LastChangeDateTime.
+    METHODS resolve_delta_field
+      IMPORTING
+        iv_entity     TYPE clike
+        it_anno_map   TYPE ty_fmaps
+        it_lcdt_map   TYPE ty_fmaps
+      RETURNING
+        VALUE(rv_field) TYPE c LENGTH 30.
 ENDCLASS.
 
 
@@ -50,20 +69,29 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
       lv_source = 'D'.
     ENDIF.
 
-    " Shared annotation maps (delta timestamp + data class + optional label).
+    " 1) Annotation map: @Semantics.systemDateTime.lastChangedAt
     SELECT strucobjn, lfieldname
       FROM ddfieldanno
       WHERE upper( name ) = 'SEMANTICS.SYSTEMDATETIME.LASTCHANGEDAT'
       INTO TABLE @DATA(lt_ts).
 
-    TYPES: BEGIN OF ty_map,
-             ent_up TYPE string,
-             field  TYPE c LENGTH 30,
-           END OF ty_map.
-    DATA lt_tsmap TYPE SORTED TABLE OF ty_map WITH NON-UNIQUE KEY ent_up.
+    DATA lt_anno TYPE ty_fmaps.
     LOOP AT lt_ts INTO DATA(ls_ts).
       INSERT VALUE #( ent_up = to_upper( ls_ts-strucobjn )
-                      field  = ls_ts-lfieldname ) INTO TABLE lt_tsmap.
+                      field  = ls_ts-lfieldname ) INTO TABLE lt_anno.
+    ENDLOOP.
+
+    " 2) Field-name map: LastChangeDateTime (typical on API CDS views)
+    SELECT tabname, fieldname
+      FROM dd03l
+      WHERE fieldname = 'LASTCHANGEDATETIME'
+        AND as4local  = 'A'
+      INTO TABLE @DATA(lt_lcdt).
+
+    DATA lt_lcdt_map TYPE ty_fmaps.
+    LOOP AT lt_lcdt INTO DATA(ls_lcdt).
+      INSERT VALUE #( ent_up = to_upper( ls_lcdt-tabname )
+                      field  = ls_lcdt-fieldname ) INTO TABLE lt_lcdt_map.
     ENDLOOP.
 
     SELECT strucobjn, value AS dclass
@@ -144,9 +172,11 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
           CONTINUE.
         ENDIF.
 
-        READ TABLE lt_tsmap INTO DATA(ls_m) WITH KEY ent_up = lv_ent_up.
-        IF sy-subrc = 0 AND ls_m-field IS NOT INITIAL.
-          ls_out-delta_field   = ls_m-field.
+        ls_out-delta_field = resolve_delta_field(
+          iv_entity   = ls_out-entity_name
+          it_anno_map = lt_anno
+          it_lcdt_map = lt_lcdt_map ).
+        IF ls_out-delta_field IS NOT INITIAL.
           ls_out-delta_capable = abap_true.
         ENDIF.
 
@@ -221,9 +251,11 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
           CONTINUE.
         ENDIF.
 
-        READ TABLE lt_tsmap INTO ls_m WITH KEY ent_up = lv_ent_up.
-        IF sy-subrc = 0 AND ls_m-field IS NOT INITIAL.
-          ls_out-delta_field   = ls_m-field.
+        ls_out-delta_field = resolve_delta_field(
+          iv_entity   = ls_out-entity_name
+          it_anno_map = lt_anno
+          it_lcdt_map = lt_lcdt_map ).
+        IF ls_out-delta_field IS NOT INITIAL.
           ls_out-delta_capable = abap_true.
         ENDIF.
 
@@ -234,6 +266,39 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
         APPEND ls_out TO rt_views.
       ENDLOOP.
     ENDIF.
+  ENDMETHOD.
+
+
+  METHOD resolve_delta_field.
+    DATA(lv_ent_up) = to_upper( CONV string( iv_entity ) ).
+
+    " 1. Prefer the Semantics annotation (works for many DEX views).
+    READ TABLE it_anno_map INTO DATA(ls_anno) WITH KEY ent_up = lv_ent_up.
+    IF sy-subrc = 0 AND ls_anno-field IS NOT INITIAL.
+      rv_field = ls_anno-field.
+      RETURN.
+    ENDIF.
+
+    " 2. Fall back to a field literally named LastChangeDateTime (DDIC).
+    READ TABLE it_lcdt_map INTO DATA(ls_lcdt) WITH KEY ent_up = lv_ent_up.
+    IF sy-subrc = 0 AND ls_lcdt-field IS NOT INITIAL.
+      rv_field = ls_lcdt-field.
+      RETURN.
+    ENDIF.
+
+    " 3. RTTI fallback for CDS entities not represented in DD03L.
+    TRY.
+        DATA(lo_type) = cl_abap_typedescr=>describe_by_name( lv_ent_up ).
+        DATA(lo_struct) = CAST cl_abap_structdescr( lo_type ).
+        LOOP AT lo_struct->components INTO DATA(ls_comp).
+          IF ls_comp-name = 'LASTCHANGEDATETIME'.
+            rv_field = ls_comp-name.
+            RETURN.
+          ENDIF.
+        ENDLOOP.
+      CATCH cx_root.
+        " Entity not describable here — leave non-delta-capable.
+    ENDTRY.
   ENDMETHOD.
 
 ENDCLASS.
