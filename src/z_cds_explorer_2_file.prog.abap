@@ -1,15 +1,6 @@
-*&---------------------------------------------------------------------*
-*& Report Z_CDS_EXPLORER_2_FILE
-*&---------------------------------------------------------------------*
-*& Discover CDS views (DEX extraction-enabled and/or API CDS named like
-*& I_*API*), then either display them or extract their data to a file -
-*& FULL (SELECT *) or DELTA (rows whose change-timestamp is newer than
-*& the last run).
-*&
-*& The action runs on ALL rows matching the selection-screen filter, so
-*& narrow with the entity select-options (single / multiple / * wildcards).
-*&---------------------------------------------------------------------*
 REPORT Z_CDS_EXPLORER_2_FILE.
+* Discover DEX/API CDS views; display or extract FULL/DELTA to file.
+* Action applies to all rows matching the selection-screen filter.
 
 *----------------------------------------------------------------------*
 * Selection screen
