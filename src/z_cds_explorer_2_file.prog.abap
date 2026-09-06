@@ -74,6 +74,7 @@ CLASS lcl_app DEFINITION CREATE PUBLIC.
         message TYPE string,
       END OF ty_res,
       ty_res_tab TYPE STANDARD TABLE OF ty_res WITH DEFAULT KEY.
+      ty_lines   TYPE STANDARD TABLE OF string WITH DEFAULT KEY.
 
     DATA mt_views TYPE zcl_dxf_catalog=>ty_views.
 
@@ -82,6 +83,16 @@ CLASS lcl_app DEFINITION CREATE PUBLIC.
       IMPORTING io_store TYPE REF TO zcl_dxf_delta_store.
     METHODS show_results
       IMPORTING it_res TYPE ty_res_tab.
+    METHODS write_run_ok
+      IMPORTING it_res    TYPE ty_res_tab
+                iv_folder TYPE string
+                iv_mode   TYPE clike
+                iv_server TYPE abap_bool.
+    METHODS write_text_file
+      IMPORTING it_lines     TYPE ty_lines
+                iv_path      TYPE string
+                iv_server    TYPE abap_bool
+      RETURNING VALUE(rv_ok) TYPE abap_bool.
     METHODS set_col_text
       IMPORTING io_cols TYPE REF TO cl_salv_columns_table
                 iv_col  TYPE lvc_fname
@@ -91,6 +102,16 @@ ENDCLASS.
 CLASS lcl_app IMPLEMENTATION.
 
   METHOD run.
+    " Background jobs cannot use GUI download or ALV display.
+    IF sy-batch = abap_true.
+      IF p_disp = abap_true.
+        MESSAGE 'Background job cannot use Display list - choose Extract to file' TYPE 'E'.
+      ENDIF.
+      IF p_local = abap_true AND p_lfn IS INITIAL.
+        MESSAGE 'Background extract requires Application server (AL11) or a Logical file name' TYPE 'E'.
+      ENDIF.
+    ENDIF.
+
     DATA(lo_store) = NEW zcl_dxf_delta_store( ).
     DATA(lv_dc) = COND string( WHEN p_mast = abap_true THEN `M`
                                WHEN p_tran = abap_true THEN `T`
@@ -167,8 +188,8 @@ CLASS lcl_app IMPLEMENTATION.
       lv_ext = 'csv'.
     ENDIF.
 
-    " a logical file name (transaction FILE) resolves to a server path -> server write
-    DATA(lv_srv) = xsdbool( p_srv = abap_true OR p_lfn IS NOT INITIAL ).
+    " Logical file name (tx FILE) or batch run => always write on the app server
+    DATA(lv_srv) = xsdbool( p_srv = abap_true OR p_lfn IS NOT INITIAL OR sy-batch = abap_true ).
 
     " target folder (ensure trailing path separator: '/' on server, '\' on frontend)
     DATA(lv_folder) = condense( |{ p_folder }| ).
@@ -180,13 +201,17 @@ CLASS lcl_app IMPLEMENTATION.
       ENDIF.
     ENDIF.
 
+    DATA(lv_mode) = COND string( WHEN lv_delta = abap_true THEN `delta` ELSE `full` ).
+    DATA(lv_stamp) = |{ sy-datum }_{ sy-uzeit }|.
+
     DATA lt_res TYPE ty_res_tab.
     LOOP AT mt_views INTO DATA(ls_v).
       DATA(ls_r) = VALUE ty_res(
         entity = ls_v-entity_name
         mode   = COND #( WHEN lv_delta = abap_true THEN 'DELTA' ELSE 'FULL' ) ).
 
-      " target path: logical file name (transaction FILE) or built folder path
+      " Predictable name: <ENTITY>_<full|delta>_<YYYYMMDD>_<HHMMSS>.<ext>
+      " Logical file name (tx FILE) may override via FILE_GET_NAME.
       DATA lv_file TYPE string.
       CLEAR lv_file.
       IF p_lfn IS NOT INITIAL.
@@ -194,7 +219,7 @@ CLASS lcl_app IMPLEMENTATION.
           EXPORTING
             logical_filename = p_lfn
             parameter_1      = ls_v-entity_name
-            parameter_2      = COND string( WHEN lv_delta = abap_true THEN `DELTA` ELSE `FULL` )
+            parameter_2      = to_upper( lv_mode )
           IMPORTING
             file_name        = lv_file
           EXCEPTIONS
@@ -207,9 +232,7 @@ CLASS lcl_app IMPLEMENTATION.
           CONTINUE.
         ENDIF.
       ELSE.
-        lv_file = |{ lv_folder }{ ls_v-entity_name }_| &&
-                  |{ COND string( WHEN lv_delta = abap_true THEN `delta` ELSE `full` ) }_| &&
-                  |{ sy-datum }_{ sy-uzeit }.{ lv_ext }|.
+        lv_file = |{ lv_folder }{ to_upper( ls_v-entity_name ) }_{ lv_mode }_{ lv_stamp }.{ lv_ext }|.
       ENDIF.
 
       DATA(ls_ex) = lo_ext->extract(
@@ -242,10 +265,114 @@ CLASS lcl_app IMPLEMENTATION.
       APPEND ls_r TO lt_res.
     ENDLOOP.
 
+    " Sidecar run summary for external pickup (same stamp as data files)
+    DATA(lv_ok_folder) = lv_folder.
+    IF lv_ok_folder IS INITIAL.
+      LOOP AT lt_res INTO DATA(ls_path) WHERE file IS NOT INITIAL.
+        DATA(lv_path) = ls_path-file.
+        " strip file name -> directory (server '/' or frontend '\')
+        DATA(lv_pos) = find( val = lv_path sub = `/` occ = -1 ).
+        IF lv_pos < 0.
+          lv_pos = find( val = lv_path sub = `\` occ = -1 ).
+        ENDIF.
+        IF lv_pos >= 0.
+          lv_ok_folder = lv_path(lv_pos + 1).
+        ENDIF.
+        EXIT.
+      ENDLOOP.
+    ENDIF.
+    IF lv_ok_folder IS NOT INITIAL.
+      write_run_ok( it_res    = lt_res
+                    iv_folder = lv_ok_folder
+                    iv_mode   = lv_mode
+                    iv_server = lv_srv ).
+    ENDIF.
+
     show_results( lt_res ).
   ENDMETHOD.
 
+  METHOD write_run_ok.
+    DATA lt_lines TYPE ty_lines.
+    DATA lv_ok   TYPE i.
+    DATA lv_err  TYPE i.
+    DATA lv_skip TYPE i.
+    DATA lv_rows TYPE i.
+
+    LOOP AT it_res INTO DATA(ls_r).
+      CASE ls_r-status.
+        WHEN 'S'. lv_ok = lv_ok + 1.
+        WHEN 'E'. lv_err = lv_err + 1.
+        WHEN 'K'. lv_skip = lv_skip + 1.
+      ENDCASE.
+      lv_rows = lv_rows + ls_r-rows.
+    ENDLOOP.
+
+    DATA(lv_run_status) = COND string(
+      WHEN lv_err = 0 AND lv_ok >= 0 THEN `S`
+      WHEN lv_ok > 0 AND lv_err > 0 THEN `P`
+      ELSE `E` ).
+
+    APPEND |run_date={ sy-datum }| TO lt_lines.
+    APPEND |run_time={ sy-uzeit }| TO lt_lines.
+    APPEND |sysid={ sy-sysid }| TO lt_lines.
+    APPEND |uname={ sy-uname }| TO lt_lines.
+    APPEND |mode={ to_upper( iv_mode ) }| TO lt_lines.
+    APPEND |status={ lv_run_status }| TO lt_lines.
+    APPEND |entities={ lines( it_res ) }| TO lt_lines.
+    APPEND |ok={ lv_ok }| TO lt_lines.
+    APPEND |error={ lv_err }| TO lt_lines.
+    APPEND |skipped={ lv_skip }| TO lt_lines.
+    APPEND |rows_total={ lv_rows }| TO lt_lines.
+    APPEND |entity;mode;rows;status;file;message| TO lt_lines.
+    LOOP AT it_res INTO ls_r.
+      APPEND |{ ls_r-entity };{ ls_r-mode };{ ls_r-rows };{ ls_r-status };{ ls_r-file };{ ls_r-message }|
+             TO lt_lines.
+    ENDLOOP.
+
+    DATA(lv_ok_path) = |{ iv_folder }zdxf_run_{ sy-datum }_{ sy-uzeit }.ok|.
+    IF write_text_file( it_lines = lt_lines iv_path = lv_ok_path iv_server = iv_server ) = abap_false.
+      MESSAGE |Could not write run summary { lv_ok_path }| TYPE 'S' DISPLAY LIKE 'W'.
+    ELSEIF sy-batch = abap_true.
+      MESSAGE |Run summary written: { lv_ok_path }| TYPE 'S'.
+    ENDIF.
+  ENDMETHOD.
+
+  METHOD write_text_file.
+    IF iv_server = abap_true.
+      OPEN DATASET iv_path FOR OUTPUT IN TEXT MODE ENCODING UTF-8.
+      IF sy-subrc <> 0.
+        rv_ok = abap_false.
+        RETURN.
+      ENDIF.
+      LOOP AT it_lines INTO DATA(lv_line).
+        TRANSFER lv_line TO iv_path.
+      ENDLOOP.
+      CLOSE DATASET iv_path.
+      rv_ok = abap_true.
+    ELSE.
+      DATA(lt_lines) = it_lines.
+      cl_gui_frontend_services=>gui_download(
+        EXPORTING
+          filename = iv_path
+          filetype = 'ASC'
+        CHANGING
+          data_tab = lt_lines
+        EXCEPTIONS
+          OTHERS   = 1 ).
+      rv_ok = xsdbool( sy-subrc = 0 ).
+    ENDIF.
+  ENDMETHOD.
+
   METHOD show_results.
+    " In background: write to the job log instead of ALV.
+    IF sy-batch = abap_true.
+      LOOP AT it_res INTO DATA(ls_batch).
+        MESSAGE |{ ls_batch-entity } { ls_batch-mode } { ls_batch-status } rows={ ls_batch-rows } { ls_batch-file } { ls_batch-message }|
+                TYPE 'S'.
+      ENDLOOP.
+      RETURN.
+    ENDIF.
+
     DATA lt_res TYPE ty_res_tab.
     lt_res = it_res.
     TRY.

@@ -106,7 +106,7 @@ Selection screen:
 | **Data class** | *All* / *Master data* / *Transactional* - from `@ObjectModel.usageType.dataClass`, **not** the `I_`/`C_` prefix |
 | **Action** | *Display list only* / *Extract to file* - runs on the filtered set |
 | **Mode** | *Full load* / *Delta (change timestamp)* |
-| **Target** | *Local frontend (download)* / *Application server (AL11)* |
+| **Target** | *Local frontend (download)* / *Application server (AL11)* — **background jobs require AL11 or logical file** |
 | **Format** | *CSV* / *Tab (.txt)* / *Excel (tab, .xls)* |
 | **CSV delimiter** | separator for CSV (default `;`) |
 | **Folder / server dir** | frontend folder (e.g. `C:\temp\`) or an app-server path (e.g. `/tmp/`) |
@@ -120,6 +120,67 @@ Selection screen:
 - **Extract** → per view: extract (full/delta) → download `<entity>_<full|delta>_<date>_<time>.<ext>`
   → advance the delta marker (only after a successful download) → **results grid** (entity, mode,
   rows, file, status, message). Delta requested but no timestamp field → skipped (`K`).
+
+## External file interface
+
+Use this path when an **external application** should consume full/delta extracts
+(no OData required).
+
+### Recommended setup
+1. Prefer **Source = DEX** and entities with **Has change TS**.
+2. **Action = Extract to file**, **Target = Application server (AL11)** (or a **logical file name**).
+3. Save a selection-screen **variant**.
+4. Schedule the variant in **SM36** (background job).
+5. Let the external app pick up files via **SFTP / NFS / shared folder**.
+
+Background jobs **cannot** use local GUI download or Display-list ALV. If the job is started
+with Target = Local frontend and no logical file name, the report raises an error.
+
+### File naming
+Data files (when Folder / server dir is used):
+
+```text
+<ENTITY>_<full|delta>_<YYYYMMDD>_<HHMMSS>.<csv|txt|xls>
+```
+
+Example: `C_PURCHASEORDERITEMDEX_delta_20260906_221530.csv`
+
+All entities in one run share the same timestamp stamp. A logical file name from transaction
+`FILE` can override the physical path/name (`<PARAM_1>` = entity, `<PARAM_2>` = FULL/DELTA).
+
+### Run summary (`.ok`)
+After each extract, the report also writes a sidecar summary next to the data files:
+
+```text
+zdxf_run_<YYYYMMDD>_<HHMMSS>.ok
+```
+
+Contents (line-oriented, easy to parse):
+
+```text
+run_date=20260906
+run_time=221530
+sysid=S4H
+uname=INTERFACE
+mode=DELTA
+status=S
+entities=3
+ok=3
+error=0
+skipped=0
+rows_total=120
+entity;mode;rows;status;file;message
+C_PURCHASEORDERITEMDEX;DELTA;40;S;/usr/sap/interface/.../C_PURCHASEORDERITEMDEX_delta_....csv;
+...
+```
+
+`status`: `S` = all ok, `P` = partial (some errors), `E` = all failed.  
+External apps should wait for the `.ok` file, then load the listed data files.
+
+### Operating model
+1. **Initial load:** job variant with **Mode = Full**.
+2. **Ongoing:** job variant with **Mode = Delta** (same entities / folder).
+3. After successful pickup, archive or delete consumed files (and the matching `.ok`).
 
 ## Notes
 
@@ -143,14 +204,43 @@ Selection screen:
 This repo is serialized in [abapGit](https://abapgit.org) format (`src/` layout, prefix folder
 logic).
 
-### 1. One-time prerequisites
+### 1. Install abapGit (one-time)
 
-- **abapGit installed** - report `ZABAPGIT_STANDALONE` (paste the standalone source, activate, run).
-- **GitHub TLS trusted** in `STRUST` (SSL Client Standard) and a **Personal Access Token** (this is
-  a private repo). See the [`sap-dex2odata` README](../sap-dex2odata/README.md#installing--importing-with-abapgit)
-  for the detailed one-time steps (cert import + PAT).
+1. Download the standalone report from [abapGit releases](https://github.com/abapGit/abapGit/releases)
+   (`zabapgit_standalone.prog.abap` / copy source).
+2. In the SAP system create report **`ZABAPGIT_STANDALONE`** (SE38), paste the source, activate.
+3. Run `ZABAPGIT_STANDALONE`.
 
-### 2. Create a target package
+### 2. Trust GitHub TLS in `STRUST` (one-time)
+
+abapGit talks to GitHub over HTTPS. The SAP system must trust the GitHub certificate chain.
+
+1. In a browser open `https://github.com` (and ideally also `https://api.github.com`).
+2. Export the **server certificate** and its **intermediate / root** certificates
+   (browser certificate viewer → Certification path → export each node as Base64 `.cer` / `.pem`).
+3. In SAP run transaction **`STRUST`**.
+4. Open **SSL client SSL Client (Anonymous)** (double-click the PSE node).
+5. Switch to **Change**.
+6. For each exported certificate:
+   - **Import certificate**
+   - **Add to Certificate List**
+7. **Save** the PSE.
+8. Repeat for **`api.github.com`** if clone/pull with authentication still fails TLS.
+9. Optional: in **SMICM** → *Restart* ICM (or soft restart) if the new certificates are not picked up.
+
+If HTTPS still fails, check **SMICM** trace / **SM59** SSL errors and confirm the cipher suite
+profile allows TLS 1.2+ (Basis/admin).
+
+### 3. GitHub Personal Access Token (private repo)
+
+This repository is private. Create a GitHub **Personal Access Token (classic)** with at least
+**`repo`** scope (or a fine-grained token with read access to this repository).
+
+In abapGit, when credentials are requested:
+- **Username** = your GitHub username
+- **Password** = the **PAT** (not your GitHub login password)
+
+### 4. Create a target package
 
 - **Local / testing:** create a `$`-prefixed package, e.g. **`$DEX2FILE`** (`SE80` → dropdown
   *Package* → type the name → *Create*). `$` packages are local - no software component, no
@@ -158,18 +248,19 @@ logic).
 - **Transportable:** a normal `Z…` package with software component **`HOME`** and a transport
   request.
 
-### 3. Clone the repo
+### 5. Clone / pull from GitHub
 
 In abapGit: **+ New Online** →
-- URL: `https://github.com/aleo25672/sap-dex2file.git`
-- Branch: `main`
-- Package: your package from step 2
-- Credentials when prompted: **User** = your GitHub user, **Password** = your **PAT**.
+- **URL:** `https://github.com/aleo25672/sap-dex2file.git`
+- **Branch:** `main`
+- **Package:** your package from step 4
+- Credentials when prompted: GitHub user + **PAT**
 
-### 4. Pull & activate
+After clone, objects appear as new → **Pull**.
 
-After clone, the objects show as new → **Pull**. Then **activate**, in this order (or select all
-and mass-activate so dependencies resolve):
+### 6. Activate
+
+Activate in this order (or select all and mass-activate so dependencies resolve):
 
 1. **`ZDXF_DELTA`** (table) - first, because the classes reference it.
 2. `ZCL_DXF_*` classes.
@@ -177,7 +268,43 @@ and mass-activate so dependencies resolve):
 
 Then run `Z_CDS_EXPLORER_2_FILE` in `SE38` / `SA38`.
 
-### 5. Getting later updates
+### 7. Getting later updates
+
+When the repo changes: open it in abapGit → **Pull** → mass-activate the changed objects.
+
+abapGit, when credentials are requested:
+- **Username** = your GitHub username
+- **Password** = the **PAT** (not your GitHub login password)
+
+### 4. Create a target package
+
+- **Local / testing:** create a `$`-prefixed package, e.g. **`$DEX2FILE`** (`SE80` → dropdown
+  *Package* → type the name → *Create*). `$` packages are local - no software component, no
+  transport prompt. *(abapGit blocks the literal `$TMP`, so use a named `$…` package.)*
+- **Transportable:** a normal `Z…` package with software component **`HOME`** and a transport
+  request.
+
+### 5. Clone / pull from GitHub
+
+In abapGit: **+ New Online** →
+- **URL:** `https://github.com/aleo25672/sap-dex2file.git`
+- **Branch:** `main`
+- **Package:** your package from step 4
+- Credentials when prompted: GitHub user + **PAT**
+
+After clone, objects appear as new → **Pull**.
+
+### 6. Activate
+
+Activate in this order (or select all and mass-activate so dependencies resolve):
+
+1. **`ZDXF_DELTA`** (table) - first, because the classes reference it.
+2. `ZCL_DXF_*` classes.
+3. `Z_CDS_EXPLORER_2_FILE` (report).
+
+Then run `Z_CDS_EXPLORER_2_FILE` in `SE38` / `SA38`.
+
+### 7. Getting later updates
 
 When the repo changes: open it in abapGit → **Pull** → mass-activate the changed objects.
 
