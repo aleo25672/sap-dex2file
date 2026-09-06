@@ -67,14 +67,16 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
              ddl_up TYPE c LENGTH 40,
              obj_up TYPE c LENGTH 40,
            END OF ty_dep.
+    " VRSD-OBJNAME length is release-dependent (often 40 or 110).
+    " FAE requires LT_ENTS-NAME_UP to match VRSD-OBJNAME exactly.
     TYPES: BEGIN OF ty_ent,
-             name_up TYPE c LENGTH 40,
+             name_up TYPE vrsd-objname,
            END OF ty_ent.
     TYPES: BEGIN OF ty_vrs,
-             objname TYPE c LENGTH 40,
-             versno  TYPE n LENGTH 5,
-             datum   TYPE d,
-             zeit    TYPE t,
+             objname TYPE vrsd-objname,
+             versno  TYPE vrsd-versno,
+             datum   TYPE vrsd-datum,
+             zeit    TYPE vrsd-zeit,
            END OF ty_vrs.
 
     DATA lt_deltamap TYPE SORTED TABLE OF ty_map WITH UNIQUE KEY ent_up.
@@ -104,7 +106,7 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
     DATA lv_name    TYPE c LENGTH 40.
     DATA lv_dc      TYPE c LENGTH 20.
     DATA lv_lab     TYPE c LENGTH 60.
-    DATA lv_objname TYPE c LENGTH 40.
+    DATA lv_objname TYPE vrsd-objname.
     DATA lv_tab     TYPE ddobjname.
 
     FIELD-SYMBOLS <view> TYPE ty_view.
@@ -450,22 +452,12 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
       ENDLOOP.
 
       IF lt_ents IS NOT INITIAL.
-        " Inline result avoids TYPE vrsd-* (OBJNAME length differs by release).
-        SELECT objname, versno, datum, zeit
+        SELECT objname versno datum zeit
           FROM vrsd
-          FOR ALL ENTRIES IN @lt_ents
+          INTO TABLE lt_vrsd
+          FOR ALL ENTRIES IN lt_ents
           WHERE objtype = 'DDLS'
-            AND objname = @lt_ents-name_up
-          INTO TABLE @DATA(lt_vrsd_raw).
-
-        LOOP AT lt_vrsd_raw INTO DATA(ls_raw).
-          CLEAR ls_vrsd.
-          ls_vrsd-objname = ls_raw-objname.
-          ls_vrsd-versno  = ls_raw-versno.
-          ls_vrsd-datum   = ls_raw-datum.
-          ls_vrsd-zeit    = ls_raw-zeit.
-          APPEND ls_vrsd TO lt_vrsd.
-        ENDLOOP.
+            AND objname = lt_ents-name_up.
       ENDIF.
 
       LOOP AT lt_vrsd INTO ls_vrsd.
