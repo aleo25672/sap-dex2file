@@ -9,9 +9,11 @@
 "       2. @Semantics.systemDateTime.localInstanceLastChangedAt
 "       3. field named LastChangeDateTime (DDFIELDANNO / DD03L /
 "          DDLDEPENDENCY SQL view / DDIF_FIELDINFO_GET fallback)
-"   - Entity filters are select-option ranges (single values and CP wildcards).
+"   - Entity filters are select-option ranges (single values and CP wildcards)
+"     on CDS entity name, DDLNAME, and/or DBTABNAME (AND when several filled).
+"   - DDLNAME / DBTABNAME come from DDLDEPENDENCY (STOB / VIEW).
 "   - Last changed date/time comes from VRSD (DDLS version directory).
-CLASS zcl_dxf_catalog DEFINITION
+CLASS zevo_cl_catalog DEFINITION
   PUBLIC
   CREATE PUBLIC.
 
@@ -19,6 +21,8 @@ CLASS zcl_dxf_catalog DEFINITION
     TYPES:
       BEGIN OF ty_view,
         entity_name       TYPE c LENGTH 60,
+        ddl_name          TYPE c LENGTH 40,  " DDLNAME (DDLS source)
+        db_tabname        TYPE c LENGTH 40,  " SQL/DDIC view (DBTABNAME)
         description       TYPE c LENGTH 60,
         source_type       TYPE c LENGTH 3,
         family            TYPE c LENGTH 20,
@@ -39,15 +43,17 @@ CLASS zcl_dxf_catalog DEFINITION
       IMPORTING
         it_name_range  TYPE ty_entity_range OPTIONAL
         it_api_range   TYPE ty_entity_range OPTIONAL
+        it_ddl_range   TYPE ty_entity_range OPTIONAL
+        it_dbtab_range TYPE ty_entity_range OPTIONAL
         iv_source      TYPE clike DEFAULT 'D'
         iv_dataclass   TYPE clike DEFAULT space
-        io_delta_store TYPE REF TO zcl_dxf_delta_store OPTIONAL
+        io_delta_store TYPE REF TO zevo_cl_delta_store OPTIONAL
       RETURNING
         VALUE(rt_views) TYPE ty_views.
 ENDCLASS.
 
 
-CLASS zcl_dxf_catalog IMPLEMENTATION.
+CLASS zevo_cl_catalog IMPLEMENTATION.
 
   METHOD get_views.
 
@@ -67,6 +73,14 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
              ddl_up TYPE c LENGTH 40,
              obj_up TYPE c LENGTH 40,
            END OF ty_dep.
+    TYPES: BEGIN OF ty_ent_ddl,
+             ent_up TYPE c LENGTH 40,
+             ddl    TYPE c LENGTH 40,
+           END OF ty_ent_ddl.
+    TYPES: BEGIN OF ty_ddl_db,
+             ddl_up TYPE c LENGTH 40,
+             dbtab  TYPE c LENGTH 40,
+           END OF ty_ddl_db.
     " Last-changed via VRSD. Use RANGE (not FOR ALL ENTRIES) to avoid
     " release-dependent OBJNAME length mismatches.
     TYPES: BEGIN OF ty_vrs,
@@ -80,11 +94,15 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
     DATA lt_dcmap    TYPE SORTED TABLE OF ty_dc  WITH NON-UNIQUE KEY ent_up.
     DATA lt_labmap   TYPE SORTED TABLE OF ty_lab WITH NON-UNIQUE KEY ent_up.
     DATA lt_depmap   TYPE SORTED TABLE OF ty_dep WITH NON-UNIQUE KEY ddl_up.
+    DATA lt_ent_ddl  TYPE SORTED TABLE OF ty_ent_ddl WITH NON-UNIQUE KEY ent_up.
+    DATA lt_ddl_db   TYPE SORTED TABLE OF ty_ddl_db WITH NON-UNIQUE KEY ddl_up.
     DATA lt_latest   TYPE SORTED TABLE OF ty_vrs WITH UNIQUE KEY objname.
     DATA lt_vrsd     TYPE STANDARD TABLE OF ty_vrs WITH DEFAULT KEY.
     DATA lt_dfies    TYPE STANDARD TABLE OF dfies WITH DEFAULT KEY.
     DATA lt_api_sel  TYPE ty_entity_range.
     DATA lt_name_sel TYPE ty_entity_range.
+    DATA lt_ddl_sel  TYPE ty_entity_range.
+    DATA lt_dbt_sel  TYPE ty_entity_range.
     DATA lt_obj_rng  TYPE RANGE OF vrsd-objname.
 
     DATA ls_out    TYPE ty_view.
@@ -92,6 +110,8 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
     DATA ls_dcm    TYPE ty_dc.
     DATA ls_lbl    TYPE ty_lab.
     DATA ls_dep    TYPE ty_dep.
+    DATA ls_ed     TYPE ty_ent_ddl.
+    DATA ls_ddb    TYPE ty_ddl_db.
     DATA ls_latest TYPE ty_vrs.
     DATA ls_vrsd   TYPE ty_vrs.
     DATA ls_dfies  TYPE dfies.
@@ -129,6 +149,24 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
          AND ( ls_range-low CS '*' OR ls_range-low CS '+' ).
         ls_range-option = 'CP'.
         MODIFY lt_api_sel FROM ls_range.
+      ENDIF.
+    ENDLOOP.
+
+    lt_ddl_sel = it_ddl_range.
+    LOOP AT lt_ddl_sel INTO ls_range.
+      IF ( ls_range-option = 'EQ' OR ls_range-option = 'CP' )
+         AND ( ls_range-low CS '*' OR ls_range-low CS '+' ).
+        ls_range-option = 'CP'.
+        MODIFY lt_ddl_sel FROM ls_range.
+      ENDIF.
+    ENDLOOP.
+
+    lt_dbt_sel = it_dbtab_range.
+    LOOP AT lt_dbt_sel INTO ls_range.
+      IF ( ls_range-option = 'EQ' OR ls_range-option = 'CP' )
+         AND ( ls_range-low CS '*' OR ls_range-low CS '+' ).
+        ls_range-option = 'CP'.
+        MODIFY lt_dbt_sel FROM ls_range.
       ENDIF.
     ENDLOOP.
 
@@ -182,7 +220,7 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
     ENDLOOP.
 
     " 5) CDS DDL name <-> SQL/DDIC object via DDLDEPENDENCY
-    SELECT ddlname, objectname
+    SELECT ddlname, objecttype, objectname
       FROM ddldependency
       WHERE objecttype = 'VIEW'
          OR objecttype = 'STOB'
@@ -192,6 +230,23 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
       ls_dep-ddl_up = to_upper( CONV string( ls_dep_row-ddlname ) ).
       ls_dep-obj_up = to_upper( CONV string( ls_dep_row-objectname ) ).
       INSERT ls_dep INTO TABLE lt_depmap.
+
+      IF ls_dep_row-objecttype = 'STOB'.
+        CLEAR ls_ed.
+        ls_ed-ent_up = ls_dep-obj_up.
+        ls_ed-ddl    = ls_dep_row-ddlname.
+        INSERT ls_ed INTO TABLE lt_ent_ddl.
+        " DDL source name itself often equals the CDS entity for API DDLSs.
+        CLEAR ls_ed.
+        ls_ed-ent_up = ls_dep-ddl_up.
+        ls_ed-ddl    = ls_dep_row-ddlname.
+        INSERT ls_ed INTO TABLE lt_ent_ddl.
+      ELSEIF ls_dep_row-objecttype = 'VIEW'.
+        CLEAR ls_ddb.
+        ls_ddb-ddl_up = ls_dep-ddl_up.
+        ls_ddb-dbtab  = ls_dep_row-objectname.
+        INSERT ls_ddb INTO TABLE lt_ddl_db.
+      ENDIF.
 
       READ TABLE lt_deltamap INTO ls_m WITH TABLE KEY ent_up = ls_dep-obj_up.
       IF sy-subrc = 0.
@@ -486,6 +541,32 @@ CLASS zcl_dxf_catalog IMPLEMENTATION.
           <view>-last_changed_time = ls_latest-zeit.
         ENDIF.
       ENDLOOP.
+    ENDIF.
+
+    " ------------------------------------------------------------------
+    " Enrich DDLNAME / DBTABNAME and apply optional filters
+    " ------------------------------------------------------------------
+    LOOP AT rt_views ASSIGNING <view>.
+      lv_ent_up = to_upper( <view>-entity_name ).
+      READ TABLE lt_ent_ddl INTO ls_ed WITH KEY ent_up = lv_ent_up.
+      IF sy-subrc = 0.
+        <view>-ddl_name = ls_ed-ddl.
+      ELSE.
+        " Fallback: entity name is often the DDL source name (esp. API DDLS).
+        <view>-ddl_name = <view>-entity_name.
+      ENDIF.
+
+      READ TABLE lt_ddl_db INTO ls_ddb WITH KEY ddl_up = to_upper( <view>-ddl_name ).
+      IF sy-subrc = 0.
+        <view>-db_tabname = ls_ddb-dbtab.
+      ENDIF.
+    ENDLOOP.
+
+    IF lt_ddl_sel IS NOT INITIAL.
+      DELETE rt_views WHERE ddl_name NOT IN lt_ddl_sel.
+    ENDIF.
+    IF lt_dbt_sel IS NOT INITIAL.
+      DELETE rt_views WHERE db_tabname NOT IN lt_dbt_sel.
     ENDIF.
 
   ENDMETHOD.

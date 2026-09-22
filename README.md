@@ -34,7 +34,7 @@ Delta is **timestamp-based** (not true CDC). For each view, remember the **high-
 of the last extraction, and next time only pull rows changed after it.
 
 ### 1. Finding the change-timestamp field
-On discovery (`ZCL_DXF_CATALOG`), the tool resolves each view's **change-timestamp element** in
+On discovery (`ZEVO_CL_CATALOG`), the tool resolves each view's **change-timestamp element** in
 this order (first match wins):
 
 1. Field annotated **`@Semantics.systemDateTime.lastChangedAt`** (`DDFIELDANNO`) - common on DEX
@@ -47,18 +47,18 @@ If found, the view is **delta-capable**. The display list shows the field name i
 delta isn't possible for that view.
 
 ### 2. The high-water store
-The last extracted position per view is kept in table **`ZDXF_DELTA`**
-(`VIEWNAME → LAST_TS`, plus who/when), read & written by `ZCL_DXF_DELTA_STORE`.
+The last extracted position per view is kept in table **`ZEVO_DELTA`**
+(`VIEWNAME → LAST_TS`, plus who/when), read & written by `ZEVO_CL_DELTA_STORE`.
 
 ### 3. A run
-When you extract with **Mode = Delta** (`ZCL_DXF_EXTRACTOR`):
+When you extract with **Mode = Delta** (`ZEVO_CL_EXTRACTOR`):
 
 1. Read the stored high-water `LAST_TS` for the view (a view never extracted → `0`).
 2. Capture **"now"** at the *start* of the run - this becomes the **new** high-water.
 3. `SELECT * FROM (entity) WHERE <ts field> > <LAST_TS>` - i.e. only rows changed since last time.
    *(First delta run, `LAST_TS = 0` → selects everything = an initial load.)*
 4. Write the file. **Only after a successful write**, store the new high-water (step 2) back to
-   `ZDXF_DELTA`. If the write fails, the marker is **not** advanced, so nothing is lost.
+   `ZEVO_DELTA`. If the write fails, the marker is **not** advanced, so nothing is lost.
 
 Because the new high-water is "now-at-start" (not the max timestamp seen), rows changed *during*
 the run are simply re-read next time - safer than risking a gap.
@@ -69,7 +69,7 @@ from the full-load point.
 ### Resetting delta
 - **Re-baseline:** run a **Full** load - it resets the marker to now; the next delta returns only
   later changes.
-- **Re-extract everything as delta:** delete the view's row in `ZDXF_DELTA` (`SE16N`) → next delta
+- **Re-extract everything as delta:** delete the view's row in `ZEVO_DELTA` (`SE16N`) → next delta
   sees `LAST_TS = 0` and selects all.
 
 ### Limits (be aware)
@@ -79,20 +79,30 @@ from the full-load point.
 - ✅ **No ODP RFC.** Deliberately avoids the ODP replication API (`RODPS_REPL_ODP_*`), which
   **SAP Note 3255746** restricts for custom use - so no gray-area dependency.
 - The change-timestamp field's data type governs the `WHERE` literal; if a view's delta returns
-  nothing or errors, its timestamp type may need a small tweak in `ZCL_DXF_EXTRACTOR`.
+  nothing or errors, its timestamp type may need a small tweak in `ZEVO_CL_EXTRACTOR`.
+
+## Naming convention
+
+All custom ABAP objects use the **`ZEVO`** prefix:
+
+| Kind | Pattern | Example |
+|------|---------|---------|
+| Report | `ZEVO_*` | `ZEVO_CDS_EXPLORER_2_FILE` |
+| Class | `ZEVO_CL_*` | `ZEVO_CL_CATALOG` |
+| Table | `ZEVO_*` | `ZEVO_DELTA` |
 
 ## Objects
 
 | Object | Type | Purpose |
 |--------|------|---------|
-| `Z_CDS_EXPLORER_2_FILE` | report | selection screen + `CL_SALV_TABLE` grid + extract/download |
-| `ZCL_DXF_CATALOG` | class | discover DEX (`IXTRCTNENBLDVW`) and/or API CDS (`TADIR`/`DDLS`) + resolve delta field (annotation or `LastChangeDateTime`) |
-| `ZCL_DXF_EXTRACTOR` | class | dynamic `SELECT * FROM (entity)` - full, or delta `WHERE ts > last` |
-| `ZCL_DXF_FILE_WRITER` | class | serialize the table → delimited text → `gui_download` / `OPEN DATASET` |
-| `ZCL_DXF_DELTA_STORE` | class | read/update the last-run high-water per view |
-| `ZDXF_DELTA` | table | delta high-water per view (`VIEWNAME` → `LAST_TS`) |
+| `ZEVO_CDS_EXPLORER_2_FILE` | report | selection screen + `CL_SALV_TABLE` grid + extract/download |
+| `ZEVO_CL_CATALOG` | class | discover DEX (`IXTRCTNENBLDVW`) and/or API CDS (`TADIR`/`DDLS`) + resolve delta field (annotation or `LastChangeDateTime`) + map `DDLNAME` / `DBTABNAME` via `DDLDEPENDENCY` |
+| `ZEVO_CL_EXTRACTOR` | class | dynamic `SELECT * FROM (entity)` - full, or delta `WHERE ts > last` |
+| `ZEVO_CL_FILE_WRITER` | class | serialize the table → delimited text → `gui_download` / `OPEN DATASET` |
+| `ZEVO_CL_DELTA_STORE` | class | read/update the last-run high-water per view |
+| `ZEVO_DELTA` | table | delta high-water per view (`VIEWNAME` → `LAST_TS`) |
 
-## Using `Z_CDS_EXPLORER_2_FILE`
+## Using `ZEVO_CDS_EXPLORER_2_FILE`
 
 Run in SAP GUI (`SE38` / `SA38`).
 
@@ -101,8 +111,10 @@ Selection screen:
 | Field | Meaning |
 |-------|---------|
 | **Source type** | *DEX* / *API CDS* / *Both* |
-| **DEX entity** | select-options (**case-sensitive**): one / multiple / `*` wildcards; blank = all DEX |
-| **API CDS entity** | select-options (**case-sensitive**): one / multiple / `*` wildcards; **blank = `I_*API*`** |
+| **CDS entity** | select-options (**case-sensitive**): entity name; blank = all for the source |
+| **DDLNAME** | select-options (**case-sensitive**): CDS DDL source name (`DDLDEPENDENCY-DDLNAME`) |
+| **DBTABNAME** | select-options (**case-sensitive**): SQL/DDIC view name (`DDLDEPENDENCY` object type `VIEW`) |
+| **API CDS entity** | select-options (**case-sensitive**): used when Source includes API; **blank = `I_*API*`** |
 | **Data class** | *All* / *Master data* / *Transactional* - from `@ObjectModel.usageType.dataClass`, **not** the `I_`/`C_` prefix |
 | **Action** | *Display list only* / *Extract to file* - runs on the filtered set |
 | **Mode** | *Full load* / *Delta (change timestamp)* |
@@ -113,7 +125,9 @@ Selection screen:
 | **Logical file name** | a logical file name from transaction **`FILE`**; when set, it resolves the path via `FILE_GET_NAME` (server) and **overrides** the folder |
 | **Max rows** | cap per view (`0` = unlimited) - guard for frontend download limits |
 
-- **Display** → grid of views: entity, description, **source (DEX/API)**, data class, CDC flag,
+Filled filters are combined with **AND** (empty = ignore that dimension). `*` / `+` wildcards are supported.
+
+- **Display** → grid of views: entity, **DDLNAME**, **DBTABNAME**, description, **source (DEX/API)**, data class, CDC flag,
   **LastChangeDateTime** (field name when present), **Has change TS**,
   **Last changed on/at** (from `VRSD` version directory — useful to compare `A_*` vs `A_*_2`),
   last delta position. (ALV **Export** is enabled via `set_all`.)
@@ -152,7 +166,7 @@ All entities in one run share the same timestamp stamp. A logical file name from
 After each extract, the report also writes a sidecar summary next to the data files:
 
 ```text
-zdxf_run_<YYYYMMDD>_<HHMMSS>.ok
+zevo_run_<YYYYMMDD>_<HHMMSS>.ok
 ```
 
 Contents (line-oriented, easy to parse):
@@ -194,7 +208,7 @@ External apps should wait for the `.ok` file, then load the listed data files.
   etc.). The report resolves it per view with `FILE_GET_NAME`. This is the recommended way to keep
   paths out of the code / consistent across systems; it implies the app-server target.
 - **Parameterized views** can't be `SELECT`ed without parameter values; extraction of such a view
-  returns an error row rather than dumping (caught in `ZCL_DXF_EXTRACTOR`).
+  returns an error row rather than dumping (caught in `ZEVO_CL_EXTRACTOR`).
 - Release dependencies to confirm: tables `IXTRCTNENBLDVW`, `DDFIELDANNO`, `DD03L`, `DDLDEPENDENCY`,
   `TADIR`; FM `DDIF_FIELDINFO_GET`; the exact annotation `NAME` values for last-changed semantics;
   and that API / `A_*` entities expose `LastChangeDateTime` when the annotation is absent.
@@ -242,7 +256,7 @@ In abapGit, when credentials are requested:
 
 ### 4. Create a target package
 
-- **Local / testing:** create a `$`-prefixed package, e.g. **`$DEX2FILE`** (`SE80` → dropdown
+- **Local / testing:** create a `$`-prefixed package, e.g. **`$ZEVO`** (`SE80` → dropdown
   *Package* → type the name → *Create*). `$` packages are local - no software component, no
   transport prompt. *(abapGit blocks the literal `$TMP`, so use a named `$…` package.)*
 - **Transportable:** a normal `Z…` package with software component **`HOME`** and a transport
@@ -262,16 +276,18 @@ After clone, objects appear as new → **Pull**.
 
 Activate in this order (or select all and mass-activate so dependencies resolve):
 
-1. **`ZDXF_DELTA`** (table) - first, because the classes reference it.
-2. `ZCL_DXF_*` classes.
-3. `Z_CDS_EXPLORER_2_FILE` (report).
+1. **`ZEVO_DELTA`** (table) - first, because the classes reference it.
+2. `ZEVO_CL_*` classes.
+3. `ZEVO_CDS_EXPLORER_2_FILE` (report).
 
-Then run `Z_CDS_EXPLORER_2_FILE` in `SE38` / `SA38`.
+After a rename from older `Z_CDS_*` / `ZCL_DXF_*` / `ZDXF_*` objects: delete the old objects (or let abapGit remove them), then pull/activate the `ZEVO*` ones.
+
+Then run `ZEVO_CDS_EXPLORER_2_FILE` in `SE38` / `SA38`.
 
 If activation says **"The REPORT/PROGRAM statement is missing, or the program type is INCLUDE"**:
 
-1. `SE38` → `Z_CDS_EXPLORER_2_FILE` → **Attributes** → **Type** must be **Executable program (1)**, not Include.
-2. Open the source and confirm the first statement is `REPORT Z_CDS_EXPLORER_2_FILE.`
+1. `SE38` → `ZEVO_CDS_EXPLORER_2_FILE` → **Attributes** → **Type** must be **Executable program (1)**, not Include.
+2. Open the source and confirm the first statement is `REPORT ZEVO_CDS_EXPLORER_2_FILE.`
 3. If type/source still wrong after a rename or partial pull: **delete** the program in `SE80`/`SE38`, then abapGit **Pull** again so it is recreated as type 1 with full source.
 
 ### 7. Getting later updates

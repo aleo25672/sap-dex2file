@@ -3,9 +3,9 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <VSEOCLASS>
-    <CLSNAME>ZCL_DXF_DELTA_STORE</CLSNAME>
+    <CLSNAME>ZEVO_CL_FILE_WRITER</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>DEX2FILE - delta high-water store</DESCRIPT>
+    <DESCRIPT>ZEVO CDS Explorer - serialize table to delimited file</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>

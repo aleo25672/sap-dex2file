@@ -3,9 +3,9 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <VSEOCLASS>
-    <CLSNAME>ZCL_DXF_CATALOG</CLSNAME>
+    <CLSNAME>ZEVO_CL_EXTRACTOR</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>DEX2FILE - discover DEX/API CDS + delta field</DESCRIPT>
+    <DESCRIPT>ZEVO CDS Explorer - extract CDS data (full / delta)</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>

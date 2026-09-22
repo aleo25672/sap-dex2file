@@ -3,7 +3,7 @@
 "   Delta : SELECT * FROM (entity) WHERE <change-ts field> > <last high-water>
 " Returns a ref to the table + row count + the new high-water (captured at run
 " start, so a later delta never misses concurrent changes).
-CLASS zcl_dxf_extractor DEFINITION
+CLASS zevo_cl_extractor DEFINITION
   PUBLIC
   CREATE PUBLIC.
 
@@ -34,7 +34,7 @@ CLASS zcl_dxf_extractor DEFINITION
 ENDCLASS.
 
 
-CLASS zcl_dxf_extractor IMPLEMENTATION.
+CLASS zevo_cl_extractor IMPLEMENTATION.
 
   METHOD extract.
     IF iv_delta = abap_true AND iv_ts_field IS INITIAL.

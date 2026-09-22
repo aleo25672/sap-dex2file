@@ -1,4 +1,4 @@
-REPORT Z_CDS_EXPLORER_2_FILE.
+REPORT ZEVO_CDS_EXPLORER_2_FILE.
 * Discover DEX/API CDS views; display or extract FULL/DELTA to file.
 * Action applies to all rows matching the selection-screen filter.
 
@@ -12,11 +12,14 @@ PARAMETERS p_both RADIOBUTTON GROUP src.              " Both
 SELECTION-SCREEN END OF BLOCK b_src.
 
 SELECTION-SCREEN BEGIN OF BLOCK b_sel WITH FRAME TITLE TEXT-b01.
-" Select-options: one entity, multiple values, or * / + patterns.
+" Select-options: one value, multiple values, or * / + patterns.
 " LOWER CASE = case-sensitive (no automatic uppercase conversion).
+" Filters combine with AND when several are filled (empty = ignore).
 DATA gv_entity TYPE c LENGTH 40.
-SELECT-OPTIONS s_name FOR gv_entity NO INTERVALS LOWER CASE.  " DEX entities
-SELECT-OPTIONS s_api  FOR gv_entity NO INTERVALS LOWER CASE.  " API CDS; empty = I_*API*
+SELECT-OPTIONS s_name  FOR gv_entity NO INTERVALS LOWER CASE.  " CDS entity
+SELECT-OPTIONS s_ddl   FOR gv_entity NO INTERVALS LOWER CASE.  " DDLNAME (DDLS)
+SELECT-OPTIONS s_dbtab FOR gv_entity NO INTERVALS LOWER CASE.  " DBTABNAME (SQL view)
+SELECT-OPTIONS s_api   FOR gv_entity NO INTERVALS LOWER CASE.  " API CDS; empty = I_*API*
 SELECTION-SCREEN END OF BLOCK b_sel.
 
 SELECTION-SCREEN BEGIN OF BLOCK b_fam WITH FRAME TITLE TEXT-b05.
@@ -67,11 +70,11 @@ CLASS lcl_app DEFINITION CREATE PUBLIC.
       ty_res_tab TYPE STANDARD TABLE OF ty_res WITH DEFAULT KEY,
       ty_lines   TYPE STANDARD TABLE OF string WITH DEFAULT KEY.
 
-    DATA mt_views TYPE zcl_dxf_catalog=>ty_views.
+    DATA mt_views TYPE zevo_cl_catalog=>ty_views.
 
     METHODS display_grid.
     METHODS extract_all
-      IMPORTING io_store TYPE REF TO zcl_dxf_delta_store.
+      IMPORTING io_store TYPE REF TO zevo_cl_delta_store.
     METHODS show_results
       IMPORTING it_res TYPE ty_res_tab.
     METHODS write_run_ok
@@ -103,16 +106,18 @@ CLASS lcl_app IMPLEMENTATION.
       ENDIF.
     ENDIF.
 
-    DATA(lo_store) = NEW zcl_dxf_delta_store( ).
+    DATA(lo_store) = NEW zevo_cl_delta_store( ).
     DATA(lv_dc) = COND string( WHEN p_mast = abap_true THEN `M`
                                WHEN p_tran = abap_true THEN `T`
                                ELSE ` ` ).
     DATA(lv_src) = COND string( WHEN p_api  = abap_true THEN `A`
                                 WHEN p_both = abap_true THEN `B`
                                 ELSE `D` ).
-    mt_views = NEW zcl_dxf_catalog( )->get_views(
+    mt_views = NEW zevo_cl_catalog( )->get_views(
       it_name_range  = s_name[]
       it_api_range   = s_api[]
+      it_ddl_range   = s_ddl[]
+      it_dbtab_range = s_dbtab[]
       iv_source      = lv_src
       iv_dataclass   = lv_dc
       io_delta_store = lo_store ).
@@ -144,6 +149,8 @@ CLASS lcl_app IMPLEMENTATION.
     DATA(lo_cols) = lo_alv->get_columns( ).
     lo_cols->set_optimize( abap_true ).
     set_col_text( io_cols = lo_cols iv_col = 'ENTITY_NAME'    iv_text = 'CDS Entity' ).
+    set_col_text( io_cols = lo_cols iv_col = 'DDL_NAME'       iv_text = 'DDLNAME' ).
+    set_col_text( io_cols = lo_cols iv_col = 'DB_TABNAME'     iv_text = 'DBTABNAME' ).
     set_col_text( io_cols = lo_cols iv_col = 'DESCRIPTION'    iv_text = 'Description' ).
     set_col_text( io_cols = lo_cols iv_col = 'SOURCE_TYPE'    iv_text = 'Source' ).
     set_col_text( io_cols = lo_cols iv_col = 'FAMILY'         iv_text = 'Data class' ).
@@ -163,8 +170,8 @@ CLASS lcl_app IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD extract_all.
-    DATA(lo_ext)   = NEW zcl_dxf_extractor( ).
-    DATA(lo_wr)    = NEW zcl_dxf_file_writer( ).
+    DATA(lo_ext)   = NEW zevo_cl_extractor( ).
+    DATA(lo_wr)    = NEW zevo_cl_file_writer( ).
     DATA(lv_delta) = xsdbool( p_delta = abap_true ).
 
     " separator + file extension from the chosen format
@@ -330,7 +337,7 @@ CLASS lcl_app IMPLEMENTATION.
              TO lt_lines.
     ENDLOOP.
 
-    DATA(lv_ok_path) = |{ iv_folder }zdxf_run_{ sy-datum }_{ sy-uzeit }.ok|.
+    DATA(lv_ok_path) = |{ iv_folder }zevo_run_{ sy-datum }_{ sy-uzeit }.ok|.
     IF write_text_file( it_lines = lt_lines iv_path = lv_ok_path iv_server = iv_server ) = abap_false.
       MESSAGE |Could not write run summary { lv_ok_path }| TYPE 'S' DISPLAY LIKE 'W'.
     ELSEIF sy-batch = abap_true.
