@@ -7,6 +7,10 @@ a **full** load (`SELECT *`) or a **timestamp-based delta** (changes since the l
 Companion to [`sap-dex2odata`](../sap-dex2odata) (which exposes views as OData services);
 this one extracts straight to a file instead.
 
+**Also in this repo:** a generic **OData V2** extract service (`ExtractCds` / `GetCdsMetadata`) that
+accepts a CDS name + OData `$filter`, supports pagination and caller-managed delta, and returns
+JSON or XML. See **[docs/ZEVO_ODATA_EXTRACT.md](docs/ZEVO_ODATA_EXTRACT.md)**.
+
 ## Source types
 
 On the selection screen, **Source type** chooses what to discover:
@@ -97,10 +101,19 @@ All custom ABAP objects use the **`ZEVO`** prefix:
 |--------|------|---------|
 | `ZEVO_CDS_EXPLORER_2_FILE` | report | selection screen + `CL_SALV_TABLE` grid + extract/download |
 | `ZEVO_CL_CATALOG` | class | discover DEX (`IXTRCTNENBLDVW`) and/or API CDS (`TADIR`/`DDLS`) + resolve delta field (annotation or `LastChangeDateTime`) + map `DDLNAME` / `DBTABNAME` via `DDLDEPENDENCY` |
-| `ZEVO_CL_EXTRACTOR` | class | dynamic `SELECT * FROM (entity)` - full, or delta `WHERE ts > last` |
+| `ZEVO_CL_EXTRACTOR` | class | dynamic `SELECT * FROM (entity)` - full, or delta `WHERE ts > last`; `extract_ex` adds filter + Skip/Top |
 | `ZEVO_CL_FILE_WRITER` | class | serialize the table → delimited text → `gui_download` / `OPEN DATASET` |
 | `ZEVO_CL_DELTA_STORE` | class | read/update the last-run high-water per view |
-| `ZEVO_DELTA` | table | delta high-water per view (`VIEWNAME` → `LAST_TS`) |
+| `ZEVO_DELTA` | table | delta high-water per view (`VIEWNAME` → `LAST_TS`) — **file report only** |
+| `ZEVO_CL_FILTER_PARSER` | class | OData `$filter` → OpenSQL `WHERE` |
+| `ZEVO_CL_SERIALIZER` | class | CDS extract / metadata → JSON or XML envelope |
+| `ZEVO_CL_CDS_META` | class | per-entity fields, keys, DDL/DBTAB, delta field |
+| `ZEVO_CL_ODATA_API` | class | facade for `ExtractCds` / `GetCdsMetadata` |
+| `ZEVO_CL_ODATA_MPC` | class | Gateway model provider (function imports) |
+| `ZEVO_CL_ODATA_DPC` | class | Gateway data provider |
+
+OData setup, URL examples, `$filter` grammar, and pagination/delta protocol:
+**[docs/ZEVO_ODATA_EXTRACT.md](docs/ZEVO_ODATA_EXTRACT.md)**.
 
 ## Using `ZEVO_CDS_EXPLORER_2_FILE`
 
@@ -277,8 +290,9 @@ After clone, objects appear as new → **Pull**.
 Activate in this order (or select all and mass-activate so dependencies resolve):
 
 1. **`ZEVO_DELTA`** (table) - first, because the classes reference it.
-2. `ZEVO_CL_*` classes.
+2. `ZEVO_CL_*` classes (including OData helpers; MPC/DPC need Gateway `/IWBEP/*`).
 3. `ZEVO_CDS_EXPLORER_2_FILE` (report).
+4. For the OData service: register/activate per [docs/ZEVO_ODATA_EXTRACT.md](docs/ZEVO_ODATA_EXTRACT.md).
 
 After a rename from older `Z_CDS_*` / `ZCL_DXF_*` / `ZDXF_*` objects: delete the old objects (or let abapGit remove them), then pull/activate the `ZEVO*` ones.
 
