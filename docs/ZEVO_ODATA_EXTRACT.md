@@ -159,8 +159,8 @@ Runs `SELECT` on the CDS entity with optional filter, optional delta, and pagina
 | `Filter` | string | no | OData `$filter` expression (see below) |
 | `Format` | string | no | `json` (default) or `xml` — **content of Payload**, not the OData envelope |
 | `DeltaSince` | string | no | If set, only rows with change-ts **>** this value (caller-managed delta) |
-| `Skip` | int32 | no | Offset (default `0`) |
-| `Top` | int32 | no | Page size (default `1000`, max `10000`) |
+| `Skip` | string | no | Offset (default `0`) — quoted, e.g. `Skip='0'` (`Edm.String`) |
+| `Top` | string | no | Page size (default `1000`, max `10000`) — quoted, e.g. `Top='500'` |
 
 ### Examples
 
