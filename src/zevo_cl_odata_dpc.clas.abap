@@ -72,7 +72,7 @@ CLASS zevo_cl_odata_dpc IMPLEMENTATION.
         IF lv_top_s IS NOT INITIAL.
           lv_top = lv_top_s.
         ELSE.
-          lv_top = zevo_cl_extractor=>c_default_top.
+          lv_top = 1000.
         ENDIF.
 
         ls_resp = zevo_cl_odata_api=>extract_cds(

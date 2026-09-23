@@ -123,7 +123,7 @@ CLASS zevo_cl_odata_api IMPLEMENTATION.
 
     lv_top = iv_top.
     IF lv_top <= 0.
-      lv_top = zevo_cl_extractor=>c_default_top.
+      lv_top = 1000.
     ENDIF.
 
     CREATE OBJECT lo_extr.
