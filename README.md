@@ -185,7 +185,7 @@ What the DPC method does:
 ```http
 GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/$metadata
 GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/GetCdsMetadata?EntityName='I_SalesOrderPartner'&$format=json
-GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds?EntityName='I_SalesOrderPartner'&Format='json'&Skip=0&Top=10&$format=json
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds?EntityName='I_SalesOrderPartner'&Format='json'&Skip='0'&Top='10'&$format=json
 ```
 
 #### Path B — optional note
@@ -280,8 +280,8 @@ Runs `SELECT` on the CDS entity with optional filter, optional delta, and pagina
 | `Filter` | string | no | OData `$filter` expression (see below) |
 | `Format` | string | no | `json` (default) or `xml` — **content of Payload**, not the OData envelope |
 | `DeltaSince` | string | no | If set, only rows with change-ts **>** this value (caller-managed delta) |
-| `Skip` | int32 | no | Offset (default `0`) |
-| `Top` | int32 | no | Page size (default `1000`, max `10000`) |
+| `Skip` | string | no | Offset (default `0`) — pass as **quoted** string, e.g. `Skip='0'` (`Edm.String`) |
+| `Top` | string | no | Page size (default `1000`, max `10000`) — pass as **quoted** string, e.g. `Top='500'` |
 
 #### Examples
 
@@ -291,8 +291,8 @@ Runs `SELECT` on the CDS entity with optional filter, optional delta, and pagina
 GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
   ?EntityName='I_SalesOrderPartner'
   &Format='json'
-  &Skip=0
-  &Top=500
+  &Skip='0'
+  &Top='500'
   &$format=json
 ```
 
@@ -303,7 +303,7 @@ GET .../ExtractCds
   ?EntityName='I_SalesOrderPartner'
   &Filter='PartnerFunction eq ''WE'''
   &Format='json'
-  &Top=500
+  &Top='500'
 ```
 
 > In OData URLs, string literals use single quotes; embed a quote by doubling (`''`).
@@ -314,8 +314,8 @@ GET .../ExtractCds
 GET .../ExtractCds
   ?EntityName='C_PurchaseOrderItemDEX'
   &DeltaSince='20260101000000'
-  &Skip=0
-  &Top=1000
+  &Skip='0'
+  &Top='1000'
   &Format='json'
 ```
 
@@ -369,7 +369,7 @@ GET .../ExtractCds
 
 Synchronous only: each HTTP call returns one page.
 
-1. Call with `Skip=0`, `Top=1000` (or your size ≤ 10000).
+1. Call with `Skip='0'`, `Top='1000'` (or your size ≤ 10000).
 2. Read `totalCount` and `rowCount` from Payload.
 3. While `skip + rowCount < totalCount`, call again with `Skip = skip + top`.
 4. Stop when a page returns `rowCount = 0` or `skip >= totalCount`.
