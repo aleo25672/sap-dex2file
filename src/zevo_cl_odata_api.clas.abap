@@ -64,9 +64,12 @@ CLASS zevo_cl_odata_api IMPLEMENTATION.
     IF lv_format IS INITIAL.
       lv_format = 'json'.
     ENDIF.
-    IF lv_format <> 'json' AND lv_format <> 'xml'.
+    IF lv_format <> 'json'
+       AND lv_format <> 'xml'
+       AND lv_format <> 'jsonrows'
+       AND lv_format <> 'xmlrows'.
       rs_resp-status  = 'E'.
-      rs_resp-message = |Format must be json or xml, got '{ lv_format }'|.
+      rs_resp-message = |Format must be json, xml, jsonrows, or xmlrows, got '{ lv_format }'|.
       RETURN.
     ENDIF.
 

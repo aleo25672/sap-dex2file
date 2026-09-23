@@ -9,7 +9,7 @@ Generic **OData V2** service that extracts any selectable CDS entity on **SAP S/
 |------------|-----------|
 | Pass CDS entity name | Yes (`EntityName`) |
 | OData `$filter` syntax | Yes (subset → OpenSQL `WHERE`) |
-| JSON or XML payload | Yes (`Format=json\|xml`) |
+| JSON or XML payload | Yes (`Format=json\|xml\|jsonrows\|xmlrows`) |
 | Pagination | Yes (`Skip` / `Top` + `totalCount`) |
 | Delta | Yes — **caller-managed** via `DeltaSince` (no `ZEVO_DELTA` table writes) |
 | Service `$metadata` | Yes (standard Gateway) |
@@ -28,7 +28,7 @@ Client
   │
   ├─ GET .../ZEVO_CDS_EXTRACT_SRV/$metadata          ← service contract
   ├─ GET .../GetCdsMetadata?...                      ← CDS fields / keys / delta field
-  └─ GET .../ExtractCds?...                          ← paged data (json|xml inside Payload)
+  └─ GET .../ExtractCds?...                          ← paged data (json|xml|jsonrows|xmlrows inside Payload)
          │
          ▼
   ZEVO_CL_ODATA_DPC  →  ZEVO_CL_ODATA_API
@@ -157,14 +157,23 @@ Runs `SELECT` on the CDS entity with optional filter, optional delta, and pagina
 |------|------|----------|-------------|
 | `EntityName` | string | yes | CDS entity name |
 | `Filter` | string | no | OData `$filter` expression (see below) |
-| `Format` | string | no | `json` (default) or `xml` — **content of Payload**, not the OData envelope |
+| `Format` | string | no | `json` (default), `xml`, `jsonrows`, or `xmlrows` — **content of Payload**, not the OData envelope |
 | `DeltaSince` | string | no | If set, only rows with change-ts **>** this value (caller-managed delta) |
 | `Skip` | string | no | Offset (default `0`) — quoted, e.g. `Skip='0'` (`Edm.String`) |
 | `Top` | string | no | Page size (default `1000`, max `10000`) — quoted, e.g. `Top='500'` |
 
+| `Format` value | `Payload` content |
+|----------------|-------------------|
+| `json` (default) | Full extract envelope (entity, counts, `data` array, …) |
+| `xml` | Same envelope as XML |
+| `jsonrows` | **Rows only** — a JSON array `[ {...}, ... ]` |
+| `xmlrows` | **Rows only** — `<data><item>…</item>…</data>` |
+
+> Use `json` / `xml` when you need `totalCount` for paging or `maxChangedAt` for delta. Use `jsonrows` / `xmlrows` when the client only wants the row payload.
+
 ### Examples
 
-**Full page (JSON data):**
+**Full page (JSON envelope):**
 
 ```http
 GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
@@ -174,6 +183,19 @@ GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
   &Top='500'
   &$format=json
 ```
+
+**Rows only (JSON array in Payload):**
+
+```http
+GET .../ExtractCds
+  ?EntityName='C_PurchaseOrderDEX'
+  &Format='jsonrows'
+  &Skip='0'
+  &Top='10'
+  &$format=json
+```
+
+`Payload` is then e.g. `[{ "PurchaseOrder": "4500000001", ... }, ...]` — parse with `JSON.parse(d.Payload)` (no `.data` unwrap).
 
 **With $filter:**
 
@@ -223,6 +245,14 @@ GET .../ExtractCds
 | `maxChangedAt` | Max change-ts **in this page** — store for next `DeltaSince` |
 | `data` | Array of row objects |
 
+### Extract Payload (`Format=jsonrows`)
+
+```json
+[ { "purchaseOrder": "4500000001", "...": "..." }, { "...": "..." } ]
+```
+
+No envelope — `Payload` is the array alone.
+
 ### Extract Payload (XML)
 
 ```xml
@@ -242,16 +272,27 @@ GET .../ExtractCds
 </extract>
 ```
 
+### Extract Payload (`Format=xmlrows`)
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<data>
+  <item>...</item>
+</data>
+```
+
 ---
 
 ## Pagination protocol
 
 Synchronous only: each HTTP call returns one page.
 
-1. Call with `Skip='0'`, `Top='1000'` (or your size ≤ 10000).
+1. Call with `Skip='0'`, `Top='1000'` (or your size ≤ 10000) and `Format='json'` (or `xml`) so the envelope includes counts.
 2. Read `totalCount` and `rowCount` from Payload.
 3. While `skip + rowCount < totalCount`, call again with `Skip = skip + top`.
 4. Stop when a page returns `rowCount = 0` or `skip >= totalCount`.
+
+`Format=jsonrows` / `xmlrows` omit paging metadata — use them when you already know the page size or do not need `totalCount`.
 
 Paging uses `ORDER BY` key fields (DDIC keys, else first component) + SQL `OFFSET` / `UP TO` for stable pages.
 

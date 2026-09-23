@@ -1,4 +1,4 @@
-" Serialize a dynamic internal table (and optional envelope fields) to JSON or XML.
+" Serialize a dynamic internal table to JSON/XML (full envelope or rows-only).
 CLASS zevo_cl_serializer DEFINITION
   PUBLIC
   CREATE PUBLIC.
@@ -71,49 +71,72 @@ CLASS zevo_cl_serializer IMPLEMENTATION.
       ASSIGN ir_data->* TO <lt>.
     ENDIF.
 
-    IF lv_fmt = 'xml'.
-      DATA(lv_items) = ``.
-      IF ir_data IS BOUND.
-        lv_items = table_to_xml_items( ir_data ).
-      ENDIF.
-      rv_payload =
-        |<?xml version="1.0" encoding="utf-8"?>| &&
-        |<extract>| &&
-        |<entity>{ xml_escape( iv_entity ) }</entity>| &&
-        |<format>xml</format>| &&
-        |<rowCount>{ iv_row_count }</rowCount>| &&
-        |<totalCount>{ iv_total_count }</totalCount>| &&
-        |<skip>{ iv_skip }</skip>| &&
-        |<top>{ iv_top }</top>| &&
-        |<deltaField>{ xml_escape( iv_delta_field ) }</deltaField>| &&
-        |<maxChangedAt>{ xml_escape( iv_max_changed_at ) }</maxChangedAt>| &&
-        |<data>{ lv_items }</data>| &&
-        |</extract>|.
-      RETURN.
-    ENDIF.
-
     DATA lv_data_json TYPE string.
-    IF ir_data IS BOUND.
-      lv_data_json = /ui2/cl_json=>serialize(
-        data        = <lt>
-        compress    = abap_false
-        pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
-    ELSE.
-      lv_data_json = `[]`.
-    ENDIF.
+    DATA lv_items     TYPE string.
 
-    rv_payload =
-      |\{| &&
-      |"entity":"{ json_escape( iv_entity ) }",| &&
-      |"format":"json",| &&
-      |"rowCount":{ iv_row_count },| &&
-      |"totalCount":{ iv_total_count },| &&
-      |"skip":{ iv_skip },| &&
-      |"top":{ iv_top },| &&
-      |"deltaField":"{ json_escape( iv_delta_field ) }",| &&
-      |"maxChangedAt":"{ json_escape( iv_max_changed_at ) }",| &&
-      |"data":{ lv_data_json }| &&
-      |\}|.
+    CASE lv_fmt.
+      WHEN 'xml' OR 'xmlrows'.
+        CLEAR lv_items.
+        IF ir_data IS BOUND.
+          lv_items = table_to_xml_items( ir_data ).
+        ENDIF.
+        IF lv_fmt = 'xmlrows'.
+          " Rows only — minimal <data> root so Payload is well-formed XML.
+          rv_payload =
+            |<?xml version="1.0" encoding="utf-8"?>| &&
+            |<data>{ lv_items }</data>|.
+          RETURN.
+        ENDIF.
+        rv_payload =
+          |<?xml version="1.0" encoding="utf-8"?>| &&
+          |<extract>| &&
+          |<entity>{ xml_escape( iv_entity ) }</entity>| &&
+          |<format>xml</format>| &&
+          |<rowCount>{ iv_row_count }</rowCount>| &&
+          |<totalCount>{ iv_total_count }</totalCount>| &&
+          |<skip>{ iv_skip }</skip>| &&
+          |<top>{ iv_top }</top>| &&
+          |<deltaField>{ xml_escape( iv_delta_field ) }</deltaField>| &&
+          |<maxChangedAt>{ xml_escape( iv_max_changed_at ) }</maxChangedAt>| &&
+          |<data>{ lv_items }</data>| &&
+          |</extract>|.
+        RETURN.
+
+      WHEN 'jsonrows'.
+        IF ir_data IS BOUND.
+          rv_payload = /ui2/cl_json=>serialize(
+            data        = <lt>
+            compress    = abap_false
+            pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
+        ELSE.
+          rv_payload = `[]`.
+        ENDIF.
+        RETURN.
+
+      WHEN OTHERS.
+        " Default / json — full extract envelope.
+        IF ir_data IS BOUND.
+          lv_data_json = /ui2/cl_json=>serialize(
+            data        = <lt>
+            compress    = abap_false
+            pretty_name = /ui2/cl_json=>pretty_mode-camel_case ).
+        ELSE.
+          lv_data_json = `[]`.
+        ENDIF.
+
+        rv_payload =
+          |\{| &&
+          |"entity":"{ json_escape( iv_entity ) }",| &&
+          |"format":"json",| &&
+          |"rowCount":{ iv_row_count },| &&
+          |"totalCount":{ iv_total_count },| &&
+          |"skip":{ iv_skip },| &&
+          |"top":{ iv_top },| &&
+          |"deltaField":"{ json_escape( iv_delta_field ) }",| &&
+          |"maxChangedAt":"{ json_escape( iv_max_changed_at ) }",| &&
+          |"data":{ lv_data_json }| &&
+          |\}|.
+    ENDCASE.
   ENDMETHOD.
 
   METHOD serialize_cds_meta.
