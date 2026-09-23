@@ -558,8 +558,9 @@ Translated to OpenSQL `WHERE`. Field names must exist on the CDS entity (allowli
 |--------------------------|
 | `contains` / `startswith` / `endswith` / `substringof` |
 | `tolower` / `toupper` / `not` / `null` |
-| `datetime'...'` literals (use quoted timestamps instead) |
-| navigation / `/` paths |
+| `in (...)` (use `or` chains instead — see cookbook §7 multi-CDS) |
+| `datetime'...'` literals (use quoted timestamps / dates instead) |
+| navigation / `/` paths / `$expand` (one CDS per call) |
 
 Invalid filters return a Gateway **business exception** with a clear message.
 
