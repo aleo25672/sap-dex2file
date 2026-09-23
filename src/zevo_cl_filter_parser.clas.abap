@@ -121,6 +121,7 @@ CLASS zevo_cl_filter_parser IMPLEMENTATION.
     DATA lv_word TYPE string.
     DATA lv_low  TYPE string.
     DATA lv_two  TYPE c LENGTH 2.
+    DATA lv_len_word TYPE i.
     DATA ls_tok  TYPE ty_token.
 
     rv_ok = abap_true.
@@ -130,7 +131,7 @@ CLASS zevo_cl_filter_parser IMPLEMENTATION.
 
     WHILE lv_pos < lv_len.
       WHILE lv_pos < lv_len.
-        lv_ch = lv+lv_pos(1).
+        lv_ch = lv+lv_pos( 1 ).
         IF lv_ch <> ' '.
           EXIT.
         ENDIF.
@@ -141,7 +142,7 @@ CLASS zevo_cl_filter_parser IMPLEMENTATION.
       ENDIF.
 
       CLEAR ls_tok.
-      lv_ch = lv+lv_pos(1).
+      lv_ch = lv+lv_pos( 1 ).
 
       IF lv_ch = '('.
         ls_tok-kind  = 'LP'.
@@ -161,10 +162,10 @@ CLASS zevo_cl_filter_parser IMPLEMENTATION.
         CLEAR lv_lit.
         lv_closed = abap_false.
         WHILE lv_i < lv_len.
-          lv_ch = lv+lv_i(1).
+          lv_ch = lv+lv_i( 1 ).
           IF lv_ch = `'`.
             IF lv_i + 1 < lv_len.
-              lv_two = lv+lv_i(2).
+              lv_two = lv+lv_i( 2 ).
               IF lv_two = `''`.
                 lv_lit = lv_lit && `'`.
                 lv_i = lv_i + 2.
@@ -195,13 +196,14 @@ CLASS zevo_cl_filter_parser IMPLEMENTATION.
 
       lv_end = lv_pos.
       WHILE lv_end < lv_len.
-        lv_c = lv+lv_end(1).
+        lv_c = lv+lv_end( 1 ).
         IF lv_c = ' ' OR lv_c = '(' OR lv_c = ')' OR lv_c = `'`.
           EXIT.
         ENDIF.
         lv_end = lv_end + 1.
       ENDWHILE.
-      lv_word = lv+lv_pos(lv_end - lv_pos).
+      DATA(lv_len_word) = lv_end - lv_pos.
+      lv_word = lv+lv_pos( lv_len_word ).
       lv_pos = lv_end.
       lv_low = to_lower( lv_word ).
 
