@@ -56,18 +56,20 @@ Default page size: **1000**. Hard max `Top`: **10000** (`ZEVO_CL_EXTRACTOR=>C_MA
 
 ## Gateway activation (S/4 Private Cloud)
 
-abapGit ships the **classes**. You still register the OData service once in the system (SEGW or code-based registration). Two supported paths:
+**Full SEGW walkthrough** (exact class names, SE24 steps, paste-ready `DEFINE` / `EXECUTE_ACTION` code, `/IWFND/MAINT_SERVICE`, smoke tests):
 
-### Path A — SEGW project (recommended)
+→ See root **[README.md — Gateway activation](../README.md#gateway-activation-s4-private-cloud)**.
 
-1. Pull / activate all `ZEVO_CL_*` classes from this repo (abapGit).
-2. Transaction **`SEGW`** → create project **`ZEVO_CDS_EXTRACT`**.
-3. Generate runtime objects (`…_MPC_EXT`, `…_DPC_EXT`, service `ZEVO_CDS_EXTRACT_SRV`).
-4. In **`…_MPC_EXT→DEFINE`**: `zevo_cl_odata_mpc=>define_model( model ).`
-5. In **`…_DPC_EXT→EXECUTE_ACTION`**: call `zevo_cl_odata_dpc=>execute_action( ... )` and `copy_data_to_ref` on `ts_result`.
-6. Activate in **`/IWFND/MAINT_SERVICE`**.
+Short checklist:
 
-`ZEVO_CL_ODATA_MPC` / `ZEVO_CL_ODATA_DPC` do **not** inherit Gateway base classes (helpers only — avoids CLAS activation / where-used syntax errors).
+1. Pull/activate `ZEVO_CL_*` from abapGit.
+2. `SEGW` project `ZEVO_CDS_EXTRACT` → **Generate Runtime Objects**.
+3. Edit **`ZCL_ZEVO_CDS_EXTRACT_MPC_EXT`→`DEFINE`** (not the base `…_MPC`).
+4. Redefine **`ZCL_ZEVO_CDS_EXTRACT_DPC_EXT`→`EXECUTE_ACTION`**.
+5. `/IWFND/MAINT_SERVICE` → activate `ZEVO_CDS_EXTRACT_SRV`.
+6. Test `$metadata`.
+
+`ZEVO_CL_ODATA_MPC` / `ZEVO_CL_ODATA_DPC` are helpers only (no Gateway inheritance).
 
 ---
 
