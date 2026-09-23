@@ -130,9 +130,27 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD extract_ex.
+    DATA lv_top   TYPE i.
+    DATA lv_skip  TYPE i.
+    DATA lv_now   TYPE timestampl.
+    DATA lv_where TYPE string.
+    DATA lv_order TYPE string.
+    DATA lv_fetch TYPE i.
+    DATA lv_idx   TYPE i.
+    DATA lr_tab   TYPE REF TO data.
+    DATA lx       TYPE REF TO cx_root.
+    FIELD-SYMBOLS <lt> TYPE ANY TABLE.
+
     CLEAR rs_result.
-    rs_result-skip = COND i( WHEN iv_skip < 0 THEN 0 ELSE iv_skip ).
-    DATA(lv_top) = iv_top.
+
+    IF iv_skip < 0.
+      lv_skip = 0.
+    ELSE.
+      lv_skip = iv_skip.
+    ENDIF.
+    rs_result-skip = lv_skip.
+
+    lv_top = iv_top.
     IF lv_top <= 0.
       lv_top = c_default_top.
     ENDIF.
@@ -147,55 +165,63 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    DATA lv_now TYPE timestampl.
     GET TIME STAMP FIELD lv_now.
-    rs_result-new_high    = lv_now.
-    rs_result-delta_field = CONV string( iv_ts_field ).
+    rs_result-new_high = lv_now.
+    rs_result-delta_field = iv_ts_field.
 
-    DATA(lv_where) = build_where(
+    lv_where = build_where(
       iv_where    = iv_where
       iv_delta    = iv_delta
       iv_ts_field = iv_ts_field
       iv_last     = iv_last ).
 
-    DATA(lv_order) = build_order_by( iv_entity ).
+    lv_order = build_order_by( iv_entity ).
 
     TRY.
-        " total count
         IF lv_where IS INITIAL.
           SELECT COUNT( * ) FROM (iv_entity) INTO @rs_result-total_count.
         ELSE.
-          SELECT COUNT( * ) FROM (iv_entity) WHERE (lv_where)
+          SELECT COUNT( * ) FROM (iv_entity)
+            WHERE (lv_where)
             INTO @rs_result-total_count.
         ENDIF.
 
-        DATA lr_tab TYPE REF TO data.
         CREATE DATA lr_tab TYPE TABLE OF (iv_entity).
-        ASSIGN lr_tab->* TO FIELD-SYMBOL(<lt>).
+        ASSIGN lr_tab->* TO <lt>.
 
-        IF lv_where IS INITIAL.
-          IF lv_order IS NOT INITIAL.
+        " OFFSET requires ORDER BY before INTO. If no order key, fetch
+        " skip+top rows and drop the first skip locally.
+        IF lv_order IS NOT INITIAL.
+          IF lv_where IS INITIAL.
             SELECT * FROM (iv_entity)
               ORDER BY (lv_order)
               INTO TABLE @<lt>
-              OFFSET @rs_result-skip UP TO @lv_top ROWS.
+              OFFSET @lv_skip UP TO @lv_top ROWS.
           ELSE.
             SELECT * FROM (iv_entity)
+              WHERE (lv_where)
+              ORDER BY (lv_order)
               INTO TABLE @<lt>
-              OFFSET @rs_result-skip UP TO @lv_top ROWS.
+              OFFSET @lv_skip UP TO @lv_top ROWS.
           ENDIF.
         ELSE.
-          IF lv_order IS NOT INITIAL.
+          lv_fetch = lv_skip + lv_top.
+          IF lv_where IS INITIAL.
             SELECT * FROM (iv_entity)
-              WHERE (lv_where)
-              ORDER BY (lv_order)
               INTO TABLE @<lt>
-              OFFSET @rs_result-skip UP TO @lv_top ROWS.
+              UP TO @lv_fetch ROWS.
           ELSE.
             SELECT * FROM (iv_entity)
               WHERE (lv_where)
               INTO TABLE @<lt>
-              OFFSET @rs_result-skip UP TO @lv_top ROWS.
+              UP TO @lv_fetch ROWS.
+          ENDIF.
+          IF lv_skip > 0 AND lines( <lt> ) > 0.
+            lv_idx = 1.
+            WHILE lv_idx <= lv_skip AND <lt> IS NOT INITIAL.
+              DELETE <lt> INDEX 1.
+              lv_idx = lv_idx + 1.
+            ENDWHILE.
           ENDIF.
         ENDIF.
 
@@ -208,7 +234,7 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
         rs_result-status  = 'S'.
         rs_result-message = |{ rs_result-row_count } row(s), total { rs_result-total_count }|.
 
-      CATCH cx_root INTO DATA(lx).
+      CATCH cx_root INTO lx.
         rs_result-status  = 'E'.
         rs_result-message = lx->get_text( ).
     ENDTRY.
