@@ -109,12 +109,15 @@ abapGit ships the **helper classes** (`ZEVO_CL_ODATA_*`). You still create a **S
 
 ```abap
 METHOD define.
-  super->define( ).
+  " Model is code-defined only. Do NOT call super->define( ) here:
+  " SEGW tree leftovers / empty project DEFINE can leave ExtractCds missing.
   zevo_cl_odata_mpc=>define_model( model ).
 ENDMETHOD.
 ```
 
 3. Activate `ZCL_ZEVO_CDS_EXTRACT_MPC_EXT`.
+
+> **After every SEGW “Generate Runtime Objects”:** re-open `MPC_EXT->DEFINE` and `DPC_EXT->EXECUTE_ACTION`. Generate often resets EXT methods to empty stubs — paste the snippets again if needed.
 
 #### Wire `ZCL_ZEVO_CDS_EXTRACT_DPC_EXT` → `EXECUTE_ACTION`
 
@@ -185,7 +188,18 @@ If you already generated the service with **`Payload` as key**, pull the updated
 2. Activate `ZCL_ZEVO_CDS_EXTRACT_MPC_EXT` (re-runs `DEFINE_MODEL` → `Id` key + `Payload` property).
 3. **SEGW** → project **`ZEVO_CDS_EXTRACT`** → **Generate Runtime Objects** (so stubs pick up the new entity shape if needed).
 4. Clear Gateway metadata cache if `$metadata` still shows the old key (`/IWFND/CACHE_CLEANUP` or soft-state / browser cache).
-5. Re-test `$metadata` — `CdsResult` should list **`Id`** (Key) and **`Payload`**.
+5. Re-test `$metadata` — `CdsResult` should list **`Id`** (Key) and **`Payload`**, and you must find **`FunctionImport Name="ExtractCds"`**.
+
+#### Troubleshooting: `Resource not found for the segment 'ExtractCds'` / function import not found
+
+The HTTP URL is fine — the **service model has no function imports**. Typical causes after SEGW generate:
+
+1. **`MPC_EXT->DEFINE` was wiped** by Generate Runtime Objects → paste the `DEFINE` snippet above (no `super->define`) and activate.
+2. **`DEFINE_MODEL` raised** (old `CdsResult` in SEGW tree conflicting) → in **SEGW** project `ZEVO_CDS_EXTRACT`, delete any hand-created Entity Types / Function Imports from the tree (keep the project empty; model comes from ABAP). Activate `MPC_EXT` again.
+3. **Stale metadata cache** → `/IWFND/CACHE_CLEANUP` (or soft-state), then reload `$metadata` and **Ctrl+F** `ExtractCds`.
+4. Confirm **`/IWFND/MAINT_SERVICE`**: service uses model provider **`ZCL_ZEVO_CDS_EXTRACT_MPC_EXT`** (not the base `…_MPC` alone, and not `ZEVO_CL_ODATA_MPC`).
+
+Until `$metadata` contains `ExtractCds`, extract URLs will keep returning 404/500.
 
 #### Register & test
 
@@ -673,6 +687,7 @@ ls = zevo_cl_odata_api=>extract_cds(
 | Entity not selectable | Wrong name, parameterized CDS, or no auth |
 | Empty `data` but `totalCount` > 0 | `Skip` beyond end |
 | Delta returns nothing | Wrong `DeltaSince` format, or no rows newer than watermark |
+| `ExtractCds` segment / function import not found | `MPC_EXT->DEFINE` missing or wiped after SEGW generate — paste `define_model( model )` **without** `super->define( )`; clear `/IWFND/CACHE_CLEANUP`; confirm `$metadata` contains `ExtractCds` |
 | Filter error “not part of CDS” | Typo / wrong case — use names from `GetCdsMetadata` |
 | Gateway timeout | Lower `Top`, page more |
 | Huge Payload truncated | Lower `Top`; check GW string length settings |

@@ -542,6 +542,7 @@ ls = zevo_cl_odata_api=>extract_cds(
 | Entity not selectable | Wrong name, parameterized CDS, or no auth |
 | Empty `data` but `totalCount` > 0 | `Skip` beyond end |
 | Delta returns nothing | Wrong `DeltaSince` format, or no rows newer than watermark |
+| `ExtractCds` segment / function import not found | `MPC_EXT->DEFINE` missing or wiped after SEGW generate — call `zevo_cl_odata_mpc=>define_model( model )` **without** `super->define( )`; `/IWFND/CACHE_CLEANUP`; confirm `$metadata` has `ExtractCds` |
 | Filter error “not part of CDS” | Typo / wrong case — use names from `GetCdsMetadata` |
 | Gateway timeout | Lower `Top`, page more |
 | Huge Payload truncated | Lower `Top`; check GW string length settings |
