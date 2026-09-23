@@ -139,7 +139,7 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
     DATA lv_idx   TYPE i.
     DATA lr_tab   TYPE REF TO data.
     DATA lx       TYPE REF TO cx_root.
-    FIELD-SYMBOLS <lt> TYPE ANY TABLE.
+    FIELD-SYMBOLS <lt> TYPE STANDARD TABLE.
 
     CLEAR rs_result.
 
@@ -186,7 +186,8 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
             INTO @rs_result-total_count.
         ENDIF.
 
-        CREATE DATA lr_tab TYPE TABLE OF (iv_entity).
+        " STANDARD TABLE so OFFSET/UP TO and DELETE INDEX are allowed
+        CREATE DATA lr_tab TYPE STANDARD TABLE OF (iv_entity).
         ASSIGN lr_tab->* TO <lt>.
 
         " OFFSET requires ORDER BY before INTO. If no order key, fetch
