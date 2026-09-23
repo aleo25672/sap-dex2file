@@ -37,6 +37,7 @@ CLASS zevo_cl_odata_dpc IMPLEMENTATION.
     DATA lv_top_s  TYPE string.
     DATA lv_skip   TYPE i.
     DATA lv_top    TYPE i.
+    DATA lv_ts     TYPE timestampl.
 
     CLEAR es_result.
     ev_ok = abap_false.
@@ -103,6 +104,15 @@ CLASS zevo_cl_odata_dpc IMPLEMENTATION.
       RETURN.
     ENDIF.
 
+    " Surrogate key for CdsResult — keeps Gateway __metadata.id/uri short.
+    TRY.
+        es_result-id = cl_system_uuid=>create_uuid_c32_static( ).
+      CATCH cx_uuid_error.
+        " Fallback if UUID service unavailable: compact timestamp.
+        GET TIME STAMP FIELD lv_ts.
+        es_result-id = |{ lv_ts }|.
+        CONDENSE es_result-id NO-GAPS.
+    ENDTRY.
     es_result-payload = ls_resp-payload.
     ev_ok = abap_true.
     ev_message = ls_resp-message.

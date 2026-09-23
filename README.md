@@ -156,7 +156,7 @@ METHOD /iwbep/if_mgw_appl_srv_runtime~execute_action.
         message_container = lo_msg.
   ENDIF.
 
-  " Return CdsResult (PAYLOAD string) to the Gateway response
+  " Return CdsResult (Id + Payload) to the Gateway response
   copy_data_to_ref(
     EXPORTING
       is_data = ls_result
@@ -174,8 +174,18 @@ What the DPC method does:
 |------|---------|
 | `get_function_import_name` | Which import ran (`ExtractCds` / `GetCdsMetadata`) |
 | `get_parameters` | URL params (`EntityName`, `Filter`, `Format`, …) |
-| `zevo_cl_odata_dpc=>execute_action` | Runs extract / metadata via `ZEVO_CL_ODATA_API` |
-| `copy_data_to_ref` | Puts `ls_result-payload` into the OData response |
+| `zevo_cl_odata_dpc=>execute_action` | Runs extract / metadata via `ZEVO_CL_ODATA_API`; fills `Id` (GUID) + `Payload` |
+| `copy_data_to_ref` | Puts `ls_result` into the OData response |
+
+#### After model changes (Id key)
+
+If you already generated the service with **`Payload` as key**, pull the updated helpers then:
+
+1. Activate `ZEVO_CL_ODATA_MPC` / `ZEVO_CL_ODATA_DPC`.
+2. Activate `ZCL_ZEVO_CDS_EXTRACT_MPC_EXT` (re-runs `DEFINE_MODEL` → `Id` key + `Payload` property).
+3. **SEGW** → project **`ZEVO_CDS_EXTRACT`** → **Generate Runtime Objects** (so stubs pick up the new entity shape if needed).
+4. Clear Gateway metadata cache if `$metadata` still shows the old key (`/IWFND/CACHE_CLEANUP` or soft-state / browser cache).
+5. Re-test `$metadata` — `CdsResult` should list **`Id`** (Key) and **`Payload`**.
 
 #### Register & test
 
@@ -200,7 +210,7 @@ Prefer Path A (SEGW stubs). Do **not** register `ZEVO_CL_ODATA_MPC` itself as th
 GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/$metadata
 ```
 
-Returns the OData EDMX for this service: entity `CdsResult`, function imports `ExtractCds` and `GetCdsMetadata`, and their parameters. Use this so clients discover **how to call the service** (not the shape of an arbitrary CDS).
+Returns the OData EDMX for this service: entity `CdsResult` (`Id` key + `Payload`), function imports `ExtractCds` and `GetCdsMetadata`, and their parameters. Use this so clients discover **how to call the service** (not the shape of an arbitrary CDS).
 
 Also available:
 
@@ -239,7 +249,32 @@ Optional CDS payload format:
 
 #### Response shape
 
-Gateway returns entity `CdsResult` with property **`Payload`**. The Payload string is JSON or XML:
+Gateway returns entity **`CdsResult`**:
+
+| Property | Role |
+|----------|------|
+| **`Id`** | Surrogate **key** (32-char GUID). Keeps `__metadata.id` / `uri` short. |
+| **`Payload`** | Extract / metadata content (JSON or XML string). **Not** the key. |
+
+Example HTTP body (`Format=jsonrows`):
+
+```json
+{
+  "d": {
+    "__metadata": {
+      "id": ".../CdsResultCollection('A1B2C3D4...')",
+      "uri": ".../CdsResultCollection('A1B2C3D4...')",
+      "type": "ZEVO_CDS_EXTRACT_SRV.CdsResult"
+    },
+    "Id": "A1B2C3D4E5F6...",
+    "Payload": "[ { \"purchaseorder\": \"4500000001\", \"...\": \"...\" } ]"
+  }
+}
+```
+
+Clients: `JSON.parse(response.d.Payload)` — ignore `__metadata` and `Id`.
+
+For **GetCdsMetadata**, the Payload string is JSON or XML like:
 
 **JSON Payload (abbreviated):**
 
@@ -316,7 +351,7 @@ GET .../ExtractCds
   &$format=json
 ```
 
-`Payload` is then e.g. `[{ "PurchaseOrder": "4500000001", ... }, ...]` — parse with `JSON.parse(d.Payload)` (no `.data` unwrap).
+`Payload` is then e.g. `[{ "PurchaseOrder": "4500000001", ... }, ...]` — parse with `JSON.parse(d.Payload)` (no `.data` unwrap). Gateway still wraps with `d` / `__metadata` / `Id`; those stay small because `Id` is the entity key (not `Payload`).
 
 **With $filter:**
 

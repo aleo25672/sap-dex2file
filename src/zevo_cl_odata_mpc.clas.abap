@@ -23,6 +23,7 @@ CLASS zevo_cl_odata_mpc DEFINITION
       END OF ts_meta_param.
     TYPES:
       BEGIN OF ts_result,
+        id      TYPE c LENGTH 32,  " surrogate OData key (GUID, not Payload)
         payload TYPE string,
       END OF ts_result.
 
@@ -48,10 +49,17 @@ CLASS zevo_cl_odata_mpc IMPLEMENTATION.
       iv_entity_type_name = 'CdsResult'
       iv_def_entity_set   = abap_true ).
 
+    " Short surrogate key so __metadata.id/uri stay small (Payload is not the key).
+    lo_property = lo_entity_type->create_property(
+      iv_property_name  = 'Id'
+      iv_abap_fieldname = 'ID' ).
+    lo_property->set_is_key( abap_true ).
+    lo_property->set_nullable( abap_false ).
+
     lo_property = lo_entity_type->create_property(
       iv_property_name  = 'Payload'
       iv_abap_fieldname = 'PAYLOAD' ).
-    lo_property->set_is_key( abap_true ).
+    lo_property->set_is_key( abap_false ).
     lo_property->set_nullable( abap_false ).
     lo_entity_type->bind_structure( iv_structure_name = 'ZEVO_CL_ODATA_MPC=>TS_RESULT' ).
 

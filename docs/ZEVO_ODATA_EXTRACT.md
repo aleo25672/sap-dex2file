@@ -118,7 +118,32 @@ Optional CDS payload format:
 
 ### Response shape
 
-Gateway returns entity `CdsResult` with property **`Payload`**. The Payload string is JSON or XML:
+Gateway returns entity **`CdsResult`**:
+
+| Property | Role |
+|----------|------|
+| **`Id`** | Surrogate **key** (32-char GUID). Keeps `__metadata.id` / `uri` short. |
+| **`Payload`** | Extract / metadata content (JSON or XML string). **Not** the key. |
+
+Example HTTP body (`Format=jsonrows`):
+
+```json
+{
+  "d": {
+    "__metadata": {
+      "id": ".../CdsResultCollection('A1B2C3D4...')",
+      "uri": ".../CdsResultCollection('A1B2C3D4...')",
+      "type": "ZEVO_CDS_EXTRACT_SRV.CdsResult"
+    },
+    "Id": "A1B2C3D4E5F6...",
+    "Payload": "[ { \"purchaseorder\": \"4500000001\", \"...\": \"...\" } ]"
+  }
+}
+```
+
+Clients: `JSON.parse(response.d.Payload)` — ignore `__metadata` and `Id`.
+
+For **GetCdsMetadata**, the Payload string is JSON or XML like:
 
 **JSON Payload (abbreviated):**
 
@@ -195,7 +220,7 @@ GET .../ExtractCds
   &$format=json
 ```
 
-`Payload` is then e.g. `[{ "PurchaseOrder": "4500000001", ... }, ...]` — parse with `JSON.parse(d.Payload)` (no `.data` unwrap).
+`Payload` is then e.g. `[{ "PurchaseOrder": "4500000001", ... }, ...]` — parse with `JSON.parse(d.Payload)` (no `.data` unwrap). Gateway still wraps with `d` / `__metadata` / `Id`; those stay small because `Id` is the entity key (not `Payload`).
 
 **With $filter:**
 
