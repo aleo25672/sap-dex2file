@@ -189,7 +189,7 @@ CLASS zevo_cl_serializer IMPLEMENTATION.
     DATA lv_cr   TYPE c LENGTH 1.
     DATA lv_lf   TYPE c LENGTH 1.
     lv_crlf = cl_abap_char_utilities=>cr_lf.
-    lv_cr   = lv_crlf+0( 1 ).
+    lv_cr   = lv_crlf(1).
     lv_lf   = cl_abap_char_utilities=>newline.
     rv = iv_raw.
     REPLACE ALL OCCURRENCES OF `\` IN rv WITH `\\`.
