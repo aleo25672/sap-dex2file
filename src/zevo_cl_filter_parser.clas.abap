@@ -202,7 +202,7 @@ CLASS zevo_cl_filter_parser IMPLEMENTATION.
         ENDIF.
         lv_end = lv_end + 1.
       ENDWHILE.
-      DATA(lv_len_word) = lv_end - lv_pos.
+      lv_len_word = lv_end - lv_pos.
       lv_word = lv+lv_pos( lv_len_word ).
       lv_pos = lv_end.
       lv_low = to_lower( lv_word ).
