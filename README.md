@@ -329,6 +329,100 @@ GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
 
 See [Caller-managed delta](#caller-managed-delta) for how `DeltaSince` relates to `LastChangeDateTime`.
 
+#### 7. Multiple CDS (header → items → history)
+
+**Yes — as several `ExtractCds` calls.** The service has **no** `$expand` / navigation and **no** SQL join across CDS views. Each call targets **one** entity. The client orchestrates “related” extracts using keys from the header result.
+
+Typical PO document set:
+
+| Step | CDS | Role |
+|------|-----|------|
+| A | `C_PurchaseOrderDEX` | Headers (filter company + date) |
+| B | `C_PurchaseOrderItemDEX` | Items for those PO numbers |
+| C | `C_PurchaseOrderHistoryDEX` | History for those PO numbers |
+
+Confirm field names with `GetCdsMetadata` on each entity (e.g. `PurchaseOrder`, `CompanyCode`, `PurchaseOrderDate`).
+
+**Step A — headers** (`CompanyCode` + `PurchaseOrderDate >= 2026-01-01`):
+
+```http
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
+  ?EntityName='C_PurchaseOrderDEX'
+  &Filter='CompanyCode eq ''1710'' and PurchaseOrderDate ge ''2026-01-01'''
+  &Format='jsonrows'
+  &Skip='0'
+  &Top='100'
+  &$format=json
+```
+
+Parse `d.Payload` and collect distinct `purchaseorder` values (e.g. `4500000001`, `4500000002`).
+
+**Step B — items** for those POs (`or` chain; there is no `in` operator):
+
+```http
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
+  ?EntityName='C_PurchaseOrderItemDEX'
+  &Filter='PurchaseOrder eq ''4500000001'' or PurchaseOrder eq ''4500000002'''
+  &Format='jsonrows'
+  &Skip='0'
+  &Top='1000'
+  &$format=json
+```
+
+**Step C — history** for the same POs:
+
+```http
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
+  ?EntityName='C_PurchaseOrderHistoryDEX'
+  &Filter='PurchaseOrder eq ''4500000001'' or PurchaseOrder eq ''4500000002'''
+  &Format='jsonrows'
+  &Skip='0'
+  &Top='1000'
+  &$format=json
+```
+
+**Client sketch:**
+
+```javascript
+const headers = JSON.parse(
+  (await extract('C_PurchaseOrderDEX',
+    "CompanyCode eq '1710' and PurchaseOrderDate ge '2026-01-01'")).d.Payload
+);
+const pos = [...new Set(headers.map(h => h.purchaseorder))];
+const poFilter = pos.map(po => `PurchaseOrder eq '${po}'`).join(' or ');
+
+const items = JSON.parse(
+  (await extract('C_PurchaseOrderItemDEX', poFilter)).d.Payload
+);
+const history = JSON.parse(
+  (await extract('C_PurchaseOrderHistoryDEX', poFilter)).d.Payload
+);
+```
+
+**Limits / tips**
+
+| Topic | Guidance |
+|-------|----------|
+| Joins / `$expand` | Not supported — always separate calls |
+| `in (...)` | Not supported — use `or` (keep batches modest, e.g. 20–50 POs per call) |
+| Many headers | Page Step A with `Skip`/`Top`; for each page, run B/C |
+| Same company/date on children | If item/history CDS also have `CompanyCode` / date fields, you can filter children the same way **without** building a PO `or` list — still separate calls |
+| Field names | Always verify with `GetCdsMetadata` — DEX views can differ by release |
+
+Optional discovery for children:
+
+```http
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/GetCdsMetadata
+  ?EntityName='C_PurchaseOrderItemDEX'
+  &Format='json'
+  &$format=json
+
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/GetCdsMetadata
+  ?EntityName='C_PurchaseOrderHistoryDEX'
+  &Format='json'
+  &$format=json
+```
+
 ---
 
 ### Service metadata
@@ -471,6 +565,7 @@ All HTTP examples use **`C_PurchaseOrderDEX`** — see the [URL cookbook](#url-c
 | Rows only | §4 `Format=jsonrows` |
 | Filter `CompanyCode` | §5 |
 | Delta / incremental | §6 |
+| Multi-CDS (header → item → history) | §7 |
 
 #### Extract Payload (JSON)
 
@@ -683,8 +778,9 @@ Translated to OpenSQL `WHERE`. Field names must exist on the CDS entity (allowli
 |--------------------------|
 | `contains` / `startswith` / `endswith` / `substringof` |
 | `tolower` / `toupper` / `not` / `null` |
-| `datetime'...'` literals (use quoted timestamps instead) |
-| navigation / `/` paths |
+| `in (...)` (use `or` chains instead — see [multi-CDS](#7-multiple-cds-header--items--history)) |
+| `datetime'...'` literals (use quoted timestamps / dates instead) |
+| navigation / `/` paths / `$expand` (one CDS per call) |
 
 Invalid filters return a Gateway **business exception** with a clear message.
 

@@ -205,6 +205,56 @@ GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
   &$format=json
 ```
 
+#### 7. Multiple CDS (header → items → history)
+
+**Yes — as several `ExtractCds` calls.** No `$expand` / navigation and no SQL join across CDS views. Each call targets **one** entity; the client links related extracts via keys from the header result.
+
+| Step | CDS | Role |
+|------|-----|------|
+| A | `C_PurchaseOrderDEX` | Headers (filter company + date) |
+| B | `C_PurchaseOrderItemDEX` | Items for those PO numbers |
+| C | `C_PurchaseOrderHistoryDEX` | History for those PO numbers |
+
+**Step A — headers** (`CompanyCode` + `PurchaseOrderDate >= 2026-01-01`):
+
+```http
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
+  ?EntityName='C_PurchaseOrderDEX'
+  &Filter='CompanyCode eq ''1710'' and PurchaseOrderDate ge ''2026-01-01'''
+  &Format='jsonrows'
+  &Skip='0'
+  &Top='100'
+  &$format=json
+```
+
+Collect distinct `purchaseorder` from `d.Payload`.
+
+**Step B — items** (`or` chain; no `in` operator):
+
+```http
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
+  ?EntityName='C_PurchaseOrderItemDEX'
+  &Filter='PurchaseOrder eq ''4500000001'' or PurchaseOrder eq ''4500000002'''
+  &Format='jsonrows'
+  &Skip='0'
+  &Top='1000'
+  &$format=json
+```
+
+**Step C — history:**
+
+```http
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
+  ?EntityName='C_PurchaseOrderHistoryDEX'
+  &Filter='PurchaseOrder eq ''4500000001'' or PurchaseOrder eq ''4500000002'''
+  &Format='jsonrows'
+  &Skip='0'
+  &Top='1000'
+  &$format=json
+```
+
+Keep `or` batches modest (e.g. 20–50 POs). Page Step A if needed; verify field names with `GetCdsMetadata` on each entity. See the root README cookbook §7 for a client sketch and limits.
+
 ### Response shape
 
 Gateway returns entity **`CdsResult`**:
