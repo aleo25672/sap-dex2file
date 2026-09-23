@@ -205,6 +205,8 @@ GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
   &$format=json
 ```
 
+> **P2P (PO → Item → History → GR / IR):** see [`docs/P2P_OData_Extract_Call_Flow.docx`](P2P_OData_Extract_Call_Flow.docx).
+
 #### 7. Multiple CDS (header → items → history)
 
 **Yes — as several `ExtractCds` calls.** No `$expand` / navigation and no SQL join across CDS views. Each call targets **one** entity; the client links related extracts via keys from the header result.
