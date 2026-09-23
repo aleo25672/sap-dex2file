@@ -42,9 +42,9 @@ Client
 
 | Object | Role |
 |--------|------|
-| `ZEVO_CL_ODATA_MPC` | Model provider — function imports + `CdsResult` entity |
-| `ZEVO_CL_ODATA_DPC` | Data provider — `EXECUTE_ACTION` |
-| `ZEVO_CL_ODATA_API` | Facade used by DPC (also callable from ABAP tests) |
+| `ZEVO_CL_ODATA_MPC` | `DEFINE_MODEL` helper (call from SEGW MPC_EXT) |
+| `ZEVO_CL_ODATA_DPC` | `EXECUTE_ACTION` helper (call from SEGW DPC_EXT) |
+| `ZEVO_CL_ODATA_API` | Facade used by DPC helper (also callable from ABAP tests) |
 | `ZEVO_CL_FILTER_PARSER` | OData `$filter` → OpenSQL `WHERE` |
 | `ZEVO_CL_CDS_META` | Per-entity metadata + delta-field resolution |
 | `ZEVO_CL_SERIALIZER` | Envelope JSON/XML |
@@ -58,46 +58,16 @@ Default page size: **1000**. Hard max `Top`: **10000** (`ZEVO_CL_EXTRACTOR=>C_MA
 
 abapGit ships the **classes**. You still register the OData service once in the system (SEGW or code-based registration). Two supported paths:
 
-### Path A — SEGW project (recommended for most teams)
+### Path A — SEGW project (recommended)
 
 1. Pull / activate all `ZEVO_CL_*` classes from this repo (abapGit).
-2. Transaction **`SEGW`** → create project **`ZEVO_CDS_EXTRACT`** (package = your Z/`$` package).
-3. Right-click project → **Generate Runtime Objects** so SAP creates:
-   - `ZCL_ZEVO_CDS_EXTRACT_MPC` / `_MPC_EXT`
-   - `ZCL_ZEVO_CDS_EXTRACT_DPC` / `_DPC_EXT`
-   - Service `ZEVO_CDS_EXTRACT_SRV` (technical names may vary slightly by release)
-4. In **`ZCL_…_MPC_EXT` → `DEFINE`**: call the model definition from this repo, e.g. either
-   - copy the body of `ZEVO_CL_ODATA_MPC=>DEFINE`, or
-   - instantiate and delegate if you adapt inheritance so `_MPC_EXT` inherits from `ZEVO_CL_ODATA_MPC` (advanced).
-5. In **`ZCL_…_DPC_EXT` → `EXECUTE_ACTION`**: copy/delegate to `ZEVO_CL_ODATA_DPC` logic, or change inheritance so `_DPC_EXT` inherits from `ZEVO_CL_ODATA_DPC` and redefine only if needed.
-6. **Minimal wiring alternative:** keep generated stubs and in `_DPC_EXT→EXECUTE_ACTION` call only:
+2. Transaction **`SEGW`** → create project **`ZEVO_CDS_EXTRACT`**.
+3. Generate runtime objects (`…_MPC_EXT`, `…_DPC_EXT`, service `ZEVO_CDS_EXTRACT_SRV`).
+4. In **`…_MPC_EXT→DEFINE`**: `zevo_cl_odata_mpc=>define_model( model ).`
+5. In **`…_DPC_EXT→EXECUTE_ACTION`**: call `zevo_cl_odata_dpc=>execute_action( ... )` and `copy_data_to_ref` on `ts_result`.
+6. Activate in **`/IWFND/MAINT_SERVICE`**.
 
-```abap
-DATA(ls_resp) = zevo_cl_odata_api=>extract_cds( ... ).
-" or get_cds_metadata
-```
-
-using parameters from `io_tech_request_context->get_parameters( )`, returning a structure with component `PAYLOAD`.
-
-7. Transaction **`/IWFND/MAINT_SERVICE`**:
-   - Add service `ZEVO_CDS_EXTRACT_SRV` (system alias LOCAL / your GW alias)
-   - Activate ICF node
-   - Assign authorization / role as required
-8. Call `$metadata` (see below) to verify.
-
-### Path B — Code-based model classes shipped here
-
-Use `ZEVO_CL_ODATA_MPC` and `ZEVO_CL_ODATA_DPC` as the **Model Provider Class** and **Data Provider Class** when registering the service in `/IWBEP/REG_SERVICE` (or equivalent on your release):
-
-| Field | Value |
-|-------|--------|
-| Technical service name | `ZEVO_CDS_EXTRACT_SRV` |
-| Model provider | `ZEVO_CL_ODATA_MPC` |
-| Data provider | `ZEVO_CL_ODATA_DPC` |
-
-Then activate in `/IWFND/MAINT_SERVICE` as usual.
-
-> Exact registration UI labels differ slightly between S/4 releases. If registration fails on cardinality / `set_type_edm_*` methods, adjust `ZEVO_CL_ODATA_MPC=>DEFINE` to match your GW SP and keep `ZEVO_CL_ODATA_API` unchanged.
+`ZEVO_CL_ODATA_MPC` / `ZEVO_CL_ODATA_DPC` do **not** inherit Gateway base classes (helpers only — avoids CLAS activation / where-used syntax errors).
 
 ---
 

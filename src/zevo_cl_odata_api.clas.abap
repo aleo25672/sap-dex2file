@@ -1,5 +1,5 @@
 " Facade for OData function imports ExtractCds and GetCdsMetadata.
-" Gateway DPC delegates here; keeps SEGW/DPC thin and testable in ABAP.
+" Gateway DPC / ZEVO_CL_ODATA_DPC delegates here.
 CLASS zevo_cl_odata_api DEFINITION
   PUBLIC
   CREATE PUBLIC.
@@ -19,7 +19,7 @@ CLASS zevo_cl_odata_api DEFINITION
         iv_format      TYPE clike OPTIONAL
         iv_delta_since TYPE clike OPTIONAL
         iv_skip        TYPE i DEFAULT 0
-        iv_top         TYPE i DEFAULT zevo_cl_extractor=>c_default_top
+        iv_top         TYPE i DEFAULT 1000
       RETURNING
         VALUE(rs_resp) TYPE ty_response.
 
@@ -35,15 +35,32 @@ ENDCLASS.
 CLASS zevo_cl_odata_api IMPLEMENTATION.
 
   METHOD extract_cds.
+    DATA lv_entity TYPE string.
+    DATA lv_format TYPE string.
+    DATA lt_fields TYPE zevo_cl_filter_parser=>ty_fields.
+    DATA lo_parser TYPE REF TO zevo_cl_filter_parser.
+    DATA ls_parse  TYPE zevo_cl_filter_parser=>ty_result.
+    DATA lv_where  TYPE string.
+    DATA lv_delta  TYPE abap_bool.
+    DATA lv_ts     TYPE string.
+    DATA lv_last   TYPE timestampl.
+    DATA lv_since  TYPE string.
+    DATA lo_extr   TYPE REF TO zevo_cl_extractor.
+    DATA ls_ex     TYPE zevo_cl_extractor=>ty_result_ex.
+    DATA lv_top    TYPE i.
+
     CLEAR rs_resp.
-    DATA(lv_entity) = condense( CONV string( iv_entity_name ) ).
+    lv_entity = iv_entity_name.
+    CONDENSE lv_entity.
     IF lv_entity IS INITIAL.
       rs_resp-status  = 'E'.
       rs_resp-message = 'EntityName is required'.
       RETURN.
     ENDIF.
 
-    DATA(lv_format) = to_lower( condense( CONV string( iv_format ) ) ).
+    lv_format = iv_format.
+    CONDENSE lv_format.
+    lv_format = to_lower( lv_format ).
     IF lv_format IS INITIAL.
       lv_format = 'json'.
     ENDIF.
@@ -53,16 +70,17 @@ CLASS zevo_cl_odata_api IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    DATA(lt_fields) = zevo_cl_cds_meta=>get_field_names( lv_entity ).
+    lt_fields = zevo_cl_cds_meta=>get_field_names( lv_entity ).
     IF lt_fields IS INITIAL.
       rs_resp-status  = 'E'.
       rs_resp-message = |CDS entity '{ lv_entity }' not found or not selectable|.
       RETURN.
     ENDIF.
 
-    DATA(lv_where) = ``.
+    CLEAR lv_where.
     IF iv_filter IS NOT INITIAL.
-      DATA(ls_parse) = NEW zevo_cl_filter_parser( )->parse(
+      CREATE OBJECT lo_parser.
+      ls_parse = lo_parser->parse(
         iv_filter  = iv_filter
         it_allowed = lt_fields ).
       IF ls_parse-status <> 'S'.
@@ -73,9 +91,9 @@ CLASS zevo_cl_odata_api IMPLEMENTATION.
       lv_where = ls_parse-where_sql.
     ENDIF.
 
-    DATA(lv_delta) = abap_false.
-    DATA(lv_ts) = ``.
-    DATA lv_last TYPE timestampl.
+    lv_delta = abap_false.
+    CLEAR lv_ts.
+    CLEAR lv_last.
     IF iv_delta_since IS NOT INITIAL.
       lv_delta = abap_true.
       lv_ts = zevo_cl_cds_meta=>get_delta_field( lv_entity ).
@@ -84,8 +102,8 @@ CLASS zevo_cl_odata_api IMPLEMENTATION.
         rs_resp-message = |Delta requested but no change-timestamp field on '{ lv_entity }'|.
         RETURN.
       ENDIF.
-      DATA(lv_since) = condense( CONV string( iv_delta_since ) ).
-      " Accept compact timestampl / ISO-ish digits
+      lv_since = iv_delta_since.
+      CONDENSE lv_since.
       REPLACE ALL OCCURRENCES OF `-` IN lv_since WITH ``.
       REPLACE ALL OCCURRENCES OF `:` IN lv_since WITH ``.
       REPLACE ALL OCCURRENCES OF `T` IN lv_since WITH ``.
@@ -93,22 +111,30 @@ CLASS zevo_cl_odata_api IMPLEMENTATION.
       REPLACE ALL OCCURRENCES OF `.` IN lv_since WITH ``.
       REPLACE ALL OCCURRENCES OF ` ` IN lv_since WITH ``.
       TRY.
-          lv_last = CONV timestampl( lv_since ).
-        CATCH cx_root.
+          lv_last = lv_since.
+        CATCH cx_sy_conversion_no_number
+              cx_sy_conversion_overflow
+              cx_root.
           rs_resp-status  = 'E'.
           rs_resp-message = |Invalid DeltaSince value '{ iv_delta_since }'|.
           RETURN.
       ENDTRY.
     ENDIF.
 
-    DATA(ls_ex) = NEW zevo_cl_extractor( )->extract_ex(
+    lv_top = iv_top.
+    IF lv_top <= 0.
+      lv_top = zevo_cl_extractor=>c_default_top.
+    ENDIF.
+
+    CREATE OBJECT lo_extr.
+    ls_ex = lo_extr->extract_ex(
       iv_entity   = lv_entity
       iv_where    = lv_where
       iv_delta    = lv_delta
       iv_ts_field = lv_ts
       iv_last     = lv_last
       iv_skip     = iv_skip
-      iv_top      = iv_top ).
+      iv_top      = lv_top ).
 
     IF ls_ex-status <> 'S'.
       rs_resp-status  = ls_ex-status.
@@ -131,8 +157,14 @@ CLASS zevo_cl_odata_api IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD get_cds_metadata.
+    DATA lv_format TYPE string.
+    DATA lo_meta   TYPE REF TO zevo_cl_cds_meta.
+    DATA ls_meta   TYPE zevo_cl_cds_meta=>ty_meta.
+
     CLEAR rs_resp.
-    DATA(lv_format) = to_lower( condense( CONV string( iv_format ) ) ).
+    lv_format = iv_format.
+    CONDENSE lv_format.
+    lv_format = to_lower( lv_format ).
     IF lv_format IS INITIAL.
       lv_format = 'json'.
     ENDIF.
@@ -142,7 +174,8 @@ CLASS zevo_cl_odata_api IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    DATA(ls_meta) = NEW zevo_cl_cds_meta( )->get_metadata( iv_entity_name ).
+    CREATE OBJECT lo_meta.
+    ls_meta = lo_meta->get_metadata( iv_entity_name ).
     IF ls_meta-status <> 'S'.
       rs_resp-status  = ls_meta-status.
       rs_resp-message = ls_meta-message.

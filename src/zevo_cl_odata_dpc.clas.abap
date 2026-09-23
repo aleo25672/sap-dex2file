@@ -1,47 +1,71 @@
-" OData data provider: executes ExtractCds and GetCdsMetadata via ZEVO_CL_ODATA_API.
+" OData action helper for ExtractCds / GetCdsMetadata.
+" No inheritance from /IWBEP/* — call EXECUTE_ACTION from your SEGW DPC_EXT.
 CLASS zevo_cl_odata_dpc DEFINITION
   PUBLIC
-  INHERITING FROM /iwbep/cl_mgw_push_abs_data
   CREATE PUBLIC.
 
   PUBLIC SECTION.
-    METHODS /iwbep/if_mgw_appl_srv_runtime~execute_action REDEFINITION.
+    CLASS-METHODS execute_action
+      IMPORTING
+        iv_action_name TYPE clike
+        it_parameter   TYPE /iwbep/t_mgw_name_value_pair
+      EXPORTING
+        es_result      TYPE zevo_cl_odata_mpc=>ts_result
+        ev_ok          TYPE abap_bool
+        ev_message     TYPE string.
 
   PRIVATE SECTION.
-    METHODS read_param
+    CLASS-METHODS read_param
       IMPORTING
         it_parameter TYPE /iwbep/t_mgw_name_value_pair
         iv_name      TYPE clike
       RETURNING
         VALUE(rv_value) TYPE string.
-    METHODS raise_busi
-      IMPORTING
-        iv_message TYPE clike
-      RAISING
-        /iwbep/cx_mgw_busi_exception.
 ENDCLASS.
 
 
 CLASS zevo_cl_odata_dpc IMPLEMENTATION.
 
-  METHOD /iwbep/if_mgw_appl_srv_runtime~execute_action.
-    DATA(lv_action) = io_tech_request_context->get_function_import_name( ).
-    DATA(lt_parameter) = io_tech_request_context->get_parameters( ).
-
-    DATA ls_result TYPE zevo_cl_odata_mpc=>ts_result.
+  METHOD execute_action.
+    DATA lv_action TYPE string.
     DATA ls_resp   TYPE zevo_cl_odata_api=>ty_response.
+    DATA lv_entity TYPE string.
+    DATA lv_filter TYPE string.
+    DATA lv_format TYPE string.
+    DATA lv_delta  TYPE string.
+    DATA lv_skip_s TYPE string.
+    DATA lv_top_s  TYPE string.
+    DATA lv_skip   TYPE i.
+    DATA lv_top    TYPE i.
 
-    CASE to_upper( lv_action ).
+    CLEAR es_result.
+    ev_ok = abap_false.
+    CLEAR ev_message.
+
+    lv_action = iv_action_name.
+    lv_action = to_upper( lv_action ).
+
+    CASE lv_action.
       WHEN 'EXTRACTCDS'.
-        DATA(lv_entity) = read_param( it_parameter = lt_parameter iv_name = 'EntityName' ).
-        DATA(lv_filter) = read_param( it_parameter = lt_parameter iv_name = 'Filter' ).
-        DATA(lv_format) = read_param( it_parameter = lt_parameter iv_name = 'Format' ).
-        DATA(lv_delta)  = read_param( it_parameter = lt_parameter iv_name = 'DeltaSince' ).
-        DATA(lv_skip_s) = read_param( it_parameter = lt_parameter iv_name = 'Skip' ).
-        DATA(lv_top_s)  = read_param( it_parameter = lt_parameter iv_name = 'Top' ).
+        lv_entity = read_param( it_parameter = it_parameter iv_name = 'EntityName' ).
+        lv_filter = read_param( it_parameter = it_parameter iv_name = 'Filter' ).
+        IF lv_filter IS INITIAL.
+          lv_filter = read_param( it_parameter = it_parameter iv_name = 'Filter_Expr' ).
+        ENDIF.
+        lv_format = read_param( it_parameter = it_parameter iv_name = 'Format' ).
+        IF lv_format IS INITIAL.
+          lv_format = read_param( it_parameter = it_parameter iv_name = 'Format_Cd' ).
+        ENDIF.
+        lv_delta  = read_param( it_parameter = it_parameter iv_name = 'DeltaSince' ).
+        lv_skip_s = read_param( it_parameter = it_parameter iv_name = 'Skip' ).
+        IF lv_skip_s IS INITIAL.
+          lv_skip_s = read_param( it_parameter = it_parameter iv_name = 'Skip_Rows' ).
+        ENDIF.
+        lv_top_s = read_param( it_parameter = it_parameter iv_name = 'Top' ).
+        IF lv_top_s IS INITIAL.
+          lv_top_s = read_param( it_parameter = it_parameter iv_name = 'Top_Rows' ).
+        ENDIF.
 
-        DATA lv_skip TYPE i.
-        DATA lv_top  TYPE i.
         IF lv_skip_s IS NOT INITIAL.
           lv_skip = lv_skip_s.
         ENDIF.
@@ -60,51 +84,54 @@ CLASS zevo_cl_odata_dpc IMPLEMENTATION.
           iv_top         = lv_top ).
 
       WHEN 'GETCDSMETADATA'.
-        lv_entity = read_param( it_parameter = lt_parameter iv_name = 'EntityName' ).
-        lv_format = read_param( it_parameter = lt_parameter iv_name = 'Format' ).
+        lv_entity = read_param( it_parameter = it_parameter iv_name = 'EntityName' ).
+        lv_format = read_param( it_parameter = it_parameter iv_name = 'Format' ).
+        IF lv_format IS INITIAL.
+          lv_format = read_param( it_parameter = it_parameter iv_name = 'Format_Cd' ).
+        ENDIF.
         ls_resp = zevo_cl_odata_api=>get_cds_metadata(
           iv_entity_name = lv_entity
           iv_format      = lv_format ).
 
       WHEN OTHERS.
-        super->/iwbep/if_mgw_appl_srv_runtime~execute_action(
-          EXPORTING
-            iv_action_name          = iv_action_name
-            it_parameter            = it_parameter
-            io_tech_request_context = io_tech_request_context
-          IMPORTING
-            er_data                 = er_data ).
+        ev_message = |Unknown function import '{ iv_action_name }'|.
         RETURN.
     ENDCASE.
 
     IF ls_resp-status <> 'S'.
-      raise_busi( ls_resp-message ).
+      ev_message = ls_resp-message.
+      RETURN.
     ENDIF.
 
-    ls_result-payload = ls_resp-payload.
-    copy_data_to_ref(
-      EXPORTING is_data = ls_result
-      CHANGING  cr_data = er_data ).
+    es_result-payload = ls_resp-payload.
+    ev_ok = abap_true.
+    ev_message = ls_resp-message.
   ENDMETHOD.
 
   METHOD read_param.
-    DATA(lv_name) = to_upper( CONV string( iv_name ) ).
-    LOOP AT it_parameter INTO DATA(ls_p).
-      IF to_upper( CONV string( ls_p-name ) ) = lv_name.
-        rv_value = ls_p-value.
+    DATA lv_name TYPE string.
+    DATA lv_pnam TYPE string.
+    FIELD-SYMBOLS <ls_p> TYPE any.
+    FIELD-SYMBOLS <name> TYPE any.
+    FIELD-SYMBOLS <value> TYPE any.
+
+    lv_name = iv_name.
+    lv_name = to_upper( lv_name ).
+    LOOP AT it_parameter ASSIGNING <ls_p>.
+      ASSIGN COMPONENT 'NAME' OF STRUCTURE <ls_p> TO <name>.
+      IF sy-subrc <> 0.
+        CONTINUE.
+      ENDIF.
+      lv_pnam = <name>.
+      lv_pnam = to_upper( lv_pnam ).
+      IF lv_pnam = lv_name.
+        ASSIGN COMPONENT 'VALUE' OF STRUCTURE <ls_p> TO <value>.
+        IF sy-subrc = 0.
+          rv_value = <value>.
+        ENDIF.
         RETURN.
       ENDIF.
     ENDLOOP.
-  ENDMETHOD.
-
-  METHOD raise_busi.
-    DATA(lo_msg) = mo_context->get_message_container( ).
-    lo_msg->add_message_text_only(
-      iv_msg_type = 'E'
-      iv_msg_text = CONV bapi_msg( iv_message ) ).
-    RAISE EXCEPTION TYPE /iwbep/cx_mgw_busi_exception
-      EXPORTING
-        message_container = lo_msg.
   ENDMETHOD.
 
 ENDCLASS.

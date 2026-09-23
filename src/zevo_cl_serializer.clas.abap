@@ -185,11 +185,17 @@ CLASS zevo_cl_serializer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD json_escape.
-    rv = CONV string( iv_raw ).
+    DATA lv_crlf TYPE c LENGTH 2.
+    DATA lv_cr   TYPE c LENGTH 1.
+    DATA lv_lf   TYPE c LENGTH 1.
+    lv_crlf = cl_abap_char_utilities=>cr_lf.
+    lv_cr   = lv_crlf+0(1).
+    lv_lf   = cl_abap_char_utilities=>newline.
+    rv = iv_raw.
     REPLACE ALL OCCURRENCES OF `\` IN rv WITH `\\`.
     REPLACE ALL OCCURRENCES OF `"` IN rv WITH `\"`.
-    REPLACE ALL OCCURRENCES OF cl_abap_char_utilities=>newline IN rv WITH `\n`.
-    REPLACE ALL OCCURRENCES OF cl_abap_char_utilities=>cr_lf+1(1) IN rv WITH `\r`.
+    REPLACE ALL OCCURRENCES OF lv_lf IN rv WITH `\n`.
+    REPLACE ALL OCCURRENCES OF lv_cr IN rv WITH `\r`.
     REPLACE ALL OCCURRENCES OF cl_abap_char_utilities=>horizontal_tab IN rv WITH `\t`.
   ENDMETHOD.
 
@@ -225,12 +231,17 @@ CLASS zevo_cl_serializer IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD value_to_string.
-    DESCRIBE FIELD iv_value TYPE DATA(lv_type).
+    DATA lv_type TYPE c LENGTH 1.
+    DESCRIBE FIELD iv_value TYPE lv_type.
     CASE lv_type.
       WHEN 'P' OR 'I' OR '8' OR 'F'.
         rv = |{ iv_value }|.
       WHEN 'X'.
-        rv = COND string( WHEN iv_value = abap_true THEN `true` ELSE `false` ).
+        IF iv_value = abap_true.
+          rv = `true`.
+        ELSE.
+          rv = `false`.
+        ENDIF.
       WHEN OTHERS.
         rv = |{ iv_value }|.
     ENDCASE.

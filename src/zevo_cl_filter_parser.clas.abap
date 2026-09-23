@@ -17,8 +17,8 @@ CLASS zevo_cl_filter_parser DEFINITION
 
     METHODS parse
       IMPORTING
-        iv_filter       TYPE clike
-        it_allowed      TYPE ty_fields
+        iv_filter        TYPE clike
+        it_allowed       TYPE ty_fields
       RETURNING
         VALUE(rs_result) TYPE ty_result.
 
@@ -65,13 +65,18 @@ ENDCLASS.
 CLASS zevo_cl_filter_parser IMPLEMENTATION.
 
   METHOD parse.
+    DATA lv_filter TYPE string.
+    DATA lv_sql    TYPE string.
+    DATA ls_cur    TYPE ty_token.
+
     CLEAR rs_result.
     mt_allowed = it_allowed.
     CLEAR mt_tokens.
     CLEAR mv_error.
     mv_idx = 1.
 
-    DATA(lv_filter) = condense( CONV string( iv_filter ) ).
+    lv_filter = iv_filter.
+    CONDENSE lv_filter.
     IF lv_filter IS INITIAL.
       rs_result-status = 'S'.
       RETURN.
@@ -83,16 +88,17 @@ CLASS zevo_cl_filter_parser IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    DATA(lv_sql) = parse_or( ).
+    lv_sql = parse_or( ).
     IF mv_error IS NOT INITIAL.
       rs_result-status  = 'E'.
       rs_result-message = mv_error.
       RETURN.
     ENDIF.
 
-    IF current( )-kind <> 'END'.
+    ls_cur = current( ).
+    IF ls_cur-kind <> 'END'.
       rs_result-status  = 'E'.
-      rs_result-message = |Unexpected token near '{ current( )-value }'|.
+      rs_result-message = |Unexpected token near '{ ls_cur-value }'|.
       RETURN.
     ENDIF.
 
@@ -101,21 +107,41 @@ CLASS zevo_cl_filter_parser IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD tokenize.
+    DATA lv      TYPE string.
+    DATA lv_len  TYPE i.
+    DATA lv_pos  TYPE i.
+    DATA lv_ch   TYPE c LENGTH 1.
+    DATA lv_c    TYPE c LENGTH 1.
+    DATA lv_start TYPE i.
+    DATA lv_i    TYPE i.
+    DATA lv_lit  TYPE string.
+    DATA lv_esc  TYPE string.
+    DATA lv_closed TYPE abap_bool.
+    DATA lv_end  TYPE i.
+    DATA lv_word TYPE string.
+    DATA lv_low  TYPE string.
+    DATA lv_two  TYPE c LENGTH 2.
+    DATA ls_tok  TYPE ty_token.
+
     rv_ok = abap_true.
-    DATA(lv) = CONV string( iv_filter ).
-    DATA(lv_len) = strlen( lv ).
-    DATA(lv_pos) = 0.
+    lv = iv_filter.
+    lv_len = strlen( lv ).
+    lv_pos = 0.
 
     WHILE lv_pos < lv_len.
-      WHILE lv_pos < lv_len AND lv+lv_pos(1) = ` `.
+      WHILE lv_pos < lv_len.
+        lv_ch = lv+lv_pos(1).
+        IF lv_ch <> ' '.
+          EXIT.
+        ENDIF.
         lv_pos = lv_pos + 1.
       ENDWHILE.
       IF lv_pos >= lv_len.
         EXIT.
       ENDIF.
 
-      DATA(lv_ch) = lv+lv_pos(1).
-      DATA ls_tok TYPE ty_token.
+      CLEAR ls_tok.
+      lv_ch = lv+lv_pos(1).
 
       IF lv_ch = '('.
         ls_tok-kind  = 'LP'.
@@ -130,23 +156,26 @@ CLASS zevo_cl_filter_parser IMPLEMENTATION.
         APPEND ls_tok TO mt_tokens.
         CONTINUE.
       ELSEIF lv_ch = `'`.
-        " OData string literal: '...' with '' escape
-        DATA(lv_start) = lv_pos + 1.
-        DATA(lv_i) = lv_start.
-        DATA(lv_lit) = ``.
-        DATA(lv_closed) = abap_false.
+        lv_start = lv_pos + 1.
+        lv_i = lv_start.
+        CLEAR lv_lit.
+        lv_closed = abap_false.
         WHILE lv_i < lv_len.
-          IF lv+lv_i(1) = `'`.
-            IF lv_i + 1 < lv_len AND lv+lv_i(2) = `''`.
-              lv_lit = lv_lit && `'`.
-              lv_i = lv_i + 2.
-            ELSE.
-              lv_closed = abap_true.
-              lv_i = lv_i + 1.
-              EXIT.
+          lv_ch = lv+lv_i(1).
+          IF lv_ch = `'`.
+            IF lv_i + 1 < lv_len.
+              lv_two = lv+lv_i(2).
+              IF lv_two = `''`.
+                lv_lit = lv_lit && `'`.
+                lv_i = lv_i + 2.
+                CONTINUE.
+              ENDIF.
             ENDIF.
+            lv_closed = abap_true.
+            lv_i = lv_i + 1.
+            EXIT.
           ELSE.
-            lv_lit = lv_lit && lv+lv_i(1).
+            lv_lit = lv_lit && lv_ch.
             lv_i = lv_i + 1.
           ENDIF.
         ENDWHILE.
@@ -155,9 +184,8 @@ CLASS zevo_cl_filter_parser IMPLEMENTATION.
           rv_ok = abap_false.
           RETURN.
         ENDIF.
-        ls_tok-kind  = 'LIT'.
-        " OpenSQL string literal with doubled quotes
-        DATA(lv_esc) = lv_lit.
+        ls_tok-kind = 'LIT'.
+        lv_esc = lv_lit.
         REPLACE ALL OCCURRENCES OF `'` IN lv_esc WITH `''`.
         ls_tok-value = |'{ lv_esc }'|.
         lv_pos = lv_i.
@@ -165,18 +193,17 @@ CLASS zevo_cl_filter_parser IMPLEMENTATION.
         CONTINUE.
       ENDIF.
 
-      " word / number / operator keyword
-      DATA(lv_end) = lv_pos.
+      lv_end = lv_pos.
       WHILE lv_end < lv_len.
-        DATA(lv_c) = lv+lv_end(1).
-        IF lv_c = ` ` OR lv_c = '(' OR lv_c = ')' OR lv_c = `'`.
+        lv_c = lv+lv_end(1).
+        IF lv_c = ' ' OR lv_c = '(' OR lv_c = ')' OR lv_c = `'`.
           EXIT.
         ENDIF.
         lv_end = lv_end + 1.
       ENDWHILE.
-      DATA(lv_word) = lv+lv_pos(lv_end - lv_pos).
+      lv_word = lv+lv_pos(lv_end - lv_pos).
       lv_pos = lv_end.
-      DATA(lv_low) = to_lower( lv_word ).
+      lv_low = to_lower( lv_word ).
 
       CASE lv_low.
         WHEN 'eq' OR 'ne' OR 'gt' OR 'ge' OR 'lt' OR 'le'.
@@ -195,7 +222,6 @@ CLASS zevo_cl_filter_parser IMPLEMENTATION.
           ls_tok-kind  = 'LIT'.
           ls_tok-value = `' '`.
         WHEN OTHERS.
-          " number?
           IF lv_word CO '0123456789.-'.
             ls_tok-kind  = 'LIT'.
             ls_tok-value = lv_word.
@@ -223,41 +249,61 @@ CLASS zevo_cl_filter_parser IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD parse_or.
-    DATA(lv) = parse_and( ).
+    DATA lv   TYPE string.
+    DATA lv_r TYPE string.
+    DATA ls_cur TYPE ty_token.
+
+    lv = parse_and( ).
     IF mv_error IS NOT INITIAL.
       RETURN.
     ENDIF.
-    WHILE current( )-kind = 'OR'.
+    ls_cur = current( ).
+    WHILE ls_cur-kind = 'OR'.
       consume( ).
-      DATA(lv_r) = parse_and( ).
+      lv_r = parse_and( ).
       IF mv_error IS NOT INITIAL.
         RETURN.
       ENDIF.
       lv = |({ lv }) OR ({ lv_r })|.
+      ls_cur = current( ).
     ENDWHILE.
     rv_sql = lv.
   ENDMETHOD.
 
   METHOD parse_and.
-    DATA(lv) = parse_primary( ).
+    DATA lv   TYPE string.
+    DATA lv_r TYPE string.
+    DATA ls_cur TYPE ty_token.
+
+    lv = parse_primary( ).
     IF mv_error IS NOT INITIAL.
       RETURN.
     ENDIF.
-    WHILE current( )-kind = 'AND'.
+    ls_cur = current( ).
+    WHILE ls_cur-kind = 'AND'.
       consume( ).
-      DATA(lv_r) = parse_primary( ).
+      lv_r = parse_primary( ).
       IF mv_error IS NOT INITIAL.
         RETURN.
       ENDIF.
       lv = |({ lv }) AND ({ lv_r })|.
+      ls_cur = current( ).
     ENDWHILE.
     rv_sql = lv.
   ENDMETHOD.
 
   METHOD parse_primary.
-    IF current( )-kind = 'LP'.
+    DATA lv_inner TYPE string.
+    DATA ls_cur   TYPE ty_token.
+    DATA ls_field TYPE ty_token.
+    DATA ls_op    TYPE ty_token.
+    DATA ls_lit   TYPE ty_token.
+    DATA lv_field TYPE string.
+
+    ls_cur = current( ).
+    IF ls_cur-kind = 'LP'.
       consume( ).
-      DATA(lv_inner) = parse_or( ).
+      lv_inner = parse_or( ).
       IF mv_error IS NOT INITIAL.
         RETURN.
       ENDIF.
@@ -269,7 +315,7 @@ CLASS zevo_cl_filter_parser IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    DATA(ls_field) = expect( 'FIELD' ).
+    ls_field = expect( 'FIELD' ).
     IF mv_error IS NOT INITIAL.
       RETURN.
     ENDIF.
@@ -278,21 +324,23 @@ CLASS zevo_cl_filter_parser IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    DATA(ls_op) = expect( 'OP' ).
+    ls_op = expect( 'OP' ).
     IF mv_error IS NOT INITIAL.
       RETURN.
     ENDIF.
-    DATA(ls_lit) = expect( 'LIT' ).
+    ls_lit = expect( 'LIT' ).
     IF mv_error IS NOT INITIAL.
       RETURN.
     ENDIF.
 
-    rv_sql = |{ to_upper( ls_field-value ) } { map_op( ls_op-value ) } { ls_lit-value }|.
+    lv_field = to_upper( ls_field-value ).
+    rv_sql = |{ lv_field } { map_op( ls_op-value ) } { ls_lit-value }|.
   ENDMETHOD.
 
   METHOD current.
     READ TABLE mt_tokens INTO rs_tok INDEX mv_idx.
     IF sy-subrc <> 0.
+      CLEAR rs_tok.
       rs_tok-kind = 'END'.
     ENDIF.
   ENDMETHOD.
@@ -310,26 +358,41 @@ CLASS zevo_cl_filter_parser IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD map_op.
-    CASE to_lower( iv_op ).
-      WHEN 'eq'. rv_sql = '='.
-      WHEN 'ne'. rv_sql = '<>'.
-      WHEN 'gt'. rv_sql = '>'.
-      WHEN 'ge'. rv_sql = '>='.
-      WHEN 'lt'. rv_sql = '<'.
-      WHEN 'le'. rv_sql = '<='.
-      WHEN OTHERS. rv_sql = '='.
+    DATA lv_op TYPE string.
+    lv_op = to_lower( iv_op ).
+    CASE lv_op.
+      WHEN 'eq'.
+        rv_sql = '='.
+      WHEN 'ne'.
+        rv_sql = '<>'.
+      WHEN 'gt'.
+        rv_sql = '>'.
+      WHEN 'ge'.
+        rv_sql = '>='.
+      WHEN 'lt'.
+        rv_sql = '<'.
+      WHEN 'le'.
+        rv_sql = '<='.
+      WHEN OTHERS.
+        rv_sql = '='.
     ENDCASE.
   ENDMETHOD.
 
   METHOD is_allowed.
-    DATA(lv) = to_upper( CONV string( iv_field ) ).
+    DATA lv TYPE string.
+    lv = iv_field.
+    lv = to_upper( lv ).
     READ TABLE mt_allowed WITH TABLE KEY table_line = lv TRANSPORTING NO FIELDS.
-    rv_ok = xsdbool( sy-subrc = 0 ).
+    IF sy-subrc = 0.
+      rv_ok = abap_true.
+    ELSE.
+      rv_ok = abap_false.
+    ENDIF.
   ENDMETHOD.
 
   METHOD fail.
     IF mv_error IS INITIAL.
-      mv_error = CONV string( iv_msg ).
+      mv_error = iv_msg.
     ENDIF.
   ENDMETHOD.
 

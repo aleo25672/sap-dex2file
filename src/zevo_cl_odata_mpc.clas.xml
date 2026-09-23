@@ -5,7 +5,7 @@
    <VSEOCLASS>
     <CLSNAME>ZEVO_CL_ODATA_MPC</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>ZEVO - OData MPC (ExtractCds / GetCdsMetadata)</DESCRIPT>
+    <DESCRIPT>ZEVO - OData MPC model helper (no GW inherit)</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>

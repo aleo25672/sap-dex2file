@@ -5,7 +5,7 @@
    <VSEOCLASS>
     <CLSNAME>ZEVO_CL_ODATA_DPC</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>ZEVO - OData DPC (ExtractCds / GetCdsMetadata)</DESCRIPT>
+    <DESCRIPT>ZEVO - OData DPC action helper (no GW inherit)</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>

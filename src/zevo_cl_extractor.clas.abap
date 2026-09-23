@@ -215,20 +215,34 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD build_where.
-    DATA lt_parts TYPE stringtab.
+    DATA lt_parts TYPE STANDARD TABLE OF string WITH DEFAULT KEY.
+    DATA lv_part  TYPE string.
+    DATA lv_1     TYPE string.
+    DATA lv_2     TYPE string.
+    DATA lv_where TYPE string.
+    DATA lv_last  TYPE string.
+
     IF iv_where IS NOT INITIAL.
-      APPEND |( { condense( CONV string( iv_where ) ) } )| TO lt_parts.
+      lv_where = iv_where.
+      CONDENSE lv_where.
+      lv_part = |( { lv_where } )|.
+      APPEND lv_part TO lt_parts.
     ENDIF.
     IF iv_delta = abap_true AND iv_ts_field IS NOT INITIAL.
-      APPEND |{ iv_ts_field } > '{ condense( |{ iv_last }| ) }'| TO lt_parts.
+      lv_last = |{ iv_last }|.
+      CONDENSE lv_last.
+      lv_part = |{ iv_ts_field } > '{ lv_last }'|.
+      APPEND lv_part TO lt_parts.
     ENDIF.
     CASE lines( lt_parts ).
       WHEN 0.
         CLEAR rv_where.
       WHEN 1.
-        rv_where = lt_parts[ 1 ].
+        READ TABLE lt_parts INTO rv_where INDEX 1.
       WHEN OTHERS.
-        rv_where = |{ lt_parts[ 1 ] } AND { lt_parts[ 2 ] }|.
+        READ TABLE lt_parts INTO lv_1 INDEX 1.
+        READ TABLE lt_parts INTO lv_2 INDEX 2.
+        rv_where = |{ lv_1 } AND { lv_2 }|.
     ENDCASE.
   ENDMETHOD.
 
@@ -260,7 +274,10 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
                          cl_abap_typedescr=>describe_by_data_ref( lr ) ).
           DATA(lt_c) = lo_s->get_components( ).
           IF lt_c IS NOT INITIAL.
-            rv_order = lt_c[ 1 ]-name.
+            READ TABLE lt_c INTO DATA(ls_c) INDEX 1.
+            IF sy-subrc = 0.
+              rv_order = ls_c-name.
+            ENDIF.
           ENDIF.
         CATCH cx_root.
           CLEAR rv_order.
