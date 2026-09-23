@@ -1,15 +1,438 @@
 # sap-dex2file
 
-ABAP tool for **S/4HANA** that discovers **CDS views** - **DEX** (data-extraction enabled)
-and/or **API CDS** entities named like `I_*API*` - and downloads their data to a **file**:
-a **full** load (`SELECT *`) or a **timestamp-based delta** (changes since the last run).
+ABAP tools for **S/4HANA** to extract CDS data in two ways:
 
-Companion to [`sap-dex2odata`](../sap-dex2odata) (which exposes views as OData services);
-this one extracts straight to a file instead.
+1. **File extract** — report `ZEVO_CDS_EXPLORER_2_FILE` discovers DEX / API CDS views and downloads **full** or **delta** extracts to CSV/tab/AL11.
+2. **OData extract** — Gateway service with function imports `ExtractCds` / `GetCdsMetadata`: pass a CDS name + OData `$filter`, paginate with `Skip`/`Top`, optional caller-managed delta, return **JSON or XML**.
 
-**Also in this repo:** a generic **OData V2** extract service (`ExtractCds` / `GetCdsMetadata`) that
-accepts a CDS name + OData `$filter`, supports pagination and caller-managed delta, and returns
-JSON or XML. See **[docs/ZEVO_ODATA_EXTRACT.md](docs/ZEVO_ODATA_EXTRACT.md)**.
+> **Where to read the OData docs:** start at [OData CDS extract service](#odata-cds-extract-service) in this same README (full guide below). A copy also lives in [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md).  
+> **Note:** abapGit only syncs `src/` — `README.md` / `docs/` are **not** imported into SAP; read them on GitHub or in a git clone.
+
+Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the generic OData extract now lives **in this repo**.
+
+## Contents
+
+| Section | What |
+|---------|------|
+| **[OData CDS extract service](#odata-cds-extract-service)** | `ExtractCds`, `GetCdsMetadata`, `$metadata`, filter, paging, delta, activation |
+| [Source types](#source-types) | DEX / API CDS / Both (file report) |
+| [How delta works](#how-delta-works) | Timestamp delta for the **file** report (`ZEVO_DELTA`) |
+| [Naming convention](#naming-convention) / [Objects](#objects) | `ZEVO*` inventory |
+| [Using ZEVO_CDS_EXPLORER_2_FILE](#using-zevo_cds_explorer_2_file) | Selection screen & file extract |
+| [External file interface](#external-file-interface) | AL11 / jobs / `.ok` sidecar |
+| [Installing & importing with abapGit](#installing--importing-with-abapgit) | Pull & activate |
+
+---
+
+## OData CDS extract service
+
+Generic **OData V2** service that extracts any selectable CDS entity on **SAP S/4HANA Private Cloud** (or on‑premise), similar in spirit to report `ZEVO_CDS_EXPLORER_2_FILE`, but over HTTP.
+
+| Capability | Supported |
+|------------|-----------|
+| Pass CDS entity name | Yes (`EntityName`) |
+| OData `$filter` syntax | Yes (subset → OpenSQL `WHERE`) |
+| JSON or XML payload | Yes (`Format=json\|xml`) |
+| Pagination | Yes (`Skip` / `Top` + `totalCount`) |
+| Delta | Yes — **caller-managed** via `DeltaSince` (no `ZEVO_DELTA` table writes) |
+| Service `$metadata` | Yes (standard Gateway) |
+| CDS field metadata | Yes (`GetCdsMetadata`) |
+| CDS discovery list | **No** (by design) |
+| Async / background jobs | **No** (synchronous HTTP + pagination) |
+
+Companion to the file extractor in this same repository. Business logic lives in ABAP classes; Gateway MPC/DPC expose it as function imports.
+
+---
+
+### Architecture
+
+```text
+Client
+  │
+  ├─ GET .../ZEVO_CDS_EXTRACT_SRV/$metadata          ← service contract
+  ├─ GET .../GetCdsMetadata?...                      ← CDS fields / keys / delta field
+  └─ GET .../ExtractCds?...                          ← paged data (json|xml inside Payload)
+         │
+         ▼
+  ZEVO_CL_ODATA_DPC  →  ZEVO_CL_ODATA_API
+                           ├─ ZEVO_CL_FILTER_PARSER   ($filter → OpenSQL)
+                           ├─ ZEVO_CL_CDS_META        (fields, keys, delta field)
+                           ├─ ZEVO_CL_EXTRACTOR       (SELECT + Skip/Top + COUNT)
+                           └─ ZEVO_CL_SERIALIZER      (JSON / XML envelope)
+```
+
+#### Objects
+
+| Object | Role |
+|--------|------|
+| `ZEVO_CL_ODATA_MPC` | Model provider — function imports + `CdsResult` entity |
+| `ZEVO_CL_ODATA_DPC` | Data provider — `EXECUTE_ACTION` |
+| `ZEVO_CL_ODATA_API` | Facade used by DPC (also callable from ABAP tests) |
+| `ZEVO_CL_FILTER_PARSER` | OData `$filter` → OpenSQL `WHERE` |
+| `ZEVO_CL_CDS_META` | Per-entity metadata + delta-field resolution |
+| `ZEVO_CL_SERIALIZER` | Envelope JSON/XML |
+| `ZEVO_CL_EXTRACTOR` | `extract` (file report) + `extract_ex` (OData paging) |
+
+Default page size: **1000**. Hard max `Top`: **10000** (`ZEVO_CL_EXTRACTOR=>C_MAX_TOP`).
+
+---
+
+### Gateway activation (S/4 Private Cloud)
+
+abapGit ships the **classes**. You still register the OData service once in the system (SEGW or code-based registration). Two supported paths:
+
+#### Path A — SEGW project (recommended for most teams)
+
+1. Pull / activate all `ZEVO_CL_*` classes from this repo (abapGit).
+2. Transaction **`SEGW`** → create project **`ZEVO_CDS_EXTRACT`** (package = your Z/`$` package).
+3. Right-click project → **Generate Runtime Objects** so SAP creates:
+   - `ZCL_ZEVO_CDS_EXTRACT_MPC` / `_MPC_EXT`
+   - `ZCL_ZEVO_CDS_EXTRACT_DPC` / `_DPC_EXT`
+   - Service `ZEVO_CDS_EXTRACT_SRV` (technical names may vary slightly by release)
+4. In **`ZCL_…_MPC_EXT` → `DEFINE`**: call the model definition from this repo, e.g. either
+   - copy the body of `ZEVO_CL_ODATA_MPC=>DEFINE`, or
+   - instantiate and delegate if you adapt inheritance so `_MPC_EXT` inherits from `ZEVO_CL_ODATA_MPC` (advanced).
+5. In **`ZCL_…_DPC_EXT` → `EXECUTE_ACTION`**: copy/delegate to `ZEVO_CL_ODATA_DPC` logic, or change inheritance so `_DPC_EXT` inherits from `ZEVO_CL_ODATA_DPC` and redefine only if needed.
+6. **Minimal wiring alternative:** keep generated stubs and in `_DPC_EXT→EXECUTE_ACTION` call only:
+
+```abap
+DATA(ls_resp) = zevo_cl_odata_api=>extract_cds( ... ).
+" or get_cds_metadata
+```
+
+using parameters from `io_tech_request_context->get_parameters( )`, returning a structure with component `PAYLOAD`.
+
+7. Transaction **`/IWFND/MAINT_SERVICE`**:
+   - Add service `ZEVO_CDS_EXTRACT_SRV` (system alias LOCAL / your GW alias)
+   - Activate ICF node
+   - Assign authorization / role as required
+8. Call `$metadata` (see below) to verify.
+
+#### Path B — Code-based model classes shipped here
+
+Use `ZEVO_CL_ODATA_MPC` and `ZEVO_CL_ODATA_DPC` as the **Model Provider Class** and **Data Provider Class** when registering the service in `/IWBEP/REG_SERVICE` (or equivalent on your release):
+
+| Field | Value |
+|-------|--------|
+| Technical service name | `ZEVO_CDS_EXTRACT_SRV` |
+| Model provider | `ZEVO_CL_ODATA_MPC` |
+| Data provider | `ZEVO_CL_ODATA_DPC` |
+
+Then activate in `/IWFND/MAINT_SERVICE` as usual.
+
+> Exact registration UI labels differ slightly between S/4 releases. If registration fails on cardinality / `set_type_edm_*` methods, adjust `ZEVO_CL_ODATA_MPC=>DEFINE` to match your GW SP and keep `ZEVO_CL_ODATA_API` unchanged.
+
+---
+
+### Service metadata
+
+```http
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/$metadata
+```
+
+Returns the OData EDMX for this service: entity `CdsResult`, function imports `ExtractCds` and `GetCdsMetadata`, and their parameters. Use this so clients discover **how to call the service** (not the shape of an arbitrary CDS).
+
+Also available:
+
+```http
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/
+```
+
+(service document).
+
+---
+
+### Function import: `GetCdsMetadata`
+
+Returns field list, keys, DDL/SQL names, and delta-field info for **one** CDS entity.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `EntityName` | string | yes | CDS entity (e.g. `I_SalesOrderPartner`) |
+| `Format` | string | no | `json` (default) or `xml` |
+
+#### Example
+
+```http
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/GetCdsMetadata
+  ?EntityName='I_SalesOrderPartner'
+  &$format=json
+```
+
+Optional CDS payload format:
+
+```http
+.../GetCdsMetadata?EntityName='I_SalesOrderPartner'&Format='xml'
+```
+
+#### Response shape
+
+Gateway returns entity `CdsResult` with property **`Payload`**. The Payload string is JSON or XML:
+
+**JSON Payload (abbreviated):**
+
+```json
+{
+  "entity": "I_SalesOrderPartner",
+  "ddlName": "I_SALESORDERPARTNER",
+  "dbTabName": "...",
+  "deltaField": "LastChangeDateTime",
+  "deltaCapable": true,
+  "keyFields": ["SalesOrder", "PartnerFunction"],
+  "fields": [
+    {
+      "name": "SalesOrder",
+      "abapType": "C",
+      "length": 10,
+      "decimals": 0,
+      "keyFlag": true,
+      "description": "..."
+    }
+  ]
+}
+```
+
+**Use this to:** build `$filter` expressions, know keys for stable paging, and learn the delta timestamp field name before calling `ExtractCds` with `DeltaSince`.
+
+---
+
+### Function import: `ExtractCds`
+
+Runs `SELECT` on the CDS entity with optional filter, optional delta, and pagination. Returns rows inside `Payload` as JSON or XML.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `EntityName` | string | yes | CDS entity name |
+| `Filter` | string | no | OData `$filter` expression (see below) |
+| `Format` | string | no | `json` (default) or `xml` — **content of Payload**, not the OData envelope |
+| `DeltaSince` | string | no | If set, only rows with change-ts **>** this value (caller-managed delta) |
+| `Skip` | int32 | no | Offset (default `0`) |
+| `Top` | int32 | no | Page size (default `1000`, max `10000`) |
+
+#### Examples
+
+**Full page (JSON data):**
+
+```http
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
+  ?EntityName='I_SalesOrderPartner'
+  &Format='json'
+  &Skip=0
+  &Top=500
+  &$format=json
+```
+
+**With $filter:**
+
+```http
+GET .../ExtractCds
+  ?EntityName='I_SalesOrderPartner'
+  &Filter='PartnerFunction eq ''WE'''
+  &Format='json'
+  &Top=500
+```
+
+> In OData URLs, string literals use single quotes; embed a quote by doubling (`''`).
+
+**Delta + pagination (caller keeps the watermark):**
+
+```http
+GET .../ExtractCds
+  ?EntityName='C_PurchaseOrderItemDEX'
+  &DeltaSince='20260101000000'
+  &Skip=0
+  &Top=1000
+  &Format='json'
+```
+
+#### Extract Payload (JSON)
+
+```json
+{
+  "entity": "I_SalesOrderPartner",
+  "format": "json",
+  "rowCount": 500,
+  "totalCount": 12345,
+  "skip": 0,
+  "top": 500,
+  "deltaField": "LastChangeDateTime",
+  "maxChangedAt": "20260923101530123456",
+  "data": [ { "...": "..." } ]
+}
+```
+
+| Field | Meaning |
+|-------|---------|
+| `rowCount` | Rows in **this page** |
+| `totalCount` | Rows matching filter (+ delta), all pages |
+| `skip` / `top` | Echo of paging params (top may be capped) |
+| `deltaField` | Field used for delta (empty if not delta) |
+| `maxChangedAt` | Max change-ts **in this page** — store for next `DeltaSince` |
+| `data` | Array of row objects |
+
+#### Extract Payload (XML)
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<extract>
+  <entity>I_SalesOrderPartner</entity>
+  <format>xml</format>
+  <rowCount>500</rowCount>
+  <totalCount>12345</totalCount>
+  <skip>0</skip>
+  <top>500</top>
+  <deltaField></deltaField>
+  <maxChangedAt></maxChangedAt>
+  <data>
+    <item>...</item>
+  </data>
+</extract>
+```
+
+---
+
+### Pagination protocol
+
+Synchronous only: each HTTP call returns one page.
+
+1. Call with `Skip=0`, `Top=1000` (or your size ≤ 10000).
+2. Read `totalCount` and `rowCount` from Payload.
+3. While `skip + rowCount < totalCount`, call again with `Skip = skip + top`.
+4. Stop when a page returns `rowCount = 0` or `skip >= totalCount`.
+
+Paging uses `ORDER BY` key fields (DDIC keys, else first component) + SQL `OFFSET` / `UP TO` for stable pages.
+
+---
+
+### Caller-managed delta
+
+Unlike the file report (which writes `ZEVO_DELTA`), this service **never** persists high-water marks.
+
+Recommended pattern:
+
+1. `GetCdsMetadata` → confirm `deltaCapable` / `deltaField`.
+2. Initial load: `ExtractCds` **without** `DeltaSince`, page through all rows; remember global max of `maxChangedAt` (or your own max over `data`).
+3. Next run: pass that value as `DeltaSince`; page until done; update your store to the new max `maxChangedAt`.
+
+`DeltaSince` accepts compact timestamps (digits); separators `-` `:` `T` `Z` `.` spaces are stripped before conversion to `TIMESTAMPL`.
+
+If `DeltaSince` is set but the entity has no change-timestamp field → business error (status skipped / message explains).
+
+---
+
+### `$filter` support (v1)
+
+Translated to OpenSQL `WHERE`. Field names must exist on the CDS entity (allowlisted via RTTI).
+
+| Supported | Example |
+|-----------|---------|
+| `eq` `ne` `gt` `ge` `lt` `le` | `PartnerFunction eq 'WE'` |
+| `and` / `or` | `A eq '1' and B gt '2'` |
+| parentheses | `(A eq '1' or A eq '2') and B eq 'X'` |
+| string literals | `'WE'`, embed quote as `''` |
+| numeric literals | `10`, `3.14` |
+
+| Not supported (rejected) |
+|--------------------------|
+| `contains` / `startswith` / `endswith` / `substringof` |
+| `tolower` / `toupper` / `not` / `null` |
+| `datetime'...'` literals (use quoted timestamps instead) |
+| navigation / `/` paths |
+
+Invalid filters return a Gateway **business exception** with a clear message.
+
+---
+
+### Authorization & security
+
+- Gateway user needs rights to call the service and to **read** the CDS (DCL applies on `SELECT`).
+- `$filter` cannot reference unknown fields (allowlist).
+- `Top` is capped to limit memory / response size.
+- Prefer technical users with least privilege per CDS family.
+- Large `Payload` strings: keep `Top` modest (e.g. 500–2000) for Gateway / HTTP timeouts.
+
+---
+
+### Comparison with `ZEVO_CDS_EXPLORER_2_FILE`
+
+| Topic | File report | OData service |
+|-------|-------------|----------------|
+| Transport | AL11 / GUI file | HTTP JSON/XML |
+| Discovery grid | Yes | No |
+| Filter | Selection screen | OData `$filter` |
+| Delta store | `ZEVO_DELTA` table | Caller-managed |
+| Pagination | Max rows only | `Skip` / `Top` + `totalCount` |
+| Formats | CSV / tab / xls | JSON / XML |
+| Batch many CDS | One run, many files | One entity per call |
+
+Use **files** for scheduled bulk DEX dumps; use **OData** for interactive / middleware / API integration with paging.
+
+---
+
+### ABAP API (without Gateway)
+
+For unit tests or local checks after abapGit pull:
+
+```abap
+DATA(ls) = zevo_cl_odata_api=>get_cds_metadata(
+  iv_entity_name = 'I_SalesOrderPartner'
+  iv_format      = 'json' ).
+
+ls = zevo_cl_odata_api=>extract_cds(
+  iv_entity_name = 'I_SalesOrderPartner'
+  iv_filter      = |PartnerFunction eq 'WE'|
+  iv_format      = 'json'
+  iv_skip        = 0
+  iv_top         = 100 ).
+" ls-payload / ls-status / ls-message
+```
+
+---
+
+### Activation order (abapGit)
+
+1. Existing objects (`ZEVO_DELTA`, file-extractor classes, report) if not already active  
+2. `ZEVO_CL_FILTER_PARSER`  
+3. `ZEVO_CL_SERIALIZER`  
+4. `ZEVO_CL_CDS_META`  
+5. `ZEVO_CL_EXTRACTOR` (updated)  
+6. `ZEVO_CL_ODATA_API`  
+7. `ZEVO_CL_ODATA_MPC` / `ZEVO_CL_ODATA_DPC` (need Gateway `/IWBEP/*` in the system)  
+8. Register & activate service (`/IWFND/MAINT_SERVICE`)
+
+---
+
+### Troubleshooting
+
+| Symptom | Likely cause |
+|---------|----------------|
+| MPC/DPC activate errors on `/IWBEP/*` | Gateway not in system, or method names differ by SP — adjust MPC `DEFINE` |
+| `$metadata` 404 | Service not registered / ICF node inactive |
+| Entity not selectable | Wrong name, parameterized CDS, or no auth |
+| Empty `data` but `totalCount` > 0 | `Skip` beyond end |
+| Delta returns nothing | Wrong `DeltaSince` format, or no rows newer than watermark |
+| Filter error “not part of CDS” | Typo / wrong case — use names from `GetCdsMetadata` |
+| Gateway timeout | Lower `Top`, page more |
+| Huge Payload truncated | Lower `Top`; check GW string length settings |
+
+---
+
+### Out of scope (v1)
+
+- CDS catalog / discovery entity set  
+- Writing `ZEVO_DELTA` from OData  
+- Async extract jobs  
+- Full OData `$filter` grammar  
+- OData V4 / RAP unbound actions  
+- Per-CDS generated entity sets (use `sap-dex2odata` style if you need that)
+
+---
+
+---
 
 ## Source types
 
@@ -112,8 +535,7 @@ All custom ABAP objects use the **`ZEVO`** prefix:
 | `ZEVO_CL_ODATA_MPC` | class | Gateway model provider (function imports) |
 | `ZEVO_CL_ODATA_DPC` | class | Gateway data provider |
 
-OData setup, URL examples, `$filter` grammar, and pagination/delta protocol:
-**[docs/ZEVO_ODATA_EXTRACT.md](docs/ZEVO_ODATA_EXTRACT.md)**.
+Full OData documentation: see **[OData CDS extract service](#odata-cds-extract-service)** above (also [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md)).
 
 ## Using `ZEVO_CDS_EXPLORER_2_FILE`
 
@@ -292,7 +714,7 @@ Activate in this order (or select all and mass-activate so dependencies resolve)
 1. **`ZEVO_DELTA`** (table) - first, because the classes reference it.
 2. `ZEVO_CL_*` classes (including OData helpers; MPC/DPC need Gateway `/IWBEP/*`).
 3. `ZEVO_CDS_EXPLORER_2_FILE` (report).
-4. For the OData service: register/activate per [docs/ZEVO_ODATA_EXTRACT.md](docs/ZEVO_ODATA_EXTRACT.md).
+4. For the OData service: register/activate per **[OData CDS extract service](#odata-cds-extract-service)** above.
 
 After a rename from older `Z_CDS_*` / `ZCL_DXF_*` / `ZDXF_*` objects: delete the old objects (or let abapGit remove them), then pull/activate the `ZEVO*` ones.
 

@@ -1,5 +1,8 @@
 # ZEVO OData CDS Extract Service
 
+> **Also in the root README:** open [`README.md`](../README.md#odata-cds-extract-service) → section **OData CDS extract service** (same documentation). abapGit does not import `README.md` / `docs/` into SAP — read on GitHub.
+
+
 Generic **OData V2** service that extracts any selectable CDS entity on **SAP S/4HANA Private Cloud** (or on‑premise), similar in spirit to report `ZEVO_CDS_EXPLORER_2_FILE`, but over HTTP.
 
 | Capability | Supported |
