@@ -623,14 +623,14 @@ Envelope fields that matter for delta:
 ```http
 GET .../ExtractCds
   ?EntityName='C_PurchaseOrderDEX'
-  &DeltaSince='20260923101530123456'
+  &DeltaSince='20171008232647'
   &Format='json'
   &Skip='0'
   &Top='1000'
   &$format=json
 ```
 
-Only rows with `LastChangeDateTime > 20260923101530123456` are returned.
+Only rows with `LastChangeDateTime > 20171008232647` are returned.
 
 #### Format choice for delta
 
