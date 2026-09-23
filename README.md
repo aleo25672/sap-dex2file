@@ -330,6 +330,8 @@ GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
 
 See [Caller-managed delta](#caller-managed-delta) for how `DeltaSince` relates to `LastChangeDateTime`.
 
+> **P2P (PO → Item → History → GR / IR):** full call sequence as a Word doc — [`docs/P2P_OData_Extract_Call_Flow.docx`](docs/P2P_OData_Extract_Call_Flow.docx).
+
 #### 7. Multiple CDS (header → items → history)
 
 **Yes — as several `ExtractCds` calls.** The service has **no** `$expand` / navigation and **no** SQL join across CDS views. Each call targets **one** entity. The client orchestrates “related” extracts using keys from the header result.
