@@ -14,7 +14,7 @@ Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the ge
 
 | Section | What |
 |---------|------|
-| **[OData CDS extract service](#odata-cds-extract-service)** | `ExtractCds`, `GetCdsMetadata`, `$metadata`, filter, paging, delta, activation |
+| **[OData CDS extract service](#odata-cds-extract-service)** | `ExtractCds`, `GetCdsMetadata`, [URL cookbook](#url-cookbook-c_purchaseorderdex) (`C_PurchaseOrderDEX`), filter, paging, delta |
 | [Source types](#source-types) | DEX / API CDS / Both (file report) |
 | [How delta works](#how-delta-works) | Timestamp delta for the **file** report (`ZEVO_DELTA`) |
 | [Naming convention](#naming-convention) / [Objects](#objects) | `ZEVO*` inventory |
@@ -204,17 +204,130 @@ Until `$metadata` contains `ExtractCds`, extract URLs will keep returning 404/50
 #### Register & test
 
 1. **`/IWFND/MAINT_SERVICE`** — Add **`ZEVO_CDS_EXTRACT_SRV`** (system alias LOCAL / your GW alias), activate ICF node, assign role/auth as needed.
-2. Smoke tests:
-
-```http
-GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/$metadata
-GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/GetCdsMetadata?EntityName='I_SalesOrderPartner'&$format=json
-GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds?EntityName='I_SalesOrderPartner'&Format='json'&Skip='0'&Top='10'&$format=json
-```
+2. Run the [URL cookbook](#url-cookbook-c_purchaseorderdex) below (all examples use **`C_PurchaseOrderDEX`**).
 
 #### Path B — optional note
 
 Prefer Path A (SEGW stubs). Do **not** register `ZEVO_CL_ODATA_MPC` itself as the Gateway model provider class (it does not inherit `/IWBEP/CL_MGW_*`).
+
+---
+
+### URL cookbook (`C_PurchaseOrderDEX`)
+
+All extract / metadata examples in this guide use the same CDS entity. Copy-paste into Gateway Client (`/IWFND/GW_CLIENT`).
+
+> String literals in OData URLs use single quotes; embed a quote by doubling (`''`).  
+> Use **`Skip` / `Top`** (function-import params), not `$skip` / `$top`.  
+> `$format=json` is the **HTTP** body format; `Format=` is the **Payload** content mode.
+
+#### 1. Service `$metadata` (EDMX — must list `ExtractCds` / `GetCdsMetadata` and `CdsResult` with `Id` key)
+
+```http
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/$metadata
+```
+
+#### 2. CDS field metadata
+
+```http
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/GetCdsMetadata
+  ?EntityName='C_PurchaseOrderDEX'
+  &Format='json'
+  &$format=json
+```
+
+Use this to learn field names for `$filter`, keys for paging, and `deltaField` / `deltaCapable` before delta extracts.
+
+#### 3. Full JSON envelope (first 10 POs — includes `totalCount`, `data`, …)
+
+```http
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
+  ?EntityName='C_PurchaseOrderDEX'
+  &Format='json'
+  &Skip='0'
+  &Top='10'
+  &$format=json
+```
+
+Parse: `JSON.parse(d.Payload)` → object with `.data` (array), `.totalCount`, etc.
+
+#### 4. Rows only (`jsonrows` — Payload is just the array)
+
+```http
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
+  ?EntityName='C_PurchaseOrderDEX'
+  &Format='jsonrows'
+  &Skip='0'
+  &Top='10'
+  &$format=json
+```
+
+Parse: `JSON.parse(d.Payload)` → array of 10 PO objects. Gateway still returns `d.Id` + short `__metadata`.
+
+#### 5. Filter by company code
+
+```http
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
+  ?EntityName='C_PurchaseOrderDEX'
+  &Filter='CompanyCode eq ''1710'''
+  &Format='json'
+  &Skip='0'
+  &Top='10'
+  &$format=json
+```
+
+Rows only + filter:
+
+```http
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
+  ?EntityName='C_PurchaseOrderDEX'
+  &Filter='CompanyCode eq ''1710'''
+  &Format='jsonrows'
+  &Skip='0'
+  &Top='10'
+  &$format=json
+```
+
+Combine filters with `and` / `or`, e.g. `CompanyCode eq '1710' and PurchasingOrganization eq '1710'` (remember to double quotes in the URL).
+
+#### 6. Delta load (caller-managed watermark)
+
+**Initial full page** (store max of `maxChangedAt` from the envelope across pages):
+
+```http
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
+  ?EntityName='C_PurchaseOrderDEX'
+  &Format='json'
+  &Skip='0'
+  &Top='1000'
+  &$format=json
+```
+
+**Incremental** (only rows with `LastChangeDateTime` / `deltaField` **>** watermark — use `Format=json` to read the new `maxChangedAt`):
+
+```http
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
+  ?EntityName='C_PurchaseOrderDEX'
+  &DeltaSince='20171008232647'
+  &Format='json'
+  &Skip='0'
+  &Top='1000'
+  &$format=json
+```
+
+**Delta + company filter + rows only** (you already own the watermark):
+
+```http
+GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
+  ?EntityName='C_PurchaseOrderDEX'
+  &Filter='CompanyCode eq ''1710'''
+  &DeltaSince='20171008232647'
+  &Format='jsonrows'
+  &Skip='0'
+  &Top='500'
+  &$format=json
+```
+
+See [Caller-managed delta](#caller-managed-delta) for how `DeltaSince` relates to `LastChangeDateTime`.
 
 ---
 
@@ -224,7 +337,7 @@ Prefer Path A (SEGW stubs). Do **not** register `ZEVO_CL_ODATA_MPC` itself as th
 GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/$metadata
 ```
 
-Returns the OData EDMX for this service: entity `CdsResult` (`Id` key + `Payload`), function imports `ExtractCds` and `GetCdsMetadata`, and their parameters. Use this so clients discover **how to call the service** (not the shape of an arbitrary CDS).
+Returns the OData EDMX for this service: entity `CdsResult` (`Id` key + `Payload`), function imports `ExtractCds` and `GetCdsMetadata`, and their parameters. Use this so clients discover **how to call the service** (not the shape of an arbitrary CDS). See [URL cookbook](#url-cookbook-c_purchaseorderdex) item 1.
 
 Also available:
 
@@ -244,21 +357,18 @@ Returns field list, keys, DDL/SQL names, and delta-field info for **one** CDS en
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `EntityName` | string | yes | CDS entity (e.g. `I_SalesOrderPartner`) |
-| `Format` | string | no | `json` (default), `xml`, `jsonrows`, or `xmlrows` |
+| `EntityName` | string | yes | CDS entity (examples use `C_PurchaseOrderDEX`) |
+| `Format` | string | no | `json` (default) or `xml` — content of Payload |
 
 #### Example
 
+See [URL cookbook §2](#2-cds-field-metadata).
+
 ```http
 GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/GetCdsMetadata
-  ?EntityName='I_SalesOrderPartner'
+  ?EntityName='C_PurchaseOrderDEX'
+  &Format='json'
   &$format=json
-```
-
-Optional CDS payload format:
-
-```http
-.../GetCdsMetadata?EntityName='I_SalesOrderPartner'&Format='xml'
 ```
 
 #### Response shape
@@ -270,7 +380,7 @@ Gateway returns entity **`CdsResult`**:
 | **`Id`** | Surrogate **key** (32-char GUID). Keeps `__metadata.id` / `uri` short. |
 | **`Payload`** | Extract / metadata content (JSON or XML string). **Not** the key. |
 
-Example HTTP body (`Format=jsonrows`):
+Example HTTP body after extract (`Format=jsonrows`):
 
 ```json
 {
@@ -294,26 +404,34 @@ For **GetCdsMetadata**, the Payload string is JSON or XML like:
 
 ```json
 {
-  "entity": "I_SalesOrderPartner",
-  "ddlName": "I_SALESORDERPARTNER",
+  "entity": "C_PurchaseOrderDEX",
+  "ddlName": "C_PURCHASEORDERDEX",
   "dbTabName": "...",
   "deltaField": "LastChangeDateTime",
   "deltaCapable": true,
-  "keyFields": ["SalesOrder", "PartnerFunction"],
+  "keyFields": ["PurchaseOrder"],
   "fields": [
     {
-      "name": "SalesOrder",
+      "name": "PurchaseOrder",
       "abapType": "C",
       "length": 10,
       "decimals": 0,
       "keyFlag": true,
+      "description": "..."
+    },
+    {
+      "name": "CompanyCode",
+      "abapType": "C",
+      "length": 4,
+      "decimals": 0,
+      "keyFlag": false,
       "description": "..."
     }
   ]
 }
 ```
 
-**Use this to:** build `$filter` expressions, know keys for stable paging, and learn the delta timestamp field name before calling `ExtractCds` with `DeltaSince`.
+**Use this to:** build `$filter` expressions (e.g. `CompanyCode`), know keys for stable paging, and learn the delta timestamp field name before calling `ExtractCds` with `DeltaSince`.
 
 ---
 
@@ -343,77 +461,30 @@ Runs `SELECT` on the CDS entity with optional filter, optional delta, and pagina
 
 #### Examples
 
-**Full page (JSON envelope):**
+All HTTP examples use **`C_PurchaseOrderDEX`** — see the [URL cookbook](#url-cookbook-c_purchaseorderdex):
 
-```http
-GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
-  ?EntityName='I_SalesOrderPartner'
-  &Format='json'
-  &Skip='0'
-  &Top='500'
-  &$format=json
-```
-
-**Rows only (JSON array in Payload):**
-
-```http
-GET .../ExtractCds
-  ?EntityName='C_PurchaseOrderDEX'
-  &Format='jsonrows'
-  &Skip='0'
-  &Top='10'
-  &$format=json
-```
-
-`Payload` is then e.g. `[{ "PurchaseOrder": "4500000001", ... }, ...]` — parse with `JSON.parse(d.Payload)` (no `.data` unwrap). Gateway still wraps with `d` / `__metadata` / `Id`; those stay small because `Id` is the entity key (not `Payload`).
-
-**With $filter:**
-
-```http
-GET .../ExtractCds
-  ?EntityName='I_SalesOrderPartner'
-  &Filter='PartnerFunction eq ''WE'''
-  &Format='json'
-  &Top='500'
-```
-
-> In OData URLs, string literals use single quotes; embed a quote by doubling (`''`).
-
-**Delta (envelope — keep `Format=json` to read `maxChangedAt`):**
-
-```http
-GET .../ExtractCds
-  ?EntityName='C_PurchaseOrderDEX'
-  &DeltaSince='20260101120000'
-  &Skip='0'
-  &Top='1000'
-  &Format='json'
-```
-
-**Delta + rows only** (you already store the watermark yourself; no envelope):
-
-```http
-GET .../ExtractCds
-  ?EntityName='C_PurchaseOrderDEX'
-  &DeltaSince='20260101120000'
-  &Skip='0'
-  &Top='1000'
-  &Format='jsonrows'
-```
+| Need | Cookbook |
+|------|----------|
+| `$metadata` | §1 |
+| Field list / delta capability | §2 `GetCdsMetadata` |
+| Full envelope (first 10) | §3 `Format=json` |
+| Rows only | §4 `Format=jsonrows` |
+| Filter `CompanyCode` | §5 |
+| Delta / incremental | §6 |
 
 #### Extract Payload (JSON)
 
 ```json
 {
-  "entity": "I_SalesOrderPartner",
+  "entity": "C_PurchaseOrderDEX",
   "format": "json",
-  "rowCount": 500,
-  "totalCount": 12345,
+  "rowCount": 10,
+  "totalCount": 2215,
   "skip": 0,
-  "top": 500,
+  "top": 10,
   "deltaField": "LastChangeDateTime",
-  "maxChangedAt": "20260923101530123456",
-  "data": [ { "...": "..." } ]
+  "maxChangedAt": "20171008232647.2795840",
+  "data": [ { "purchaseorder": "4500000001", "companycode": "1710", "...": "..." } ]
 }
 ```
 
@@ -429,7 +500,7 @@ GET .../ExtractCds
 #### Extract Payload (`Format=jsonrows`)
 
 ```json
-[ { "purchaseOrder": "4500000001", "...": "..." }, { "...": "..." } ]
+[ { "purchaseorder": "4500000001", "companycode": "1710", "...": "..." }, { "...": "..." } ]
 ```
 
 No envelope — `Payload` is the array alone.
@@ -439,12 +510,12 @@ No envelope — `Payload` is the array alone.
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <extract>
-  <entity>I_SalesOrderPartner</entity>
+  <entity>C_PurchaseOrderDEX</entity>
   <format>xml</format>
-  <rowCount>500</rowCount>
-  <totalCount>12345</totalCount>
+  <rowCount>10</rowCount>
+  <totalCount>2215</totalCount>
   <skip>0</skip>
-  <top>500</top>
+  <top>10</top>
   <deltaField></deltaField>
   <maxChangedAt></maxChangedAt>
   <data>
@@ -570,13 +641,13 @@ Only rows with `LastChangeDateTime > 20260923101530123456` are returned.
 
 ```http
 # Envelope (recommended while learning / paging by totalCount)
-...&DeltaSince='20260101120000'&Format='json'
+...&DeltaSince='20171008232647'&Format='json'
 
 # Rows only — Payload is [ {...}, ... ]; you track watermark yourself
-...&DeltaSince='20260101120000'&Format='jsonrows'
+...&DeltaSince='20171008232647'&Format='jsonrows'
 
 # Rows only as XML
-...&DeltaSince='20260101120000'&Format='xmlrows'
+...&DeltaSince='20171008232647'&Format='xmlrows'
 ```
 
 #### Combined with `$filter`
@@ -586,13 +657,13 @@ Filter and delta are **AND**ed:
 ```http
 GET .../ExtractCds
   ?EntityName='C_PurchaseOrderDEX'
-  &Filter='PurchasingOrganization eq ''1000'''
-  &DeltaSince='20260101120000'
+  &Filter='CompanyCode eq ''1710'''
+  &DeltaSince='20171008232647'
   &Format='json'
   &Top='500'
 ```
 
-→ roughly `WHERE ( PurchasingOrganization = '1000' ) AND LastChangeDateTime > '20260101120000'`.
+→ roughly `WHERE ( CompanyCode = '1710' ) AND LastChangeDateTime > '20171008232647'`.
 
 ---
 
@@ -602,7 +673,7 @@ Translated to OpenSQL `WHERE`. Field names must exist on the CDS entity (allowli
 
 | Supported | Example |
 |-----------|---------|
-| `eq` `ne` `gt` `ge` `lt` `le` | `PartnerFunction eq 'WE'` |
+| `eq` `ne` `gt` `ge` `lt` `le` | `CompanyCode eq '1710'` |
 | `and` / `or` | `A eq '1' and B gt '2'` |
 | parentheses | `(A eq '1' or A eq '2') and B eq 'X'` |
 | string literals | `'WE'`, embed quote as `''` |
@@ -651,15 +722,15 @@ For unit tests or local checks after abapGit pull:
 
 ```abap
 DATA(ls) = zevo_cl_odata_api=>get_cds_metadata(
-  iv_entity_name = 'I_SalesOrderPartner'
+  iv_entity_name = 'C_PurchaseOrderDEX'
   iv_format      = 'json' ).
 
 ls = zevo_cl_odata_api=>extract_cds(
-  iv_entity_name = 'I_SalesOrderPartner'
-  iv_filter      = |PartnerFunction eq 'WE'|
-  iv_format      = 'json'
+  iv_entity_name = 'C_PurchaseOrderDEX'
+  iv_filter      = |CompanyCode eq '1710'|
+  iv_format      = 'jsonrows'
   iv_skip        = 0
-  iv_top         = 100 ).
+  iv_top         = 10 ).
 " ls-payload / ls-status / ls-message
 ```
 
