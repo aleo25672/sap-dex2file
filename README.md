@@ -279,7 +279,7 @@ Runs `SELECT` on the CDS entity with optional filter, optional delta, and pagina
 | `EntityName` | string | yes | CDS entity name |
 | `Filter` | string | no | OData `$filter` expression (see below) |
 | `Format` | string | no | `json` (default), `xml`, `jsonrows`, or `xmlrows` — **content of Payload**, not the OData envelope |
-| `DeltaSince` | string | no | If set, only rows with change-ts **>** this value (caller-managed delta) |
+| `DeltaSince` | string | no | Caller watermark: only rows with change-ts **>** this value (see [Caller-managed delta](#caller-managed-delta)) |
 | `Skip` | string | no | Offset (default `0`) — pass as **quoted** string, e.g. `Skip='0'` (`Edm.String`) |
 | `Top` | string | no | Page size (default `1000`, max `10000`) — pass as **quoted** string, e.g. `Top='500'` |
 
@@ -330,15 +330,26 @@ GET .../ExtractCds
 
 > In OData URLs, string literals use single quotes; embed a quote by doubling (`''`).
 
-**Delta + pagination (caller keeps the watermark):**
+**Delta (envelope — keep `Format=json` to read `maxChangedAt`):**
 
 ```http
 GET .../ExtractCds
-  ?EntityName='C_PurchaseOrderItemDEX'
-  &DeltaSince='20260101000000'
+  ?EntityName='C_PurchaseOrderDEX'
+  &DeltaSince='20260101120000'
   &Skip='0'
   &Top='1000'
   &Format='json'
+```
+
+**Delta + rows only** (you already store the watermark yourself; no envelope):
+
+```http
+GET .../ExtractCds
+  ?EntityName='C_PurchaseOrderDEX'
+  &DeltaSince='20260101120000'
+  &Skip='0'
+  &Top='1000'
+  &Format='jsonrows'
 ```
 
 #### Extract Payload (JSON)
@@ -421,17 +432,118 @@ Paging uses `ORDER BY` key fields (DDIC keys, else first component) + SQL `OFFSE
 
 ### Caller-managed delta
 
-Unlike the file report (which writes `ZEVO_DELTA`), this service **never** persists high-water marks.
+`DeltaSince` and `LastChangeDateTime` are **not the same thing** — they work as a pair.
 
-Recommended pattern:
+| Concept | What it is |
+|---------|------------|
+| **Change-timestamp field** (e.g. `LastChangeDateTime`) | A **column on the CDS**. Discovered automatically; echoed as `deltaField` in metadata / extract envelope. You never pass the field name on extract. |
+| **`DeltaSince`** | Your **watermark** on the request. When set, the service adds `deltaField > '<DeltaSince>'` to the SQL `WHERE`. |
 
-1. `GetCdsMetadata` → confirm `deltaCapable` / `deltaField`.
-2. Initial load: `ExtractCds` **without** `DeltaSince`, page through all rows; remember global max of `maxChangedAt` (or your own max over `data`).
-3. Next run: pass that value as `DeltaSince`; page until done; update your store to the new max `maxChangedAt`.
+Unlike the file report (which writes `ZEVO_DELTA`), this service **never** persists high-water marks — you store and pass them back.
 
-`DeltaSince` accepts compact timestamps (digits); separators `-` `:` `T` `Z` `.` spaces are stripped before conversion to `TIMESTAMPL`.
+#### How the field is chosen
 
-If `DeltaSince` is set but the entity has no change-timestamp field → business error (status skipped / message explains).
+`GetCdsMetadata` / extract look up (in order):
+
+1. `@Semantics.systemDateTime.lastChangedAt`
+2. `@Semantics.systemDateTime.localInstanceLastChangedAt`
+3. Element / DDIC field named `LastChangeDateTime`
+
+If none is found → `deltaCapable: false`. Passing `DeltaSince` then returns a skipped/business error.
+
+#### What the SQL does
+
+With `DeltaSince='20260101120000'` and `deltaField = LastChangeDateTime`:
+
+```sql
+... WHERE LastChangeDateTime > '20260101120000'
+```
+
+Comparison is **strictly greater than** — a row equal to the watermark is not returned again.
+
+`DeltaSince` accepts compact timestamps (digits). Separators `-` `:` `T` `Z` `.` and spaces are stripped before conversion to `TIMESTAMPL` (e.g. `2026-01-01T12:00:00Z` → `20260101120000`).
+
+#### Recommended pattern
+
+1. **Discover** — call `GetCdsMetadata`; confirm `deltaCapable` and note `deltaField`.
+
+```http
+GET .../GetCdsMetadata?EntityName='C_PurchaseOrderDEX'&Format='json'&$format=json
+```
+
+```json
+{
+  "entity": "C_PurchaseOrderDEX",
+  "deltaField": "LastChangeDateTime",
+  "deltaCapable": true,
+  "...": "..."
+}
+```
+
+2. **Initial load** — omit `DeltaSince`; page with `Format='json'` (or `xml`) so the envelope includes `maxChangedAt` / `totalCount`. Keep the **global max** of `maxChangedAt` across pages (or max the change-ts column yourself over `data`).
+
+```http
+GET .../ExtractCds
+  ?EntityName='C_PurchaseOrderDEX'
+  &Format='json'
+  &Skip='0'
+  &Top='1000'
+  &$format=json
+```
+
+Envelope fields that matter for delta:
+
+| Field | Meaning |
+|-------|---------|
+| `deltaField` | Column used for the predicate (e.g. `LastChangeDateTime`) |
+| `maxChangedAt` | Max of that column **on this page** — candidate for next `DeltaSince` |
+
+3. **Incremental run** — pass the stored watermark as `DeltaSince`; page until done; update your store to the new global max `maxChangedAt`.
+
+```http
+GET .../ExtractCds
+  ?EntityName='C_PurchaseOrderDEX'
+  &DeltaSince='20260923101530123456'
+  &Format='json'
+  &Skip='0'
+  &Top='1000'
+  &$format=json
+```
+
+Only rows with `LastChangeDateTime > 20260923101530123456` are returned.
+
+#### Format choice for delta
+
+| Goal | Format |
+|------|--------|
+| Need `totalCount` / `maxChangedAt` / `deltaField` in Payload | `json` or `xml` |
+| Already own the watermark; want only row objects | `jsonrows` or `xmlrows` |
+
+```http
+# Envelope (recommended while learning / paging by totalCount)
+...&DeltaSince='20260101120000'&Format='json'
+
+# Rows only — Payload is [ {...}, ... ]; you track watermark yourself
+...&DeltaSince='20260101120000'&Format='jsonrows'
+
+# Rows only as XML
+...&DeltaSince='20260101120000'&Format='xmlrows'
+```
+
+#### Combined with `$filter`
+
+Filter and delta are **AND**ed:
+
+```http
+GET .../ExtractCds
+  ?EntityName='C_PurchaseOrderDEX'
+  &Filter='PurchasingOrganization eq ''1000'''
+  &DeltaSince='20260101120000'
+  &Format='json'
+  &Top='500'
+```
+
+→ roughly `WHERE ( PurchasingOrganization = '1000' ) AND LastChangeDateTime > '20260101120000'`.
 
 ---
 
@@ -477,7 +589,7 @@ Invalid filters return a Gateway **business exception** with a clear message.
 | Filter | Selection screen | OData `$filter` |
 | Delta store | `ZEVO_DELTA` table | Caller-managed |
 | Pagination | Max rows only | `Skip` / `Top` + `totalCount` |
-| Formats | CSV / tab / xls | JSON / XML |
+| Formats | CSV / tab / xls | JSON / XML envelope, or `jsonrows` / `xmlrows` |
 | Batch many CDS | One run, many files | One entity per call |
 
 Use **files** for scheduled bulk DEX dumps; use **OData** for interactive / middleware / API integration with paging.
