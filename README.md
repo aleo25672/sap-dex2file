@@ -122,11 +122,41 @@ ENDMETHOD.
 
 #### Wire `ZCL_ZEVO_CDS_EXTRACT_DPC_EXT` → `EXECUTE_ACTION`
 
-1. **SE24** → class **`ZCL_ZEVO_CDS_EXTRACT_DPC_EXT`** → Change.
-2. Methods tab → find  
-   **`/IWBEP/IF_MGW_APPL_SRV_RUNTIME~EXECUTE_ACTION`**.  
-   If it only exists on the superclass: **Redefine** that method, then open source.
-3. Paste this implementation:
+The method lives on the SAP superclass chain (`/IWBEP/CL_MGW_ABS_DATA`). You must **redefine** it on **`ZCL_ZEVO_CDS_EXTRACT_DPC_EXT`**. Do **not** change `/IWBEP/CL_MGW_ABS_DATA` (that triggers repair / transportable workbench requests).
+
+If `DPC_EXT` is in a local `$…` package (e.g. `$ZEVOLVER_DEX2F`, software component **LOCAL**), redefining on EXT does **not** need a transportable request.
+
+##### SE24 (Class Builder)
+
+1. **SE24** → class **`ZCL_ZEVO_CDS_EXTRACT_DPC_EXT`** → **Display ↔ Change** (Change mode).
+2. **Methods** tab → select  
+   **`/IWBEP/IF_MGW_APPL_SRV_RUNTIME~EXECUTE_ACTION`**.
+3. Click **Redefine Method** (toolbar icon: document with pencil — hover tooltip *“Redefine Method”*).  
+   It is **not** always labelled as text; do **not** click **Sourcecode** first.
+4. If you instead see  
+   *“…EXECUTE_ACTION is implemented in class /IWBEP/CL_MGW_ABS_DATA”*  
+   → you opened the inherited implementation. **Continue** / Back, then use **Redefine Method** again on the EXT class.
+5. After redefine, click **Sourcecode**. The editor must stay on **`ZCL_ZEVO_CDS_EXTRACT_DPC_EXT`** (not `/IWBEP/…`).
+6. Paste the implementation below → **Activate**.
+
+Menu alternatives if the icon is hard to find: **Method → Redefine** or **Edit → Redefine method**.
+
+##### ADT (Eclipse) alternative
+
+1. Open **`ZCL_ZEVO_CDS_EXTRACT_DPC_EXT`**.
+2. **Outline** → `/IWBEP/IF_MGW_APPL_SRV_RUNTIME~EXECUTE_ACTION` → right‑click → **Redefine Method**  
+   (or **Ctrl+1** → Redefine).
+3. Paste the implementation → Activate.
+
+Or in source-based class editor, add in the definition:
+
+```abap
+  METHODS /iwbep/if_mgw_appl_srv_runtime~execute_action REDEFINITION.
+```
+
+then implement `METHOD /iwbep/if_mgw_appl_srv_runtime~execute_action. … ENDMETHOD.`
+
+##### Implementation to paste
 
 ```abap
 METHOD /iwbep/if_mgw_appl_srv_runtime~execute_action.
@@ -170,7 +200,7 @@ METHOD /iwbep/if_mgw_appl_srv_runtime~execute_action.
 ENDMETHOD.
 ```
 
-4. Activate `ZCL_ZEVO_CDS_EXTRACT_DPC_EXT`.
+Activate **`ZCL_ZEVO_CDS_EXTRACT_DPC_EXT`** only. Do **not** use **Enhance** for this step.
 
 What the DPC method does:
 
@@ -858,6 +888,7 @@ ls = zevo_cl_odata_api=>extract_cds(
 | Empty `data` but `totalCount` > 0 | `Skip` beyond end |
 | Delta returns nothing | Wrong `DeltaSince` format, or no rows newer than watermark |
 | `ExtractCds` segment / function import not found | `MPC_EXT->DEFINE` missing or wiped after SEGW generate — paste `define_model( model )` **without** `super->define( )`; clear `/IWFND/CACHE_CLEANUP`; confirm `$metadata` contains `ExtractCds` |
+| Transportable request when editing `EXECUTE_ACTION` | You opened `/IWBEP/CL_MGW_ABS_DATA` — **Redefine** on `ZCL_ZEVO_CDS_EXTRACT_DPC_EXT` first (SE24: document+pencil *Redefine Method*), then Sourcecode; do not change the SAP class |
 | Filter error “not part of CDS” | Typo / wrong case — use names from `GetCdsMetadata` |
 | Gateway timeout | Lower `Top`, page more |
 | Huge Payload truncated | Lower `Top`; check GW string length settings |
