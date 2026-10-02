@@ -275,6 +275,8 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
 
   METHOD build_order_by.
     DATA lt_dfies TYPE STANDARD TABLE OF dfies WITH DEFAULT KEY.
+    DATA lt_keys  TYPE STANDARD TABLE OF string WITH DEFAULT KEY.
+    DATA lv_name  TYPE string.
     DATA(lv_tab) = CONV ddobjname( iv_entity ).
     CALL FUNCTION 'DDIF_FIELDINFO_GET'
       EXPORTING
@@ -285,31 +287,43 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
         OTHERS    = 1.
     IF sy-subrc = 0.
       LOOP AT lt_dfies INTO DATA(ls_dfies) WHERE keyflag = abap_true.
-        IF rv_order IS INITIAL.
-          rv_order = ls_dfies-fieldname.
-        ELSE.
-          rv_order = |{ rv_order } { ls_dfies-fieldname }|.
+        lv_name = ls_dfies-fieldname.
+        " Skip DDIC hierarchy placeholders (e.g. .NODE1 on some CDS types)
+        IF lv_name IS INITIAL OR lv_name(1) = '.'.
+          CONTINUE.
         ENDIF.
+        APPEND lv_name TO lt_keys.
       ENDLOOP.
     ENDIF.
-    IF rv_order IS INITIAL.
-      " fallback: first component for stable paging when no DDIC keys
+    IF lt_keys IS INITIAL.
+      " fallback: first elementary RTTI component for stable paging
       TRY.
           DATA lr TYPE REF TO data.
           CREATE DATA lr TYPE (iv_entity).
           DATA(lo_s) = CAST cl_abap_structdescr(
                          cl_abap_typedescr=>describe_by_data_ref( lr ) ).
-          DATA(lt_c) = lo_s->get_components( ).
-          IF lt_c IS NOT INITIAL.
-            READ TABLE lt_c INTO DATA(ls_c) INDEX 1.
-            IF sy-subrc = 0.
-              rv_order = ls_c-name.
+          LOOP AT lo_s->get_components( ) INTO DATA(ls_c).
+            IF ls_c-name IS INITIAL OR ls_c-name(1) = '.'.
+              CONTINUE.
             ENDIF.
-          ENDIF.
+            IF ls_c-as_include = abap_true.
+              CONTINUE.
+            ENDIF.
+            APPEND CONV string( ls_c-name ) TO lt_keys.
+            EXIT.
+          ENDLOOP.
         CATCH cx_root.
-          CLEAR rv_order.
+          CLEAR lt_keys.
       ENDTRY.
     ENDIF.
+    " Comma-separated list for dynamic ORDER BY (space-only lists misparse).
+    LOOP AT lt_keys INTO lv_name.
+      IF rv_order IS INITIAL.
+        rv_order = lv_name.
+      ELSE.
+        rv_order = |{ rv_order }, { lv_name }|.
+      ENDIF.
+    ENDLOOP.
   ENDMETHOD.
 
   METHOD read_max_changed.

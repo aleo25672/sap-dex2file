@@ -57,6 +57,9 @@ CLASS zevo_cl_filter_parser DEFINITION
     METHODS is_allowed
       IMPORTING iv_field TYPE clike
       RETURNING VALUE(rv_ok) TYPE abap_bool.
+    METHODS resolve_field
+      IMPORTING iv_field TYPE clike
+      RETURNING VALUE(rv_field) TYPE string.
     METHODS fail
       IMPORTING iv_msg TYPE clike.
 ENDCLASS.
@@ -270,7 +273,8 @@ CLASS zevo_cl_filter_parser IMPLEMENTATION.
       IF mv_error IS NOT INITIAL.
         RETURN.
       ENDIF.
-      lv = |({ lv }) OR ({ lv_r })|.
+      " Blanks after '(' / before ')' required by OpenSQL dynamic WHERE parser.
+      lv = |( { lv } ) OR ( { lv_r } )|.
       ls_cur = current( ).
     ENDWHILE.
     rv_sql = lv.
@@ -292,7 +296,9 @@ CLASS zevo_cl_filter_parser IMPLEMENTATION.
       IF mv_error IS NOT INITIAL.
         RETURN.
       ENDIF.
-      lv = |({ lv }) AND ({ lv_r })|.
+      " No extra parens around each predicate — avoids OpenSQL "(" token errors
+      " on CDS view entities; AND binds tighter than OR (see parse_or).
+      lv = |{ lv } AND { lv_r }|.
       ls_cur = current( ).
     ENDWHILE.
     rv_sql = lv.
@@ -317,7 +323,7 @@ CLASS zevo_cl_filter_parser IMPLEMENTATION.
       IF mv_error IS NOT INITIAL.
         RETURN.
       ENDIF.
-      rv_sql = |({ lv_inner })|.
+      rv_sql = |( { lv_inner } )|.
       RETURN.
     ENDIF.
 
@@ -339,7 +345,8 @@ CLASS zevo_cl_filter_parser IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    lv_field = to_upper( ls_field-value ).
+    " Prefer allowlist spelling (RTTI); fall back to uppercased token.
+    lv_field = resolve_field( ls_field-value ).
     rv_sql = |{ lv_field } { map_op( ls_op-value ) } { ls_lit-value }|.
   ENDMETHOD.
 
@@ -385,15 +392,28 @@ CLASS zevo_cl_filter_parser IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD is_allowed.
-    DATA lv TYPE string.
-    lv = iv_field.
-    lv = to_upper( lv ).
-    READ TABLE mt_allowed WITH TABLE KEY table_line = lv TRANSPORTING NO FIELDS.
-    IF sy-subrc = 0.
-      rv_ok = abap_true.
-    ELSE.
-      rv_ok = abap_false.
+    rv_ok = xsdbool( resolve_field( iv_field ) IS NOT INITIAL ).
+  ENDMETHOD.
+
+  METHOD resolve_field.
+    DATA lv_u TYPE string.
+    DATA lv_a TYPE string.
+    CLEAR rv_field.
+    lv_u = to_upper( condense( CONV string( iv_field ) ) ).
+    IF lv_u IS INITIAL.
+      RETURN.
     ENDIF.
+    " Exact key (allowlist stored upper) then scan for case variants.
+    READ TABLE mt_allowed WITH TABLE KEY table_line = lv_u INTO rv_field.
+    IF sy-subrc = 0.
+      RETURN.
+    ENDIF.
+    LOOP AT mt_allowed INTO lv_a.
+      IF to_upper( lv_a ) = lv_u.
+        rv_field = lv_a.
+        RETURN.
+      ENDIF.
+    ENDLOOP.
   ENDMETHOD.
 
   METHOD fail.

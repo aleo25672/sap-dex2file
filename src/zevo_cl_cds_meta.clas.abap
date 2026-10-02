@@ -100,12 +100,19 @@ CLASS zevo_cl_cds_meta IMPLEMENTATION.
       DATA(lo_struct) = CAST cl_abap_structdescr(
                           cl_abap_typedescr=>describe_by_data_ref( lr_line ) ).
       LOOP AT lo_struct->get_components( ) INTO DATA(ls_comp).
+        IF ls_comp-name IS INITIAL OR ls_comp-name(1) = '.'.
+          CONTINUE.
+        ENDIF.
         DATA ls_f TYPE ty_field.
         ls_f-name = ls_comp-name.
         APPEND ls_f TO rs_meta-fields.
       ENDLOOP.
     ELSE.
       LOOP AT lt_dfies INTO DATA(ls_dfies).
+        " .NODE* entries are DDIC hierarchy placeholders, not OpenSQL fields
+        IF ls_dfies-fieldname IS INITIAL OR ls_dfies-fieldname(1) = '.'.
+          CONTINUE.
+        ENDIF.
         CLEAR ls_f.
         ls_f-name        = ls_dfies-fieldname.
         ls_f-abap_type   = ls_dfies-inttype.
@@ -193,6 +200,12 @@ CLASS zevo_cl_cds_meta IMPLEMENTATION.
         DATA(lo_struct) = CAST cl_abap_structdescr(
                             cl_abap_typedescr=>describe_by_data_ref( lr_line ) ).
         LOOP AT lo_struct->get_components( ) INTO DATA(ls_comp).
+          IF ls_comp-name IS INITIAL OR ls_comp-name(1) = '.'.
+            CONTINUE.
+          ENDIF.
+          IF ls_comp-as_include = abap_true.
+            CONTINUE.
+          ENDIF.
           INSERT to_upper( CONV string( ls_comp-name ) ) INTO TABLE rt_fields.
         ENDLOOP.
       CATCH cx_root.
