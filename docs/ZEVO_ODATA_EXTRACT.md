@@ -66,7 +66,7 @@ Short checklist:
 2. `SEGW` project `ZEVO_CDS_EXTRACT` → **Generate Runtime Objects**.
 3. Edit **`ZCL_ZEVO_CDS_EXTRACT_MPC_EXT`→`DEFINE`** (not the base `…_MPC`).
 4. Redefine **`ZCL_ZEVO_CDS_EXTRACT_DPC_EXT`→`EXECUTE_ACTION`** (SE24: **Redefine Method** icon first — document+pencil — then Sourcecode; do not edit `/IWBEP/CL_MGW_ABS_DATA`).
-5. `/IWFND/MAINT_SERVICE` → activate `ZEVO_CDS_EXTRACT_SRV`.
+5. `/IWFND/MAINT_SERVICE` → Add/activate `ZEVO_CDS_EXTRACT_SRV`. On **Add Service**, set **ICF Node** = **SAP Gateway OData V2** (not **None**).
 6. Test `$metadata`.
 
 `ZEVO_CL_ODATA_MPC` / `ZEVO_CL_ODATA_DPC` are helpers only (no Gateway inheritance).
@@ -632,7 +632,7 @@ ls = zevo_cl_odata_api=>extract_cds(
 | Symptom | Likely cause |
 |---------|----------------|
 | MPC/DPC activate errors on `/IWBEP/*` | Gateway not in system, or method names differ by SP — adjust MPC `DEFINE` |
-| `$metadata` 404 | Service not registered / ICF node inactive |
+| `$metadata` 404 | Service not registered / ICF node inactive / Add Service used **ICF Node = None** (use **SAP Gateway OData V2**) |
 | Entity not selectable | Wrong name, parameterized CDS, or no auth |
 | Empty `data` but `totalCount` > 0 | `Skip` beyond end |
 | Delta returns nothing | Wrong `DeltaSince` format, or no rows newer than watermark |
