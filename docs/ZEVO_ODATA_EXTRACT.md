@@ -65,7 +65,7 @@ Short checklist:
 1. Pull/activate `ZEVO_CL_*` from abapGit.
 2. `SEGW` project `ZEVO_CDS_EXTRACT` → **Generate Runtime Objects**.
 3. Edit **`ZCL_ZEVO_CDS_EXTRACT_MPC_EXT`→`DEFINE`** (not the base `…_MPC`).
-4. Redefine **`ZCL_ZEVO_CDS_EXTRACT_DPC_EXT`→`EXECUTE_ACTION`**.
+4. Redefine **`ZCL_ZEVO_CDS_EXTRACT_DPC_EXT`→`EXECUTE_ACTION`** (SE24: **Redefine Method** icon first — document+pencil — then Sourcecode; do not edit `/IWBEP/CL_MGW_ABS_DATA`).
 5. `/IWFND/MAINT_SERVICE` → activate `ZEVO_CDS_EXTRACT_SRV`.
 6. Test `$metadata`.
 
