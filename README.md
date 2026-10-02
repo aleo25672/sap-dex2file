@@ -890,7 +890,7 @@ ls = zevo_cl_odata_api=>extract_cds(
 | `ExtractCds` segment / function import not found | `MPC_EXT->DEFINE` missing or wiped after SEGW generate — paste `define_model( model )` **without** `super->define( )`; clear `/IWFND/CACHE_CLEANUP`; confirm `$metadata` contains `ExtractCds` |
 | Transportable request when editing `EXECUTE_ACTION` | You opened `/IWBEP/CL_MGW_ABS_DATA` — **Redefine** on `ZCL_ZEVO_CDS_EXTRACT_DPC_EXT` first (SE24: document+pencil *Redefine Method*), then Sourcecode; do not change the SAP class |
 | Filter error “not part of CDS” | Typo / wrong case — use names from `GetCdsMetadata` |
-| OpenSQL parser: `(` / “blank may be missing” | Multi-`and` filter used to emit `(FIELD=…)` without blanks — pull latest `ZEVO_CL_FILTER_PARSER` (spaces around predicates; no extra AND parens) |
+| OpenSQL parser: `(` / “blank may be missing” | Old parser/extractor wrapped dynamic WHERE / `ORDER BY (cols)`. Pull **PR branch `cursor/filter-sql-parens-e01b`** (or merge PR #18) — not on `main` until merged — and activate `ZEVO_CL_FILTER_PARSER` + `ZEVO_CL_EXTRACTOR` |
 | OpenSQL: `"COMPANYCODE" is not valid here` | Confirm field via `GetCdsMetadata`; skip `.NODE*` names; activate latest extractor/parser |
 | Gateway timeout | Lower `Top`, page more |
 | Huge Payload truncated | Lower `Top`; check GW string length settings |

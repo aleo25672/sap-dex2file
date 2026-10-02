@@ -71,9 +71,6 @@ CLASS zevo_cl_extractor DEFINITION
         iv_last          TYPE timestampl
       RETURNING
         VALUE(rv_where)  TYPE string.
-    METHODS build_order_by
-      IMPORTING iv_entity TYPE clike
-      RETURNING VALUE(rv_order) TYPE string.
     METHODS read_max_changed
       IMPORTING
         ir_data     TYPE REF TO data
@@ -134,7 +131,6 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
     DATA lv_skip  TYPE i.
     DATA lv_now   TYPE timestampl.
     DATA lv_where TYPE string.
-    DATA lv_order TYPE string.
     DATA lv_fetch TYPE i.
     DATA lv_idx   TYPE i.
     DATA lr_tab   TYPE REF TO data.
@@ -175,8 +171,6 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
       iv_ts_field = iv_ts_field
       iv_last     = iv_last ).
 
-    lv_order = build_order_by( iv_entity ).
-
     TRY.
         IF lv_where IS INITIAL.
           SELECT COUNT( * ) FROM (iv_entity) INTO @rs_result-total_count.
@@ -190,41 +184,44 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
         CREATE DATA lr_tab TYPE STANDARD TABLE OF (iv_entity).
         ASSIGN lr_tab->* TO <lt>.
 
-        " OFFSET requires ORDER BY before INTO. If no order key, fetch
-        " skip+top rows and drop the first skip locally.
-        IF lv_order IS NOT INITIAL.
-          IF lv_where IS INITIAL.
-            SELECT * FROM (iv_entity)
-              ORDER BY (lv_order)
-              INTO TABLE @<lt>
-              OFFSET @lv_skip UP TO @lv_top ROWS.
-          ELSE.
-            SELECT * FROM (iv_entity)
-              WHERE (lv_where)
-              ORDER BY (lv_order)
-              INTO TABLE @<lt>
-              OFFSET @lv_skip UP TO @lv_top ROWS.
-          ENDIF.
-        ELSE.
-          lv_fetch = lv_skip + lv_top.
-          IF lv_where IS INITIAL.
-            SELECT * FROM (iv_entity)
-              INTO TABLE @<lt>
-              UP TO @lv_fetch ROWS.
-          ELSE.
-            SELECT * FROM (iv_entity)
-              WHERE (lv_where)
-              INTO TABLE @<lt>
-              UP TO @lv_fetch ROWS.
-          ENDIF.
-          IF lv_skip > 0 AND lines( <lt> ) > 0.
-            lv_idx = 1.
-            WHILE lv_idx <= lv_skip AND <lt> IS NOT INITIAL.
-              DELETE <lt> INDEX 1.
-              lv_idx = lv_idx + 1.
-            ENDWHILE.
-          ENDIF.
-        ENDIF.
+        " Prefer ORDER BY PRIMARY KEY + OFFSET (no dynamic ORDER BY "(col)"
+        " tokens — those trigger OpenSQL "(" parser errors on some CDS view
+        " entities). Fall back to UP TO skip+top without ORDER BY.
+        TRY.
+            IF lv_where IS INITIAL.
+              SELECT * FROM (iv_entity)
+                ORDER BY PRIMARY KEY
+                INTO TABLE @<lt>
+                OFFSET @lv_skip UP TO @lv_top ROWS.
+            ELSE.
+              SELECT * FROM (iv_entity)
+                WHERE (lv_where)
+                ORDER BY PRIMARY KEY
+                INTO TABLE @<lt>
+                OFFSET @lv_skip UP TO @lv_top ROWS.
+            ENDIF.
+          CATCH cx_root.
+            " PRIMARY KEY / OFFSET not accepted for this entity — page locally.
+            CLEAR <lt>.
+            lv_fetch = lv_skip + lv_top.
+            IF lv_where IS INITIAL.
+              SELECT * FROM (iv_entity)
+                INTO TABLE @<lt>
+                UP TO @lv_fetch ROWS.
+            ELSE.
+              SELECT * FROM (iv_entity)
+                WHERE (lv_where)
+                INTO TABLE @<lt>
+                UP TO @lv_fetch ROWS.
+            ENDIF.
+            IF lv_skip > 0 AND lines( <lt> ) > 0.
+              lv_idx = 1.
+              WHILE lv_idx <= lv_skip AND <lt> IS NOT INITIAL.
+                DELETE <lt> INDEX 1.
+                lv_idx = lv_idx + 1.
+              ENDWHILE.
+            ENDIF.
+        ENDTRY.
 
         rs_result-data_ref  = lr_tab.
         rs_result-row_count = lines( <lt> ).
@@ -252,13 +249,14 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
     IF iv_where IS NOT INITIAL.
       lv_where = iv_where.
       CONDENSE lv_where.
-      lv_part = |( { lv_where } )|.
-      APPEND lv_part TO lt_parts.
+      " Do not wrap in "( ... )" — dynamic OpenSQL on CDS view entities
+      " rejects those parentheses ("(" is not valid here).
+      APPEND lv_where TO lt_parts.
     ENDIF.
     IF iv_delta = abap_true AND iv_ts_field IS NOT INITIAL.
       lv_last = |{ iv_last }|.
       CONDENSE lv_last.
-      lv_part = |{ iv_ts_field } > '{ lv_last }'|.
+      lv_part = |{ to_upper( condense( CONV string( iv_ts_field ) ) ) } > '{ lv_last }'|.
       APPEND lv_part TO lt_parts.
     ENDIF.
     CASE lines( lt_parts ).
@@ -271,59 +269,6 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
         READ TABLE lt_parts INTO lv_2 INDEX 2.
         rv_where = |{ lv_1 } AND { lv_2 }|.
     ENDCASE.
-  ENDMETHOD.
-
-  METHOD build_order_by.
-    DATA lt_dfies TYPE STANDARD TABLE OF dfies WITH DEFAULT KEY.
-    DATA lt_keys  TYPE STANDARD TABLE OF string WITH DEFAULT KEY.
-    DATA lv_name  TYPE string.
-    DATA(lv_tab) = CONV ddobjname( iv_entity ).
-    CALL FUNCTION 'DDIF_FIELDINFO_GET'
-      EXPORTING
-        tabname   = lv_tab
-      TABLES
-        dfies_tab = lt_dfies
-      EXCEPTIONS
-        OTHERS    = 1.
-    IF sy-subrc = 0.
-      LOOP AT lt_dfies INTO DATA(ls_dfies) WHERE keyflag = abap_true.
-        lv_name = ls_dfies-fieldname.
-        " Skip DDIC hierarchy placeholders (e.g. .NODE1 on some CDS types)
-        IF lv_name IS INITIAL OR lv_name(1) = '.'.
-          CONTINUE.
-        ENDIF.
-        APPEND lv_name TO lt_keys.
-      ENDLOOP.
-    ENDIF.
-    IF lt_keys IS INITIAL.
-      " fallback: first elementary RTTI component for stable paging
-      TRY.
-          DATA lr TYPE REF TO data.
-          CREATE DATA lr TYPE (iv_entity).
-          DATA(lo_s) = CAST cl_abap_structdescr(
-                         cl_abap_typedescr=>describe_by_data_ref( lr ) ).
-          LOOP AT lo_s->get_components( ) INTO DATA(ls_c).
-            IF ls_c-name IS INITIAL OR ls_c-name(1) = '.'.
-              CONTINUE.
-            ENDIF.
-            IF ls_c-as_include = abap_true.
-              CONTINUE.
-            ENDIF.
-            APPEND CONV string( ls_c-name ) TO lt_keys.
-            EXIT.
-          ENDLOOP.
-        CATCH cx_root.
-          CLEAR lt_keys.
-      ENDTRY.
-    ENDIF.
-    " Comma-separated list for dynamic ORDER BY (space-only lists misparse).
-    LOOP AT lt_keys INTO lv_name.
-      IF rv_order IS INITIAL.
-        rv_order = lv_name.
-      ELSE.
-        rv_order = |{ rv_order }, { lv_name }|.
-      ENDIF.
-    ENDLOOP.
   ENDMETHOD.
 
   METHOD read_max_changed.
