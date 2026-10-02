@@ -239,7 +239,11 @@ Until `$metadata` contains `ExtractCds`, extract URLs will keep returning 404/50
 
 #### Register & test
 
-1. **`/IWFND/MAINT_SERVICE`** — Add **`ZEVO_CDS_EXTRACT_SRV`** (system alias LOCAL / your GW alias), activate ICF node, assign role/auth as needed.
+1. **`/IWFND/MAINT_SERVICE`** — Add **`ZEVO_CDS_EXTRACT_SRV`** (system alias LOCAL / your GW alias).
+   - On the **Add Service** dialog, under **ICF Node**, select **SAP Gateway OData V2** (not **None**). That creates the SICF node so URLs under `/sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/` work.
+   - Package: use your local package (e.g. `$ZEVOLVER_DEX2F`) or **Local Object** as appropriate.
+   - Leave **Enable OAuth for Service** unchecked unless you intentionally use OAuth.
+   - After add: confirm the ICF node is active, assign role/auth as needed.
 2. Run the [URL cookbook](#url-cookbook-c_purchaseorderdex) below (all examples use **`C_PurchaseOrderDEX`**).
 
 #### Path B — optional note
@@ -895,7 +899,7 @@ ls = zevo_cl_odata_api=>extract_cds(
 | Symptom | Likely cause |
 |---------|----------------|
 | MPC/DPC activate errors on `/IWBEP/*` | Gateway not in system, or method names differ by SP — adjust MPC `DEFINE` |
-| `$metadata` 404 | Service not registered / ICF node inactive |
+| `$metadata` 404 | Service not registered / ICF node inactive / Add Service used **ICF Node = None** (use **SAP Gateway OData V2**) |
 | Entity not selectable | Wrong name, parameterized CDS, or no auth |
 | Empty `data` but `totalCount` > 0 | `Skip` beyond end |
 | Delta returns nothing | Wrong `DeltaSince` format, or no rows newer than watermark |
