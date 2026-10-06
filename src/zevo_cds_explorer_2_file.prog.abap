@@ -531,7 +531,7 @@ START-OF-SELECTION.
 *----------------------------------------------------------------------*
 * Calendar popup for a date parameter (writes the chosen date back).
 *----------------------------------------------------------------------*
-FORM f4_calendar USING iv_dynp TYPE help_info-dynprofld
+FORM f4_calendar USING iv_dynp TYPE dynpread-fieldname
                  CHANGING cv_date TYPE sy-datum.
   DATA lv_date TYPE sy-datum.
   DATA lt_dynp TYPE TABLE OF dynpread.
