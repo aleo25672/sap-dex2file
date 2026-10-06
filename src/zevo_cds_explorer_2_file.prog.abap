@@ -29,21 +29,21 @@ PARAMETERS p_tran RADIOBUTTON GROUP fam.              " transactional
 SELECTION-SCREEN END OF BLOCK b_fam.
 
 SELECTION-SCREEN BEGIN OF BLOCK b_act WITH FRAME TITLE TEXT-b02.
-PARAMETERS p_disp RADIOBUTTON GROUP act DEFAULT 'X'.  " display list only
+PARAMETERS p_disp RADIOBUTTON GROUP act DEFAULT 'X' USER-COMMAND act. " display list only
 PARAMETERS p_ext  RADIOBUTTON GROUP act.              " extract to file
 SELECTION-SCREEN END OF BLOCK b_act.
 
 SELECTION-SCREEN BEGIN OF BLOCK b_mod WITH FRAME TITLE TEXT-b03.
-PARAMETERS p_full  RADIOBUTTON GROUP mod DEFAULT 'X'. " full load
+PARAMETERS p_full  RADIOBUTTON GROUP mod DEFAULT 'X' USER-COMMAND mod. " full load
 PARAMETERS p_delta RADIOBUTTON GROUP mod.             " delta (change-timestamp)
 PARAMETERS p_bound RADIOBUTTON GROUP mod.             " bounded date/time window
 SELECTION-SCREEN END OF BLOCK b_mod.
 
 SELECTION-SCREEN BEGIN OF BLOCK b_bnd WITH FRAME TITLE TEXT-b07.
-PARAMETERS p_bfdat TYPE d.  " bounded: from date (UTC)
-PARAMETERS p_bftim TYPE t.  " bounded: from time (UTC; blank = 00:00:00)
-PARAMETERS p_btdat TYPE d.  " bounded: to date   (blank = open-ended)
-PARAMETERS p_bttim TYPE t.  " bounded: to time   (UTC; blank = 23:59:59)
+PARAMETERS p_bfdat TYPE d MODIF ID bnd.  " bounded: from date (UTC)
+PARAMETERS p_bftim TYPE t MODIF ID bnd.  " bounded: from time (UTC; blank = 00:00:00)
+PARAMETERS p_btdat TYPE d MODIF ID bnd.  " bounded: to date   (blank = open-ended)
+PARAMETERS p_bttim TYPE t MODIF ID bnd.  " bounded: to time   (UTC; blank = 23:59:59)
 SELECTION-SCREEN END OF BLOCK b_bnd.
 
 SELECTION-SCREEN BEGIN OF BLOCK b_out WITH FRAME TITLE TEXT-b04.
@@ -490,10 +490,28 @@ AT SELECTION-SCREEN ON VALUE-REQUEST FOR p_lfn.
   ENDIF.
 
 *----------------------------------------------------------------------*
-* Bounded mode needs at least one of the from / to dates
+* Date/time window is only used for Extract to file + Bounded mode.
 *----------------------------------------------------------------------*
+AT SELECTION-SCREEN OUTPUT.
+  LOOP AT SCREEN.
+    IF screen-group1 = 'BND'.
+      IF p_ext = abap_true AND p_bound = abap_true.
+        screen-input = '1'.
+      ELSE.
+        screen-input = '0'.
+      ENDIF.
+      MODIFY SCREEN.
+    ENDIF.
+  ENDLOOP.
+
 AT SELECTION-SCREEN.
-  IF p_bound = abap_true AND p_bfdat IS INITIAL AND p_btdat IS INITIAL.
+  " Dates are required only when executing Extract to file in Bounded mode
+  " (not when displaying the list, and not when clicking other screen fields).
+  IF sy-ucomm <> 'ONLI' AND sy-ucomm <> 'SJOB' AND sy-ucomm <> 'PRIN'.
+    RETURN.
+  ENDIF.
+  IF p_ext = abap_true AND p_bound = abap_true
+      AND p_bfdat IS INITIAL AND p_btdat IS INITIAL.
     MESSAGE 'Bounded mode: enter a from and/or to date'(m02) TYPE 'E'.
   ENDIF.
 

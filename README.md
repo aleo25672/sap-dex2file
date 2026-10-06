@@ -1004,7 +1004,8 @@ instead of "since the last run":
 - Enter **From** / **To** as date + time on the selection screen, in **UTC** (to match the UTC
   change-timestamp stored by CDS). A blank **To time** means end-of-day (inclusive); a blank
   **To date** means open-ended (`>= from`); a blank **From** means open-ended (`<= to`). At least
-  one of From / To is required.
+  one of From / To is required when **Action = Extract to file** (the window is ignored and
+  input-disabled for **Display list**).
 - Views **without** a change-timestamp field are skipped (`K`), exactly like Delta.
 - A bounded run is **ad-hoc**: it does **not** read or advance the `ZEVO_DELTA` high-water, so it
   never disturbs the delta baseline. (Full and Delta still advance the marker.)
@@ -1046,7 +1047,7 @@ Selection screen:
 | **Data class** | *All* / *Master data* / *Transactional* - from `@ObjectModel.usageType.dataClass`, **not** the `I_`/`C_` prefix |
 | **Action** | *Display list only* / *Extract to file* - runs on the filtered set |
 | **Mode** | *Full load* / *Delta (change timestamp)* / *Bounded (date/time range)* |
-| **Date/time window** | *From* / *To* date + time for **Bounded** mode (UTC); shown in the "Date/time window" block |
+| **Date/time window** | *From* / *To* date + time for **Bounded** mode (UTC). Required (and input-enabled) only when **Action = Extract to file** and **Mode = Bounded**; ignored for Display list. |
 | **Target** | *Local frontend (download)* / *Application server (AL11)* — **background jobs require AL11 or logical file** |
 | **Format** | *CSV* / *Tab (.txt)* / *Excel (tab, .xls)* |
 | **CSV delimiter** | separator for CSV (default `;`) |
