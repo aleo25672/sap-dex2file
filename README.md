@@ -16,6 +16,7 @@ Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the ge
 |---------|------|
 | **[OData CDS extract service](#odata-cds-extract-service)** | `ExtractCds`, `GetCdsMetadata`, [URL cookbook](#url-cookbook-c_purchaseorderdex) (`C_PurchaseOrderDEX`), filter, paging, delta |
 | [P2P call flow (Word)](docs/P2P_OData_Extract_Call_Flow.docx) | PO → Item → History → GR / IR extract sequence |
+| [Contract to Payment](docs/CONTRACT_TO_PAYMENT.md) | Contract → release PO → GR → invoice → journal, with sample CSVs |
 | [Source types](#source-types) | DEX / API CDS / Both (file report) |
 | [How delta works](#how-delta-works) | Timestamp delta for the **file** report (`ZEVO_DELTA`) |
 | [Naming convention](#naming-convention) / [Objects](#objects) | `ZEVO*` inventory |
@@ -360,7 +361,8 @@ GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
 
 See [Caller-managed delta](#caller-managed-delta) for how `DeltaSince` relates to `LastChangeDateTime`.
 
-> **P2P (PO → Item → History → GR / IR):** full call sequence as a Word doc — [`docs/P2P_OData_Extract_Call_Flow.docx`](docs/P2P_OData_Extract_Call_Flow.docx).
+> **P2P (PO → Item → History → GR / IR):** full call sequence as a Word doc — [`docs/P2P_OData_Extract_Call_Flow.docx`](docs/P2P_OData_Extract_Call_Flow.docx).  
+> **Contract to Payment:** the same style of correlation, starting at the quantity contract and walking one real extract through to the open payable — [`docs/CONTRACT_TO_PAYMENT.md`](docs/CONTRACT_TO_PAYMENT.md).
 
 #### 7. Multiple CDS (header → items → history)
 

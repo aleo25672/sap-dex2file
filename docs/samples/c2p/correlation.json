@@ -1,0 +1,882 @@
+{
+  "extractRun": "20261006_094549",
+  "delimiter": ";",
+  "seed": {
+    "purchaseContract": "4600000041",
+    "purchaseOrder": "4500002146",
+    "companyCode": "1710",
+    "supplier": "0001000559",
+    "supplierName": "EVOLVER DOMESTIC SUPPLIER 1",
+    "currency": "USD",
+    "ledger": "0L"
+  },
+  "whyThisSeed": "4600000041 is the only purchase contract that is present in the bounded contract header and item extracts and that also has a release order in the purchase-order extract. PO 4500002146 is that release, and it continues through goods receipt, supplier invoice, and the universal journal.",
+  "contract": {
+    "purchaseContract": "4600000041",
+    "purchaseContractType": "MK",
+    "purchasingDocumentCategory": "K",
+    "supplier": "0001000559",
+    "companyCode": "1710",
+    "purchasingOrganization": "1710",
+    "purchasingGroup": "001",
+    "validityStartDate": "20261002",
+    "validityEndDate": "20271231",
+    "documentCurrency": "USD",
+    "paymentTerms": "0003",
+    "createdByUser": "ARIA",
+    "creationDate": "20261002",
+    "items": [
+      {
+        "purchaseContractItem": "00010",
+        "material": "TG10",
+        "text": "Trad.Good 10,PD,Third Party",
+        "targetQuantity": "100.000",
+        "netPrice": "11.59",
+        "targetAmount": "1159.00",
+        "unit": "ST",
+        "plant": "1710",
+        "goodsReceiptIsExpected": "X",
+        "invoiceIsExpected": "X",
+        "invoiceIsGoodsReceiptBased": ""
+      },
+      {
+        "purchaseContractItem": "00020",
+        "material": "TG20",
+        "text": "Trad.Good 20,Reorder Point,SerialNo",
+        "targetQuantity": "150.000",
+        "netPrice": "12.00",
+        "targetAmount": "1800.00",
+        "unit": "ST",
+        "plant": "1710",
+        "goodsReceiptIsExpected": "X",
+        "invoiceIsExpected": "X",
+        "invoiceIsGoodsReceiptBased": ""
+      },
+      {
+        "purchaseContractItem": "00030",
+        "material": "TG11",
+        "text": "Trad.Good 11,PD,Reg.Trading",
+        "targetQuantity": "200.000",
+        "netPrice": "13.50",
+        "targetAmount": "2700.00",
+        "unit": "ST",
+        "plant": "1710",
+        "goodsReceiptIsExpected": "X",
+        "invoiceIsExpected": "X",
+        "invoiceIsGoodsReceiptBased": ""
+      }
+    ]
+  },
+  "purchaseOrder": {
+    "purchaseOrder": "4500002146",
+    "purchaseOrderType": "NB",
+    "supplier": "0001000559",
+    "invoicingParty": "",
+    "companyCode": "1710",
+    "purchasingOrganization": "1710",
+    "purchasingGroup": "001",
+    "purchaseOrderDate": "20261002",
+    "documentCurrency": "USD",
+    "paymentTerms": "0003",
+    "purchasingProcessingStatus": "05",
+    "totalAmount": "315.00",
+    "createdByUser": "ARIA",
+    "items": [
+      {
+        "purchaseOrderItem": "00010",
+        "material": "TG11",
+        "text": "Trad.Good 11,PD,Reg.Trading",
+        "orderQuantity": "10.000",
+        "netPrice": "13.50",
+        "netAmount": "135.00",
+        "unit": "ST",
+        "plant": "1710",
+        "storageLocation": "171A",
+        "purchaseContract": "4600000041",
+        "purchaseContractItem": "00030",
+        "goodsReceiptIsExpected": "X",
+        "invoiceIsExpected": "X",
+        "invoiceIsGoodsReceiptBased": "",
+        "accountAssignmentCategory": ""
+      },
+      {
+        "purchaseOrderItem": "00020",
+        "material": "TG20",
+        "text": "Trad.Good 20,Reorder Point,SerialNo",
+        "orderQuantity": "15.000",
+        "netPrice": "12.00",
+        "netAmount": "180.00",
+        "unit": "ST",
+        "plant": "1710",
+        "storageLocation": "171B",
+        "purchaseContract": "4600000041",
+        "purchaseContractItem": "00020",
+        "goodsReceiptIsExpected": "X",
+        "invoiceIsExpected": "X",
+        "invoiceIsGoodsReceiptBased": "X",
+        "accountAssignmentCategory": ""
+      }
+    ]
+  },
+  "purchaseOrderHistory": [
+    {
+      "purchaseOrderItem": "00020",
+      "purchasingHistoryDocumentType": "1",
+      "purchasingHistoryCategory": "E",
+      "purchasingHistoryDocument": "5000002931",
+      "purchasingHistoryDocumentItem": "0001",
+      "goodsMovementType": "101",
+      "postingDate": "20261002",
+      "material": "TG20",
+      "quantity": "3.000",
+      "amount": "36.00",
+      "purchaseContract": "4600000041",
+      "purchaseContractItem": "00020",
+      "referenceDocument": "5000002931",
+      "debitCreditCode": "S"
+    },
+    {
+      "purchaseOrderItem": "00020",
+      "purchasingHistoryDocumentType": "1",
+      "purchasingHistoryCategory": "E",
+      "purchasingHistoryDocument": "5000002940",
+      "purchasingHistoryDocumentItem": "0001",
+      "goodsMovementType": "101",
+      "postingDate": "20261005",
+      "material": "TG20",
+      "quantity": "7.000",
+      "amount": "84.00",
+      "purchaseContract": "4600000041",
+      "purchaseContractItem": "00020",
+      "referenceDocument": "5000002940",
+      "debitCreditCode": "S"
+    },
+    {
+      "purchaseOrderItem": "00020",
+      "purchasingHistoryDocumentType": "2",
+      "purchasingHistoryCategory": "Q",
+      "purchasingHistoryDocument": "5100001598",
+      "purchasingHistoryDocumentItem": "0001",
+      "goodsMovementType": "",
+      "postingDate": "20261005",
+      "material": "TG20",
+      "quantity": "3.000",
+      "amount": "36.00",
+      "purchaseContract": "4600000041",
+      "purchaseContractItem": "00020",
+      "referenceDocument": "5000002931",
+      "debitCreditCode": "S"
+    },
+    {
+      "purchaseOrderItem": "00020",
+      "purchasingHistoryDocumentType": "2",
+      "purchasingHistoryCategory": "Q",
+      "purchasingHistoryDocument": "5100001598",
+      "purchasingHistoryDocumentItem": "0002",
+      "goodsMovementType": "",
+      "postingDate": "20261005",
+      "material": "TG20",
+      "quantity": "7.000",
+      "amount": "84.00",
+      "purchaseContract": "4600000041",
+      "purchaseContractItem": "00020",
+      "referenceDocument": "5000002940",
+      "debitCreditCode": "S"
+    },
+    {
+      "purchaseOrderItem": "00010",
+      "purchasingHistoryDocumentType": "1",
+      "purchasingHistoryCategory": "E",
+      "purchasingHistoryDocument": "5000002941",
+      "purchasingHistoryDocumentItem": "0001",
+      "goodsMovementType": "101",
+      "postingDate": "20261005",
+      "material": "TG11",
+      "quantity": "3.000",
+      "amount": "40.50",
+      "purchaseContract": "4600000041",
+      "purchaseContractItem": "00030",
+      "referenceDocument": "",
+      "debitCreditCode": "S"
+    },
+    {
+      "purchaseOrderItem": "00010",
+      "purchasingHistoryDocumentType": "2",
+      "purchasingHistoryCategory": "Q",
+      "purchasingHistoryDocument": "5100001599",
+      "purchasingHistoryDocumentItem": "0001",
+      "goodsMovementType": "",
+      "postingDate": "20261005",
+      "material": "TG11",
+      "quantity": "3.000",
+      "amount": "40.50",
+      "purchaseContract": "4600000041",
+      "purchaseContractItem": "00030",
+      "referenceDocument": "",
+      "debitCreditCode": "S"
+    }
+  ],
+  "goodsReceipts": [
+    {
+      "materialDocument": "5000002931",
+      "materialDocumentYear": "2026",
+      "materialDocumentItem": "0001",
+      "goodsMovementType": "101",
+      "inventoryTransactionType": "WE",
+      "goodsMovementRefDocType": "B",
+      "purchaseOrder": "4500002146",
+      "purchaseOrderItem": "00020",
+      "material": "TG20",
+      "quantity": "3.000",
+      "unit": "ST",
+      "postingDate": "20261002",
+      "plant": "1710",
+      "storageLocation": "171B",
+      "companyCode": "1710"
+    },
+    {
+      "materialDocument": "5000002940",
+      "materialDocumentYear": "2026",
+      "materialDocumentItem": "0001",
+      "goodsMovementType": "101",
+      "inventoryTransactionType": "WE",
+      "goodsMovementRefDocType": "B",
+      "purchaseOrder": "4500002146",
+      "purchaseOrderItem": "00020",
+      "material": "TG20",
+      "quantity": "7.000",
+      "unit": "ST",
+      "postingDate": "20261005",
+      "plant": "1710",
+      "storageLocation": "171B",
+      "companyCode": "1710"
+    },
+    {
+      "materialDocument": "5000002941",
+      "materialDocumentYear": "2026",
+      "materialDocumentItem": "0001",
+      "goodsMovementType": "101",
+      "inventoryTransactionType": "WE",
+      "goodsMovementRefDocType": "B",
+      "purchaseOrder": "4500002146",
+      "purchaseOrderItem": "00010",
+      "material": "TG11",
+      "quantity": "3.000",
+      "unit": "ST",
+      "postingDate": "20261005",
+      "plant": "1710",
+      "storageLocation": "171A",
+      "companyCode": "1710"
+    }
+  ],
+  "supplierInvoices": [
+    {
+      "supplierInvoice": "5100001598",
+      "fiscalYear": "2026",
+      "companyCode": "1710",
+      "postingDate": "20261005",
+      "invoicingParty": "0001000559",
+      "supplierInvoiceIdByInvcgParty": "SUPP.INV.0001",
+      "grossAmount": "120.00",
+      "currency": "USD",
+      "supplierInvoiceStatus": "5",
+      "isInvoice": "X",
+      "items": [
+        {
+          "supplierInvoiceItem": "000001",
+          "purchaseOrder": "4500002146",
+          "purchaseOrderItem": "00020",
+          "material": "TG20",
+          "quantity": "3.000",
+          "amount": "36.00",
+          "referenceMaterialDocument": "5000002931",
+          "referenceMaterialDocumentYear": "2026",
+          "referenceMaterialDocumentItem": "0001"
+        },
+        {
+          "supplierInvoiceItem": "000002",
+          "purchaseOrder": "4500002146",
+          "purchaseOrderItem": "00020",
+          "material": "TG20",
+          "quantity": "7.000",
+          "amount": "84.00",
+          "referenceMaterialDocument": "5000002940",
+          "referenceMaterialDocumentYear": "2026",
+          "referenceMaterialDocumentItem": "0001"
+        }
+      ]
+    },
+    {
+      "supplierInvoice": "5100001599",
+      "fiscalYear": "2026",
+      "companyCode": "1710",
+      "postingDate": "20261005",
+      "invoicingParty": "0001000559",
+      "supplierInvoiceIdByInvcgParty": "SUPP.INV.0002",
+      "grossAmount": "40.50",
+      "currency": "USD",
+      "supplierInvoiceStatus": "5",
+      "isInvoice": "X",
+      "items": [
+        {
+          "supplierInvoiceItem": "000001",
+          "purchaseOrder": "4500002146",
+          "purchaseOrderItem": "00010",
+          "material": "TG11",
+          "quantity": "3.000",
+          "amount": "40.50",
+          "referenceMaterialDocument": "",
+          "referenceMaterialDocumentYear": "0000",
+          "referenceMaterialDocumentItem": "0000"
+        }
+      ]
+    }
+  ],
+  "journalLines": [
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "5000000001",
+      "ledgerGLLineItem": "000001",
+      "accountingDocumentType": "WE",
+      "postingDate": "20261002",
+      "glAccount": "0013600000",
+      "financialAccountType": "M",
+      "debitCreditCode": "S",
+      "amountInCompanyCodeCurrency": "36.00",
+      "companyCodeCurrency": "USD",
+      "supplier": "0001000559",
+      "purchasingDocument": "4500002146",
+      "purchasingDocumentItem": "00020",
+      "referenceDocumentType": "MKPF",
+      "referenceDocument": "5000002931",
+      "referenceDocumentItem": "000001",
+      "assignmentReference": "",
+      "documentItemText": "",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": "",
+      "offsettingAccount": "0021120000"
+    },
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "5000000001",
+      "ledgerGLLineItem": "000002",
+      "accountingDocumentType": "WE",
+      "postingDate": "20261002",
+      "glAccount": "0021120000",
+      "financialAccountType": "S",
+      "debitCreditCode": "H",
+      "amountInCompanyCodeCurrency": "-36.00",
+      "companyCodeCurrency": "USD",
+      "supplier": "0001000559",
+      "purchasingDocument": "4500002146",
+      "purchasingDocumentItem": "00020",
+      "referenceDocumentType": "MKPF",
+      "referenceDocument": "5000002931",
+      "referenceDocumentItem": "000001",
+      "assignmentReference": "450000214600020",
+      "documentItemText": "",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": "",
+      "offsettingAccount": "0013600000"
+    },
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "5000000002",
+      "ledgerGLLineItem": "000001",
+      "accountingDocumentType": "WE",
+      "postingDate": "20261005",
+      "glAccount": "0013600000",
+      "financialAccountType": "M",
+      "debitCreditCode": "S",
+      "amountInCompanyCodeCurrency": "84.00",
+      "companyCodeCurrency": "USD",
+      "supplier": "0001000559",
+      "purchasingDocument": "4500002146",
+      "purchasingDocumentItem": "00020",
+      "referenceDocumentType": "MKPF",
+      "referenceDocument": "5000002940",
+      "referenceDocumentItem": "000001",
+      "assignmentReference": "",
+      "documentItemText": "",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": "",
+      "offsettingAccount": "0021120000"
+    },
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "5000000002",
+      "ledgerGLLineItem": "000002",
+      "accountingDocumentType": "WE",
+      "postingDate": "20261005",
+      "glAccount": "0021120000",
+      "financialAccountType": "S",
+      "debitCreditCode": "H",
+      "amountInCompanyCodeCurrency": "-84.00",
+      "companyCodeCurrency": "USD",
+      "supplier": "0001000559",
+      "purchasingDocument": "4500002146",
+      "purchasingDocumentItem": "00020",
+      "referenceDocumentType": "MKPF",
+      "referenceDocument": "5000002940",
+      "referenceDocumentItem": "000001",
+      "assignmentReference": "450000214600020",
+      "documentItemText": "",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": "",
+      "offsettingAccount": "0013600000"
+    },
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "5000000003",
+      "ledgerGLLineItem": "000001",
+      "accountingDocumentType": "WE",
+      "postingDate": "20261005",
+      "glAccount": "0013600000",
+      "financialAccountType": "M",
+      "debitCreditCode": "S",
+      "amountInCompanyCodeCurrency": "40.50",
+      "companyCodeCurrency": "USD",
+      "supplier": "0001000559",
+      "purchasingDocument": "4500002146",
+      "purchasingDocumentItem": "00010",
+      "referenceDocumentType": "MKPF",
+      "referenceDocument": "5000002941",
+      "referenceDocumentItem": "000001",
+      "assignmentReference": "",
+      "documentItemText": "",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": "",
+      "offsettingAccount": "0021120000"
+    },
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "5000000003",
+      "ledgerGLLineItem": "000002",
+      "accountingDocumentType": "WE",
+      "postingDate": "20261005",
+      "glAccount": "0021120000",
+      "financialAccountType": "S",
+      "debitCreditCode": "H",
+      "amountInCompanyCodeCurrency": "-40.50",
+      "companyCodeCurrency": "USD",
+      "supplier": "0001000559",
+      "purchasingDocument": "4500002146",
+      "purchasingDocumentItem": "00010",
+      "referenceDocumentType": "MKPF",
+      "referenceDocument": "5000002941",
+      "referenceDocumentItem": "000001",
+      "assignmentReference": "450000214600010",
+      "documentItemText": "",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": "",
+      "offsettingAccount": "0013600000"
+    },
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "5100000000",
+      "ledgerGLLineItem": "000001",
+      "accountingDocumentType": "RE",
+      "postingDate": "20261005",
+      "glAccount": "0021100000",
+      "financialAccountType": "K",
+      "debitCreditCode": "H",
+      "amountInCompanyCodeCurrency": "-120.00",
+      "companyCodeCurrency": "USD",
+      "supplier": "0001000559",
+      "purchasingDocument": "",
+      "purchasingDocumentItem": "00000",
+      "referenceDocumentType": "RMRP",
+      "referenceDocument": "5100001598",
+      "referenceDocumentItem": "000000",
+      "assignmentReference": "",
+      "documentItemText": "INVOICE SUPP.INV.0001",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": "",
+      "offsettingAccount": "0021120000"
+    },
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "5100000000",
+      "ledgerGLLineItem": "000002",
+      "accountingDocumentType": "RE",
+      "postingDate": "20261005",
+      "glAccount": "0021120000",
+      "financialAccountType": "S",
+      "debitCreditCode": "S",
+      "amountInCompanyCodeCurrency": "36.00",
+      "companyCodeCurrency": "USD",
+      "supplier": "",
+      "purchasingDocument": "4500002146",
+      "purchasingDocumentItem": "00020",
+      "referenceDocumentType": "RMRP",
+      "referenceDocument": "5100001598",
+      "referenceDocumentItem": "000001",
+      "assignmentReference": "450000214600020",
+      "documentItemText": "",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": "",
+      "offsettingAccount": "0001000559"
+    },
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "5100000000",
+      "ledgerGLLineItem": "000003",
+      "accountingDocumentType": "RE",
+      "postingDate": "20261005",
+      "glAccount": "0021120000",
+      "financialAccountType": "S",
+      "debitCreditCode": "S",
+      "amountInCompanyCodeCurrency": "84.00",
+      "companyCodeCurrency": "USD",
+      "supplier": "",
+      "purchasingDocument": "4500002146",
+      "purchasingDocumentItem": "00020",
+      "referenceDocumentType": "RMRP",
+      "referenceDocument": "5100001598",
+      "referenceDocumentItem": "000002",
+      "assignmentReference": "450000214600020",
+      "documentItemText": "",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": "",
+      "offsettingAccount": "0001000559"
+    },
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "5100000001",
+      "ledgerGLLineItem": "000001",
+      "accountingDocumentType": "RE",
+      "postingDate": "20261005",
+      "glAccount": "0021100000",
+      "financialAccountType": "K",
+      "debitCreditCode": "H",
+      "amountInCompanyCodeCurrency": "-40.50",
+      "companyCodeCurrency": "USD",
+      "supplier": "0001000559",
+      "purchasingDocument": "",
+      "purchasingDocumentItem": "00000",
+      "referenceDocumentType": "RMRP",
+      "referenceDocument": "5100001599",
+      "referenceDocumentItem": "000000",
+      "assignmentReference": "",
+      "documentItemText": "SUPP.INV.0002",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": "",
+      "offsettingAccount": "0021120000"
+    },
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "5100000001",
+      "ledgerGLLineItem": "000002",
+      "accountingDocumentType": "RE",
+      "postingDate": "20261005",
+      "glAccount": "0021120000",
+      "financialAccountType": "S",
+      "debitCreditCode": "S",
+      "amountInCompanyCodeCurrency": "40.50",
+      "companyCodeCurrency": "USD",
+      "supplier": "",
+      "purchasingDocument": "4500002146",
+      "purchasingDocumentItem": "00010",
+      "referenceDocumentType": "RMRP",
+      "referenceDocument": "5100001599",
+      "referenceDocumentItem": "000001",
+      "assignmentReference": "450000214600010",
+      "documentItemText": "",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": "",
+      "offsettingAccount": "0001000559"
+    }
+  ],
+  "glAccounts": [
+    {
+      "glAccount": "0013600000",
+      "companyCode": "1710",
+      "chartOfAccounts": "YCOA",
+      "glAccountType": "X",
+      "reconciliationAccountType": "",
+      "isOpenItemManaged": "",
+      "glAccountExternal": "13600000",
+      "companyCodeName": "Company Code 1710"
+    },
+    {
+      "glAccount": "0021100000",
+      "companyCode": "1710",
+      "chartOfAccounts": "YCOA",
+      "glAccountType": "X",
+      "reconciliationAccountType": "K",
+      "isOpenItemManaged": "",
+      "glAccountExternal": "21100000",
+      "companyCodeName": "Company Code 1710"
+    },
+    {
+      "glAccount": "0021120000",
+      "companyCode": "1710",
+      "chartOfAccounts": "YCOA",
+      "glAccountType": "X",
+      "reconciliationAccountType": "",
+      "isOpenItemManaged": "X",
+      "glAccountExternal": "21120000",
+      "companyCodeName": "Company Code 1710"
+    }
+  ],
+  "quantityReconciliation": [
+    {
+      "purchaseContractItem": "00030",
+      "purchaseOrderItem": "00010",
+      "material": "TG11",
+      "contractTargetQuantity": "200.000",
+      "releasedQuantity": "10.000",
+      "orderQuantity": "10.000",
+      "orderAmount": "135.00",
+      "receivedQuantity": "3.000",
+      "receivedAmount": "40.50",
+      "invoicedQuantity": "3.000",
+      "invoicedAmount": "40.50",
+      "openReceiptQuantity": "7.000",
+      "openReceiptAmount": "94.50",
+      "unreleasedQuantity": "190.000"
+    },
+    {
+      "purchaseContractItem": "00020",
+      "purchaseOrderItem": "00020",
+      "material": "TG20",
+      "contractTargetQuantity": "150.000",
+      "releasedQuantity": "15.000",
+      "orderQuantity": "15.000",
+      "orderAmount": "180.00",
+      "receivedQuantity": "10.000",
+      "receivedAmount": "120.00",
+      "invoicedQuantity": "10.000",
+      "invoicedAmount": "120.00",
+      "openReceiptQuantity": "5.000",
+      "openReceiptAmount": "60.00",
+      "unreleasedQuantity": "135.000"
+    },
+    {
+      "purchaseContractItem": "00010",
+      "purchaseOrderItem": "",
+      "material": "TG10",
+      "contractTargetQuantity": "100.000",
+      "releasedQuantity": "0.000",
+      "orderQuantity": "0.000",
+      "orderAmount": "0.00",
+      "receivedQuantity": "0.000",
+      "receivedAmount": "0.00",
+      "invoicedQuantity": "0.000",
+      "invoicedAmount": "0.00",
+      "openReceiptQuantity": "0.000",
+      "openReceiptAmount": "0.00",
+      "unreleasedQuantity": "100.000"
+    }
+  ],
+  "payment": {
+    "status": "open",
+    "openAmount": "160.50",
+    "currency": "USD",
+    "glAccount": "0021100000",
+    "clearingDate": "",
+    "clearingAccountingDocument": "",
+    "grirNetAmount": "0.00",
+    "note": "No payment or clearing document is in this extract. ClearingDate and ClearingAccountingDocument are blank on every journal line of the seed. The vendor items on 21100000 remain open."
+  },
+  "joinKeys": [
+    {
+      "from": "C_PurchaseContractDEX",
+      "to": "C_PurchaseContractItemDEX",
+      "keys": [
+        "PurchaseContract"
+      ]
+    },
+    {
+      "from": "C_PurchaseContractItemDEX",
+      "to": "C_PurchaseContractHistoryDEX",
+      "keys": [
+        "PurchaseContract",
+        "PurchaseContractItem"
+      ],
+      "note": "ReleaseOrder / ReleaseOrderItem is the purchase order."
+    },
+    {
+      "from": "C_PurchaseContractItemDEX",
+      "to": "C_PurchaseOrderItemDEX",
+      "keys": [
+        "PurchaseContract",
+        "PurchaseContractItem"
+      ]
+    },
+    {
+      "from": "C_PurchaseOrderDEX",
+      "to": "C_PurchaseOrderItemDEX",
+      "keys": [
+        "PurchaseOrder"
+      ]
+    },
+    {
+      "from": "C_PurchaseOrderItemDEX",
+      "to": "C_PurchaseOrderHistoryDEX",
+      "keys": [
+        "PurchaseOrder",
+        "PurchaseOrderItem"
+      ],
+      "note": "PurchasingHistoryDocumentType 1 = goods receipt, 2 = invoice receipt."
+    },
+    {
+      "from": "C_PurchaseOrderHistoryDEX",
+      "to": "I_GoodsMovementDocumentDEX",
+      "keys": [
+        "PurchasingHistoryDocument = MaterialDocument",
+        "PurchaseOrder",
+        "PurchaseOrderItem"
+      ],
+      "note": "Only history type 1. GoodsMovementType 101."
+    },
+    {
+      "from": "C_PurchaseOrderHistoryDEX",
+      "to": "C_SupplierInvoiceDEX",
+      "keys": [
+        "PurchasingHistoryDocument = SupplierInvoice"
+      ],
+      "note": "Only history type 2. CompanyCode + FiscalYear also match."
+    },
+    {
+      "from": "C_SupplierInvoiceItemDEX",
+      "to": "I_GoodsMovementDocumentDEX",
+      "keys": [
+        "PrmthbReferenceDocument = MaterialDocument"
+      ],
+      "note": "Filled when the PO item is goods-receipt-based invoice verification."
+    },
+    {
+      "from": "I_GoodsMovementDocumentDEX",
+      "to": "I_GLAccountLineItemRawData",
+      "keys": [
+        "MaterialDocument = ReferenceDocument",
+        "ReferenceDocumentType = MKPF"
+      ],
+      "note": "AccountingDocument is a different number from MaterialDocument."
+    },
+    {
+      "from": "C_SupplierInvoiceDEX",
+      "to": "I_GLAccountLineItemRawData",
+      "keys": [
+        "SupplierInvoice = ReferenceDocument",
+        "ReferenceDocumentType = RMRP"
+      ],
+      "note": "AccountingDocument is a different number from SupplierInvoice."
+    },
+    {
+      "from": "I_GLAccountLineItemRawData GR/IR line",
+      "to": "C_PurchaseOrderItemDEX",
+      "keys": [
+        "PurchasingDocument",
+        "PurchasingDocumentItem"
+      ],
+      "note": "AssignmentReference repeats PurchaseOrder + PurchaseOrderItem with no separator."
+    },
+    {
+      "from": "I_GLAccountLineItemRawData vendor line",
+      "to": "supplier invoice and PO",
+      "keys": [
+        "AccountingDocument of the same RE document",
+        "Supplier",
+        "ReferenceDocument"
+      ],
+      "note": "The vendor line (21100000) has no PurchasingDocument. Use the GR/IR lines on the same accounting document."
+    },
+    {
+      "from": "C_PurchaseOrderDEX",
+      "to": "I_BusinessPartner / I_BusinessPartnerSupplierDEX",
+      "keys": [
+        "Supplier = BusinessPartner"
+      ]
+    },
+    {
+      "from": "I_GLAccountLineItemRawData",
+      "to": "I_GLAccount",
+      "keys": [
+        "GLAccount",
+        "CompanyCode"
+      ]
+    }
+  ],
+  "sourceCounts": {
+    "C_PURCHASECONTRACTDEX": 3,
+    "C_PURCHASECONTRACTITEMDEX": 9,
+    "C_PURCHASECONTRACTHISTORYDEX": 17,
+    "C_PURCHASEORDERDEX": 5,
+    "C_PURCHASEORDERITEMDEX": 6,
+    "C_PURCHASEORDERHISTORYDEX": 7,
+    "C_PURORDACCOUNTASSIGNMENTDEX": 0,
+    "C_SUPPLIERINVOICEDEX": 2,
+    "C_SUPPLIERINVOICEITEMDEX": 3,
+    "I_GOODSMOVEMENTDOCUMENTDEX": 13,
+    "I_GLACCOUNTLINEITEMRAWDATA": 178,
+    "I_GLACCOUNT": 34812,
+    "I_BUSINESSPARTNER": 434,
+    "I_BUSINESSPARTNERSUPPLIERDEX": 155
+  },
+  "gaps": [
+    {
+      "id": "no-payment",
+      "detail": "ClearingDate is 00000000 and ClearingAccountingDocument is blank. Document types in company 1710 are RE, RV, WA, WE, WL. There is no payment document."
+    },
+    {
+      "id": "partial-receipt",
+      "detail": "PO 4500002146 item 00020 ordered 15 and received 10. Item 00010 ordered 10 and received 3. Invoiced quantity equals received quantity on both items."
+    },
+    {
+      "id": "contract-item-not-released",
+      "detail": "Contract item 00010 material TG10 target quantity 100 has no release order in the full contract-history extract."
+    },
+    {
+      "id": "no-account-assignment",
+      "detail": "C_PurOrdAccountAssignmentDEX has a header and zero rows. Both PO items have a blank account-assignment category (stock procurement)."
+    },
+    {
+      "id": "no-inbound-delivery",
+      "detail": "Purchase-order history DeliveryDocumentItem is 000000 on every seed row."
+    },
+    {
+      "id": "fi-number-is-not-the-logistics-number",
+      "detail": "Material document 5000002931 posts to accounting document 5000000001. Supplier invoice 5100001598 posts to accounting document 5100000000. Join on ReferenceDocument, not on AccountingDocument."
+    },
+    {
+      "id": "parallel-ledger",
+      "detail": "The same FI documents also exist on ledger 2L. The seed keeps leading ledger 0L only."
+    },
+    {
+      "id": "other-pos-missing-contract-header",
+      "detail": "Purchase orders 4500002142, 4500002143, 4500002144, 4500002145 are in the PO extract as releases of contract 4600000038, which is not in the bounded contract header or item files. Only 4500002143 has a goods receipt (material document 5000002930, accounting document 5000000000). None of them has a supplier invoice in this extract."
+    },
+    {
+      "id": "contracts-without-release",
+      "detail": "Contracts 4600000031, 4600000040 are in the bounded header and item extracts and have no rows in the full contract-history extract."
+    },
+    {
+      "id": "no-gl-account-name",
+      "detail": "I_GLAccount in this extract has no account-name column."
+    }
+  ]
+}
