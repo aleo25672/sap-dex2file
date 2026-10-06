@@ -363,7 +363,8 @@ GET /sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/ExtractCds
 See [Caller-managed delta](#caller-managed-delta) for how `DeltaSince` relates to `LastChangeDateTime`.
 
 > **P2P (PO → Item → History → GR / IR):** full call sequence as a Word doc — [`docs/P2P_OData_Extract_Call_Flow.docx`](docs/P2P_OData_Extract_Call_Flow.docx).  
-> **Contract to Payment:** quantity contract `4600000041` and release PO `4500002146`, with the sample rows in the document — [`docs/CONTRACT_TO_PAYMENT.docx`](docs/CONTRACT_TO_PAYMENT.docx).
+> **Contract to Payment:** quantity contract `4600000041` and release PO `4500002146`, with the sample rows in the document — [`docs/CONTRACT_TO_PAYMENT.docx`](docs/CONTRACT_TO_PAYMENT.docx).  
+> **Order to Cash:** sales order `6321` through delivery, billing `0090005785`, and customer receipt `1400000000` — [`docs/ORDER_TO_CASH.docx`](docs/ORDER_TO_CASH.docx).
 
 #### 7. Multiple CDS (header → items → history)
 
