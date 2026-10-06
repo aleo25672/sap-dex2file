@@ -696,8 +696,11 @@ Unlike the file report (which writes `ZEVO_DELTA`), this service **never** persi
 1. `@Semantics.systemDateTime.lastChangedAt`
 2. `@Semantics.systemDateTime.localInstanceLastChangedAt`
 3. Element / DDIC field named `LastChangeDateTime`
+4. Pair `CREATIONDATE` + `CREATIONTIME` (returned as `CREATIONDATE|CREATIONTIME`)
 
 If none is found → `deltaCapable: false`. Passing `DeltaSince` then returns a skipped/business error.
+A date+time pair is filtered as
+`CREATIONDATE > d OR CREATIONDATE = d AND CREATIONTIME > t`.
 
 #### What the SQL does
 
@@ -929,7 +932,8 @@ single entities, multiple values, or `*` wildcards (option CP). Entity select-op
 case as in the system (TADIR / API names are usually uppercase).
 
 File extract (`SELECT *`) works for **both** DEX and API CDS. A view is **delta-capable** when a
-change-timestamp field can be resolved (see below) and can then be run in delta mode.
+change-timestamp field **or** a `CREATIONDATE`+`CREATIONTIME` pair can be resolved (see below)
+and can then be run in delta / bounded mode.
 
 ## How delta works
 
@@ -944,10 +948,13 @@ this order (first match wins):
 2. Field annotated **`@Semantics.systemDateTime.localInstanceLastChangedAt`**
 3. Field named **`LastChangeDateTime`** via annotations, `DD03L`, CDS→SQL mapping
    (`DDLDEPENDENCY`), or `DDIF_FIELDINFO_GET` - common on API / `A_*` projection views
+4. Pair **`CREATIONDATE` + `CREATIONTIME`** (token `CREATIONDATE|CREATIONTIME`) when no
+   timestamp field exists — e.g. `I_GoodsMovementDocumentDEX`
 
-If found, the view is **delta-capable**. The display list shows the field name in column
-**LastChangeDateTime** and marks **Has change TS**; otherwise those columns stay empty and
-delta isn't possible for that view.
+If found, the view is **delta-capable**. The display list shows the field (or pair token) in
+column **Delta field** and marks **Delta capable**; otherwise those columns stay empty.
+Delta on a date+time pair uses
+`CREATIONDATE > d OR (CREATIONDATE = d AND CREATIONTIME > t)` (and `>=` / `<=` for Bounded).
 
 ### 2. The high-water store
 The last extracted position per view is kept in table **`ZEVO_DELTA`**
@@ -977,8 +984,8 @@ from the full-load point.
 
 ### Limits (be aware)
 - ⚠️ **No deletes.** A timestamp filter only sees inserts/updates; deleted rows are not reported.
-- ⚠️ **Needs a change-timestamp field.** Views with neither a last-changed annotation
-  nor a `LastChangeDateTime` field are **full-only** (Delta is skipped with a reason).
+- ⚠️ **Needs a change-timestamp or CREATIONDATE+CREATIONTIME.** Views with neither are **full-only**
+  (Delta is skipped with a reason; Bounded falls back to a full extract).
 - ✅ **No ODP RFC.** Deliberately avoids the ODP replication API (`RODPS_REPL_ODP_*`), which
   **SAP Note 3255746** restricts for custom use - so no gray-area dependency.
 - The change-timestamp field's data type governs the `WHERE` literal; if a view's delta returns
@@ -1058,12 +1065,12 @@ Selection screen:
 Filled filters are combined with **AND** (empty = ignore that dimension). `*` / `+` wildcards are supported.
 
 - **Display** → grid of views: entity, **DDLNAME**, **DBTABNAME**, description, **source (DEX/API)**, data class, CDC flag,
-  **LastChangeDateTime** (field name when present), **Has change TS**,
+  **Delta field** (timestamp or `CREATIONDATE|CREATIONTIME`), **Delta capable**,
   **Last changed on/at** (from `VRSD` version directory — useful to compare `A_*` vs `A_*_2`),
   last delta position. (ALV **Export** is enabled via `set_all`.)
 - **Extract** → per view: extract (full/delta) → download `<entity>_<full|delta>_<date>_<time>.<ext>`
   → advance the delta marker (only after a successful download) → **results grid** (entity, mode,
-  rows, file, status, message). Delta requested but no timestamp field → skipped (`K`).
+  rows, file, status, message). Delta requested but no timestamp / creation pair → skipped (`K`).
 
 ## External file interface
 

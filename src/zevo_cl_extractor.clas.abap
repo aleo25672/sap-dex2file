@@ -1,8 +1,9 @@
 " Extract data from a CDS entity into a dynamic table.
 "   Full   : SELECT * FROM (entity)
 "   Delta  : SELECT * FROM (entity) WHERE <change-ts field> > <last high-water>
+"            or CREATIONDATE/CREATIONTIME pair when no timestamp field exists
 "   Bounded: SELECT * FROM (entity) WHERE <change-ts field> >= <from> [AND <= <to>]
-"            (full extract if the view has no change-timestamp field)
+"            (same CREATIONDATE|CREATIONTIME fallback; full extract if neither)
 "   extract_ex adds OData $filter (as OpenSQL WHERE), Skip/Top pagination,
 "   totalCount, and maxChangedAt for caller-managed delta.
 CLASS zevo_cl_extractor DEFINITION
@@ -79,6 +80,26 @@ CLASS zevo_cl_extractor DEFINITION
         iv_last          TYPE timestampl
       RETURNING
         VALUE(rv_where)  TYPE string.
+    METHODS build_ts_pred
+      IMPORTING
+        iv_ts_field TYPE clike
+        iv_op       TYPE clike
+        iv_ts       TYPE timestampl
+      RETURNING
+        VALUE(rv_sql) TYPE string.
+    METHODS split_pair
+      IMPORTING
+        iv_ts_field TYPE clike
+      EXPORTING
+        ev_date_field TYPE string
+        ev_time_field TYPE string
+        ev_is_pair    TYPE abap_bool.
+    METHODS ts_to_datim
+      IMPORTING
+        iv_ts TYPE timestampl
+      EXPORTING
+        ev_date TYPE string
+        ev_time TYPE string.
     METHODS read_max_changed
       IMPORTING
         ir_data     TYPE REF TO data
@@ -122,13 +143,22 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
         " wrapped in "( ... )" (dynamic OpenSQL on CDS entities rejects those).
         DATA lv_where TYPE string.
         IF iv_delta = abap_true.
-          lv_where = |{ iv_ts_field } > '{ condense( |{ iv_last }| ) }'|.
+          lv_where = build_ts_pred(
+            iv_ts_field = iv_ts_field
+            iv_op       = 'GT'
+            iv_ts       = iv_last ).
         ELSEIF iv_bounded = abap_true AND lv_full_fallback = abap_false.
           IF iv_from IS NOT INITIAL.
-            lv_where = |{ iv_ts_field } >= '{ condense( |{ iv_from }| ) }'|.
+            lv_where = build_ts_pred(
+              iv_ts_field = iv_ts_field
+              iv_op       = 'GE'
+              iv_ts       = iv_from ).
           ENDIF.
           IF iv_to IS NOT INITIAL.
-            DATA(lv_hi) = |{ iv_ts_field } <= '{ condense( |{ iv_to }| ) }'|.
+            DATA(lv_hi) = build_ts_pred(
+              iv_ts_field = iv_ts_field
+              iv_op       = 'LE'
+              iv_ts       = iv_to ).
             lv_where = COND string( WHEN lv_where IS INITIAL THEN lv_hi
                                     ELSE |{ lv_where } AND { lv_hi }| ).
           ENDIF.
@@ -284,7 +314,6 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
     DATA lv_1     TYPE string.
     DATA lv_2     TYPE string.
     DATA lv_where TYPE string.
-    DATA lv_last  TYPE string.
 
     IF iv_where IS NOT INITIAL.
       lv_where = iv_where.
@@ -294,9 +323,10 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
       APPEND lv_where TO lt_parts.
     ENDIF.
     IF iv_delta = abap_true AND iv_ts_field IS NOT INITIAL.
-      lv_last = |{ iv_last }|.
-      CONDENSE lv_last.
-      lv_part = |{ to_upper( condense( CONV string( iv_ts_field ) ) ) } > '{ lv_last }'|.
+      lv_part = build_ts_pred(
+        iv_ts_field = iv_ts_field
+        iv_op       = 'GT'
+        iv_ts       = iv_last ).
       APPEND lv_part TO lt_parts.
     ENDIF.
     CASE lines( lt_parts ).
@@ -311,16 +341,129 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
     ENDCASE.
   ENDMETHOD.
 
+  METHOD build_ts_pred.
+    DATA lv_date_f TYPE string.
+    DATA lv_time_f TYPE string.
+    DATA lv_is_pair TYPE abap_bool.
+    DATA lv_date TYPE string.
+    DATA lv_time TYPE string.
+    DATA lv_op   TYPE string.
+    DATA lv_sqlop TYPE string.
+    DATA lv_field TYPE string.
+    DATA lv_ts    TYPE string.
+
+    CLEAR rv_sql.
+    split_pair(
+      EXPORTING iv_ts_field   = iv_ts_field
+      IMPORTING ev_date_field = lv_date_f
+                ev_time_field = lv_time_f
+                ev_is_pair    = lv_is_pair ).
+    ts_to_datim(
+      EXPORTING iv_ts   = iv_ts
+      IMPORTING ev_date = lv_date
+                ev_time = lv_time ).
+
+    lv_op = to_upper( condense( CONV string( iv_op ) ) ).
+    IF lv_is_pair = abap_true.
+      CASE lv_op.
+        WHEN 'GT'.
+          rv_sql = |{ lv_date_f } > '{ lv_date }' OR { lv_date_f } = '{ lv_date }' AND { lv_time_f } > '{ lv_time }'|.
+        WHEN 'GE'.
+          rv_sql = |{ lv_date_f } > '{ lv_date }' OR { lv_date_f } = '{ lv_date }' AND { lv_time_f } >= '{ lv_time }'|.
+        WHEN 'LT'.
+          rv_sql = |{ lv_date_f } < '{ lv_date }' OR { lv_date_f } = '{ lv_date }' AND { lv_time_f } < '{ lv_time }'|.
+        WHEN 'LE'.
+          rv_sql = |{ lv_date_f } < '{ lv_date }' OR { lv_date_f } = '{ lv_date }' AND { lv_time_f } <= '{ lv_time }'|.
+      ENDCASE.
+    ELSE.
+      CASE lv_op.
+        WHEN 'GT'.
+          lv_sqlop = '>'.
+        WHEN 'GE'.
+          lv_sqlop = '>='.
+        WHEN 'LT'.
+          lv_sqlop = '<'.
+        WHEN 'LE'.
+          lv_sqlop = '<='.
+        WHEN OTHERS.
+          lv_sqlop = '>'.
+      ENDCASE.
+      lv_field = to_upper( condense( CONV string( iv_ts_field ) ) ).
+      lv_ts = |{ iv_ts }|.
+      CONDENSE lv_ts.
+      rv_sql = |{ lv_field } { lv_sqlop } '{ lv_ts }'|.
+    ENDIF.
+  ENDMETHOD.
+
+  METHOD split_pair.
+    DATA lv TYPE string.
+    CLEAR: ev_date_field, ev_time_field, ev_is_pair.
+    lv = to_upper( condense( CONV string( iv_ts_field ) ) ).
+    IF lv IS INITIAL OR lv NS '|'.
+      RETURN.
+    ENDIF.
+    SPLIT lv AT '|' INTO ev_date_field ev_time_field.
+    IF ev_date_field IS NOT INITIAL AND ev_time_field IS NOT INITIAL.
+      ev_is_pair = abap_true.
+    ENDIF.
+  ENDMETHOD.
+
+  METHOD ts_to_datim.
+    DATA lv TYPE string.
+    DATA lv_len TYPE i.
+    CLEAR: ev_date, ev_time.
+    lv = |{ iv_ts }|.
+    REPLACE ALL OCCURRENCES OF '.' IN lv WITH space.
+    CONDENSE lv NO-GAPS.
+    lv_len = strlen( lv ).
+    IF lv_len >= 8.
+      ev_date = substring( val = lv off = 0 len = 8 ).
+    ELSE.
+      ev_date = '00000000'.
+    ENDIF.
+    IF lv_len >= 14.
+      ev_time = substring( val = lv off = 8 len = 6 ).
+    ELSE.
+      ev_time = '000000'.
+    ENDIF.
+  ENDMETHOD.
+
   METHOD read_max_changed.
+    DATA lv_date_f TYPE string.
+    DATA lv_time_f TYPE string.
+    DATA lv_is_pair TYPE abap_bool.
+    DATA lv_cur TYPE string.
     FIELD-SYMBOLS <lt> TYPE ANY TABLE.
+    FIELD-SYMBOLS <ls> TYPE any.
+    FIELD-SYMBOLS <v>  TYPE any.
+    FIELD-SYMBOLS <d>  TYPE any.
+    FIELD-SYMBOLS <t>  TYPE any.
+
     ASSIGN ir_data->* TO <lt>.
-    DATA(lv_field) = to_upper( condense( CONV string( iv_ts_field ) ) ).
-    LOOP AT <lt> ASSIGNING FIELD-SYMBOL(<ls>).
-      ASSIGN COMPONENT lv_field OF STRUCTURE <ls> TO FIELD-SYMBOL(<v>).
-      IF sy-subrc <> 0.
-        RETURN.
+    split_pair(
+      EXPORTING iv_ts_field   = iv_ts_field
+      IMPORTING ev_date_field = lv_date_f
+                ev_time_field = lv_time_f
+                ev_is_pair    = lv_is_pair ).
+    LOOP AT <lt> ASSIGNING <ls>.
+      IF lv_is_pair = abap_true.
+        ASSIGN COMPONENT lv_date_f OF STRUCTURE <ls> TO <d>.
+        IF sy-subrc <> 0.
+          RETURN.
+        ENDIF.
+        ASSIGN COMPONENT lv_time_f OF STRUCTURE <ls> TO <t>.
+        IF sy-subrc <> 0.
+          RETURN.
+        ENDIF.
+        lv_cur = |{ <d> }{ <t> }|.
+      ELSE.
+        DATA(lv_field) = to_upper( condense( CONV string( iv_ts_field ) ) ).
+        ASSIGN COMPONENT lv_field OF STRUCTURE <ls> TO <v>.
+        IF sy-subrc <> 0.
+          RETURN.
+        ENDIF.
+        lv_cur = |{ <v> }|.
       ENDIF.
-      DATA(lv_cur) = |{ <v> }|.
       CONDENSE lv_cur.
       IF rv_max IS INITIAL OR lv_cur > rv_max.
         rv_max = lv_cur.

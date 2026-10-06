@@ -9,6 +9,7 @@
 "       2. @Semantics.systemDateTime.localInstanceLastChangedAt
 "       3. field named LastChangeDateTime (DDFIELDANNO / DD03L /
 "          DDLDEPENDENCY SQL view / DDIF_FIELDINFO_GET fallback)
+"       4. CREATIONDATE + CREATIONTIME pair (token CREATIONDATE|CREATIONTIME)
 "   - Entity filters are select-option ranges (single values and CP wildcards)
 "     on CDS entity name, DDLNAME, and/or DBTABNAME (AND when several filled).
 "   - DDLNAME / DBTABNAME come from DDLDEPENDENCY (STOB / VIEW).
@@ -361,6 +362,13 @@ CLASS zevo_cl_catalog IMPLEMENTATION.
           ENDIF.
         ENDIF.
 
+        IF ls_out-delta_capable = abap_false.
+          ls_out-delta_field = zevo_cl_cds_meta=>creation_pair_token( CONV string( lv_ent_up ) ).
+          IF ls_out-delta_field IS NOT INITIAL.
+            ls_out-delta_capable = abap_true.
+          ENDIF.
+        ENDIF.
+
         IF io_delta_store IS BOUND.
           ls_out-last_delta_ts = io_delta_store->get_last( ls_out-entity_name ).
         ENDIF.
@@ -480,6 +488,13 @@ CLASS zevo_cl_catalog IMPLEMENTATION.
               ls_m-field  = ls_dfies-fieldname.
               INSERT ls_m INTO TABLE lt_deltamap.
             ENDIF.
+          ENDIF.
+        ENDIF.
+
+        IF ls_out-delta_capable = abap_false.
+          ls_out-delta_field = zevo_cl_cds_meta=>creation_pair_token( CONV string( lv_ent_up ) ).
+          IF ls_out-delta_field IS NOT INITIAL.
+            ls_out-delta_capable = abap_true.
           ENDIF.
         ENDIF.
 

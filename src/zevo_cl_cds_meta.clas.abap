@@ -1,5 +1,6 @@
 " Resolve CDS entity metadata for OData GetCdsMetadata: fields, keys,
-" DDLNAME / DBTABNAME, and change-timestamp field (same priority as catalog).
+" DDLNAME / DBTABNAME, and change-timestamp field (same priority as catalog;
+" CREATIONDATE|CREATIONTIME as last resort).
 CLASS zevo_cl_cds_meta DEFINITION
   PUBLIC
   CREATE PUBLIC.
@@ -32,6 +33,11 @@ CLASS zevo_cl_cds_meta DEFINITION
     CLASS-METHODS get_field_names
       IMPORTING iv_entity TYPE clike
       RETURNING VALUE(rt_fields) TYPE zevo_cl_filter_parser=>ty_fields.
+
+    " CREATIONDATE|CREATIONTIME when both exist and no timestamp field.
+    CLASS-METHODS creation_pair_token
+      IMPORTING iv_entity TYPE clike
+      RETURNING VALUE(rv_token) TYPE string.
 ENDCLASS.
 
 
@@ -188,8 +194,85 @@ CLASS zevo_cl_cds_meta IMPLEMENTATION.
         INTO @lv_dd03.
       IF sy-subrc = 0.
         rv_field = lv_dd03.
+        RETURN.
       ENDIF.
     ENDIF.
+
+    rv_field = creation_pair_token( iv_entity ).
+  ENDMETHOD.
+
+  METHOD creation_pair_token.
+    DATA lt_dfies TYPE STANDARD TABLE OF dfies WITH DEFAULT KEY.
+    DATA ls_date  TYPE dfies.
+    DATA ls_time  TYPE dfies.
+    DATA lv_tab   TYPE ddobjname.
+    DATA lv_cd    TYPE dd03l-fieldname.
+    DATA lv_ct    TYPE dd03l-fieldname.
+    DATA lr_line  TYPE REF TO data.
+    DATA lo_struct TYPE REF TO cl_abap_structdescr.
+    DATA lv_has_d TYPE abap_bool.
+    DATA lv_has_t TYPE abap_bool.
+
+    CLEAR rv_token.
+    DATA(lv_up) = to_upper( condense( CONV string( iv_entity ) ) ).
+    IF lv_up IS INITIAL.
+      RETURN.
+    ENDIF.
+
+    lv_tab = lv_up.
+    CALL FUNCTION 'DDIF_FIELDINFO_GET'
+      EXPORTING
+        tabname   = lv_tab
+      TABLES
+        dfies_tab = lt_dfies
+      EXCEPTIONS
+        OTHERS    = 1.
+    IF sy-subrc = 0 AND lt_dfies IS NOT INITIAL.
+      READ TABLE lt_dfies INTO ls_date WITH KEY fieldname = 'CREATIONDATE'.
+      IF sy-subrc = 0.
+        READ TABLE lt_dfies INTO ls_time WITH KEY fieldname = 'CREATIONTIME'.
+        IF sy-subrc = 0.
+          rv_token = ls_date-fieldname && '|' && ls_time-fieldname.
+          RETURN.
+        ENDIF.
+      ENDIF.
+    ENDIF.
+
+    SELECT SINGLE fieldname FROM dd03l
+      WHERE upper( tabname ) = @lv_up
+        AND fieldname = 'CREATIONDATE'
+        AND as4local = 'A'
+      INTO @lv_cd.
+    SELECT SINGLE fieldname FROM dd03l
+      WHERE upper( tabname ) = @lv_up
+        AND fieldname = 'CREATIONTIME'
+        AND as4local = 'A'
+      INTO @lv_ct.
+    IF lv_cd IS NOT INITIAL AND lv_ct IS NOT INITIAL.
+      rv_token = lv_cd && '|' && lv_ct.
+      RETURN.
+    ENDIF.
+
+    TRY.
+        CREATE DATA lr_line TYPE (lv_up).
+        lo_struct = CAST cl_abap_structdescr(
+                      cl_abap_typedescr=>describe_by_data_ref( lr_line ) ).
+        lv_has_d = abap_false.
+        lv_has_t = abap_false.
+        LOOP AT lo_struct->get_components( ) INTO DATA(ls_comp).
+          IF to_upper( CONV string( ls_comp-name ) ) = 'CREATIONDATE'.
+            lv_has_d = abap_true.
+          ENDIF.
+          IF to_upper( CONV string( ls_comp-name ) ) = 'CREATIONTIME'.
+            lv_has_t = abap_true.
+          ENDIF.
+        ENDLOOP.
+        IF lv_has_d = abap_true AND lv_has_t = abap_true.
+          rv_token = 'CREATIONDATE|CREATIONTIME'.
+        ENDIF.
+      CATCH cx_root.
+        RETURN.
+    ENDTRY.
   ENDMETHOD.
 
   METHOD get_field_names.
