@@ -1,7 +1,8 @@
 " Extract data from a CDS entity into a dynamic table.
 "   Full   : SELECT * FROM (entity)
 "   Delta  : SELECT * FROM (entity) WHERE <change-ts field> > <last high-water>
-"            or CREATIONDATE/CREATIONTIME pair when no timestamp field exists
+"            or CREATIONDATE/CREATIONTIME pair, or DOCUMENTDATE (non-master),
+"            when no timestamp field exists
 "   Bounded: SELECT * FROM (entity) WHERE <change-ts field> >= <from> [AND <= <to>]
 "            (same CREATIONDATE|CREATIONTIME fallback; full extract if neither)
 "   extract_ex adds OData $filter (as OpenSQL WHERE), Skip/Top pagination,
@@ -389,9 +390,14 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
           lv_sqlop = '>'.
       ENDCASE.
       lv_field = to_upper( condense( CONV string( iv_ts_field ) ) ).
-      lv_ts = |{ iv_ts }|.
-      CONDENSE lv_ts.
-      rv_sql = |{ lv_field } { lv_sqlop } '{ lv_ts }'|.
+      " DOCUMENTDATE is DATS — compare YYYYMMDD, not the full timestamp literal.
+      IF lv_field = 'DOCUMENTDATE'.
+        rv_sql = |{ lv_field } { lv_sqlop } '{ lv_date }'|.
+      ELSE.
+        lv_ts = |{ iv_ts }|.
+        CONDENSE lv_ts.
+        rv_sql = |{ lv_field } { lv_sqlop } '{ lv_ts }'|.
+      ENDIF.
     ENDIF.
   ENDMETHOD.
 

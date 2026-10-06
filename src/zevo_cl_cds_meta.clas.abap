@@ -38,6 +38,15 @@ CLASS zevo_cl_cds_meta DEFINITION
     CLASS-METHODS creation_pair_token
       IMPORTING iv_entity TYPE clike
       RETURNING VALUE(rv_token) TYPE string.
+
+    " DOCUMENTDATE when present; never for master-data CDS.
+    CLASS-METHODS document_date_token
+      IMPORTING iv_entity TYPE clike
+      RETURNING VALUE(rv_token) TYPE string.
+
+    CLASS-METHODS is_master_data
+      IMPORTING iv_entity TYPE clike
+      RETURNING VALUE(rv_master) TYPE abap_bool.
 ENDCLASS.
 
 
@@ -199,6 +208,9 @@ CLASS zevo_cl_cds_meta IMPLEMENTATION.
     ENDIF.
 
     rv_field = creation_pair_token( iv_entity ).
+    IF rv_field IS INITIAL AND is_master_data( iv_entity ) = abap_false.
+      rv_field = document_date_token( iv_entity ).
+    ENDIF.
   ENDMETHOD.
 
   METHOD creation_pair_token.
@@ -273,6 +285,82 @@ CLASS zevo_cl_cds_meta IMPLEMENTATION.
       CATCH cx_root.
         RETURN.
     ENDTRY.
+  ENDMETHOD.
+
+  METHOD document_date_token.
+    DATA lt_dfies TYPE STANDARD TABLE OF dfies WITH DEFAULT KEY.
+    DATA ls_dfies TYPE dfies.
+    DATA lv_tab   TYPE ddobjname.
+    DATA lv_name  TYPE dd03l-fieldname.
+    DATA lr_line  TYPE REF TO data.
+    DATA lo_struct TYPE REF TO cl_abap_structdescr.
+
+    CLEAR rv_token.
+    DATA(lv_up) = to_upper( condense( CONV string( iv_entity ) ) ).
+    IF lv_up IS INITIAL.
+      RETURN.
+    ENDIF.
+
+    lv_tab = lv_up.
+    CALL FUNCTION 'DDIF_FIELDINFO_GET'
+      EXPORTING
+        tabname   = lv_tab
+      TABLES
+        dfies_tab = lt_dfies
+      EXCEPTIONS
+        OTHERS    = 1.
+    IF sy-subrc = 0.
+      READ TABLE lt_dfies INTO ls_dfies WITH KEY fieldname = 'DOCUMENTDATE'.
+      IF sy-subrc = 0.
+        rv_token = ls_dfies-fieldname.
+        RETURN.
+      ENDIF.
+    ENDIF.
+
+    SELECT SINGLE fieldname FROM dd03l
+      WHERE upper( tabname ) = @lv_up
+        AND fieldname = 'DOCUMENTDATE'
+        AND as4local = 'A'
+      INTO @lv_name.
+    IF sy-subrc = 0 AND lv_name IS NOT INITIAL.
+      rv_token = lv_name.
+      RETURN.
+    ENDIF.
+
+    TRY.
+        CREATE DATA lr_line TYPE (lv_up).
+        lo_struct = CAST cl_abap_structdescr(
+                      cl_abap_typedescr=>describe_by_data_ref( lr_line ) ).
+        LOOP AT lo_struct->get_components( ) INTO DATA(ls_comp).
+          IF to_upper( CONV string( ls_comp-name ) ) = 'DOCUMENTDATE'.
+            rv_token = 'DOCUMENTDATE'.
+            RETURN.
+          ENDIF.
+        ENDLOOP.
+      CATCH cx_root.
+        RETURN.
+    ENDTRY.
+  ENDMETHOD.
+
+  METHOD is_master_data.
+    DATA lv_dc TYPE c LENGTH 40.
+    CLEAR rv_master.
+    DATA(lv_up) = to_upper( condense( CONV string( iv_entity ) ) ).
+    IF lv_up IS INITIAL.
+      RETURN.
+    ENDIF.
+    SELECT SINGLE value FROM ddheadanno
+      WHERE upper( strucobjn ) = @lv_up
+        AND upper( name ) = 'OBJECTMODEL.USAGETYPE.DATACLASS'
+      INTO @DATA(lv_val).
+    IF sy-subrc <> 0.
+      RETURN.
+    ENDIF.
+    lv_dc = to_upper( CONV string( lv_val ) ).
+    REPLACE ALL OCCURRENCES OF `#` IN lv_dc WITH space.
+    REPLACE ALL OCCURRENCES OF `'` IN lv_dc WITH space.
+    CONDENSE lv_dc NO-GAPS.
+    rv_master = xsdbool( lv_dc = 'MASTER' ).
   ENDMETHOD.
 
   METHOD get_field_names.

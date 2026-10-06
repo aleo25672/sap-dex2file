@@ -697,10 +697,12 @@ Unlike the file report (which writes `ZEVO_DELTA`), this service **never** persi
 2. `@Semantics.systemDateTime.localInstanceLastChangedAt`
 3. Element / DDIC field named `LastChangeDateTime`
 4. Pair `CREATIONDATE` + `CREATIONTIME` (returned as `CREATIONDATE|CREATIONTIME`)
+5. `DOCUMENTDATE` (date-only; **not** for master-data CDS)
 
 If none is found → `deltaCapable: false`. Passing `DeltaSince` then returns a skipped/business error.
 A date+time pair is filtered as
 `CREATIONDATE > d OR CREATIONDATE = d AND CREATIONTIME > t`.
+`DOCUMENTDATE` is filtered as `DOCUMENTDATE > YYYYMMDD`.
 
 #### What the SQL does
 
@@ -950,11 +952,14 @@ this order (first match wins):
    (`DDLDEPENDENCY`), or `DDIF_FIELDINFO_GET` - common on API / `A_*` projection views
 4. Pair **`CREATIONDATE` + `CREATIONTIME`** (token `CREATIONDATE|CREATIONTIME`) when no
    timestamp field exists — e.g. `I_GoodsMovementDocumentDEX`
+5. Field **`DOCUMENTDATE`** (date-only watermark) when no timestamp / creation pair exists —
+   **not used for master-data** CDS (`@ObjectModel.usageType.dataClass: #MASTER`)
 
 If found, the view is **delta-capable**. The display list shows the field (or pair token) in
 column **Delta field** and marks **Delta capable**; otherwise those columns stay empty.
 Delta on a date+time pair uses
 `CREATIONDATE > d OR (CREATIONDATE = d AND CREATIONTIME > t)` (and `>=` / `<=` for Bounded).
+Delta on `DOCUMENTDATE` uses `DOCUMENTDATE > YYYYMMDD` (day granularity).
 
 ### 2. The high-water store
 The last extracted position per view is kept in table **`ZEVO_DELTA`**
