@@ -1047,7 +1047,7 @@ Selection screen:
 | **Data class** | *All* / *Master data* / *Transactional* - from `@ObjectModel.usageType.dataClass`, **not** the `I_`/`C_` prefix |
 | **Action** | *Display list only* / *Extract to file* - runs on the filtered set |
 | **Mode** | *Full load* / *Delta (change timestamp)* / *Bounded (date/time range)* |
-| **Date/time window** | *From* / *To* date + time for **Bounded** mode (UTC). Required (and input-enabled) only when **Action = Extract to file** and **Mode = Bounded**; ignored for Display list. From/To dates have F4 calendar. |
+| **Date/time window** | *From* / *To* date + time for **Bounded** mode (UTC). Required (and input-enabled) only when **Action = Extract to file** and **Mode = Bounded**; ignored for Display list. Dates are `sy-datum` (native calendar, user date format — not `YYYYMMDD`). |
 | **Target** | *Local frontend (download)* / *Application server (AL11)* — **background jobs require AL11 or logical file** |
 | **Format** | *CSV* / *Tab (.txt)* / *Excel (tab, .xls)* |
 | **CSV delimiter** | separator for CSV (default `;`) |

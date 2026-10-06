@@ -40,10 +40,11 @@ PARAMETERS p_bound RADIOBUTTON GROUP mod.             " bounded date/time window
 SELECTION-SCREEN END OF BLOCK b_mod.
 
 SELECTION-SCREEN BEGIN OF BLOCK b_bnd WITH FRAME TITLE TEXT-b07.
-PARAMETERS p_bfdat TYPE sy-datum MODIF ID bnd.  " bounded: from date (UTC); F4 calendar
-PARAMETERS p_bftim TYPE t MODIF ID bnd.        " bounded: from time (UTC; blank = 00:00:00)
-PARAMETERS p_btdat TYPE sy-datum MODIF ID bnd.  " bounded: to date (blank = open-ended); F4 calendar
-PARAMETERS p_bttim TYPE t MODIF ID bnd.        " bounded: to time (UTC; blank = 23:59:59)
+" sy-datum / sy-uzeit: native calendar/time F4 and user date format (not YYYYMMDD).
+PARAMETERS p_bfdat TYPE sy-datum MODIF ID bnd.  " bounded: from date (UTC)
+PARAMETERS p_bftim TYPE sy-uzeit MODIF ID bnd.  " bounded: from time (UTC; blank = 00:00:00)
+PARAMETERS p_btdat TYPE sy-datum MODIF ID bnd.  " bounded: to date (blank = open-ended)
+PARAMETERS p_bttim TYPE sy-uzeit MODIF ID bnd.  " bounded: to time (UTC; blank = 23:59:59)
 SELECTION-SCREEN END OF BLOCK b_bnd.
 
 SELECTION-SCREEN BEGIN OF BLOCK b_out WITH FRAME TITLE TEXT-b04.
@@ -456,15 +457,6 @@ CLASS lcl_app IMPLEMENTATION.
 ENDCLASS.
 
 *----------------------------------------------------------------------*
-* F4 calendar for bounded From / To dates
-*----------------------------------------------------------------------*
-AT SELECTION-SCREEN ON VALUE-REQUEST FOR p_bfdat.
-  PERFORM f4_calendar USING 'P_BFDAT' CHANGING p_bfdat.
-
-AT SELECTION-SCREEN ON VALUE-REQUEST FOR p_btdat.
-  PERFORM f4_calendar USING 'P_BTDAT' CHANGING p_btdat.
-
-*----------------------------------------------------------------------*
 * F4 value help for the logical file name (transaction FILE)
 *----------------------------------------------------------------------*
 AT SELECTION-SCREEN ON VALUE-REQUEST FOR p_lfn.
@@ -528,57 +520,3 @@ AT SELECTION-SCREEN.
 START-OF-SELECTION.
   NEW lcl_app( )->run( ).
 
-*----------------------------------------------------------------------*
-* Calendar popup for a date parameter (writes the chosen date back).
-*----------------------------------------------------------------------*
-FORM f4_calendar USING iv_dynp TYPE dynpread-fieldname
-                 CHANGING cv_date TYPE sy-datum.
-  DATA lv_date TYPE sy-datum.
-  DATA lt_dynp TYPE TABLE OF dynpread.
-  DATA ls_dynp TYPE dynpread.
-
-  ls_dynp-fieldname = iv_dynp.
-  APPEND ls_dynp TO lt_dynp.
-  CALL FUNCTION 'DYNP_VALUES_READ'
-    EXPORTING
-      dyname     = sy-repid
-      dynumb     = sy-dynnr
-    TABLES
-      dynpfields = lt_dynp
-    EXCEPTIONS
-      OTHERS     = 1.
-  READ TABLE lt_dynp INTO ls_dynp INDEX 1.
-  IF sy-subrc = 0 AND ls_dynp-fieldvalue IS NOT INITIAL.
-    lv_date = ls_dynp-fieldvalue.
-  ELSEIF cv_date IS NOT INITIAL.
-    lv_date = cv_date.
-  ELSE.
-    lv_date = sy-datum.
-  ENDIF.
-
-  CALL FUNCTION 'F4_DATE'
-    EXPORTING
-      date_for_first_month = lv_date
-    IMPORTING
-      select_date          = lv_date
-    EXCEPTIONS
-      OTHERS               = 1.
-  IF sy-subrc <> 0 OR lv_date IS INITIAL.
-    RETURN.
-  ENDIF.
-
-  cv_date = lv_date.
-  CLEAR lt_dynp.
-  CLEAR ls_dynp.
-  ls_dynp-fieldname  = iv_dynp.
-  ls_dynp-fieldvalue = lv_date.
-  APPEND ls_dynp TO lt_dynp.
-  CALL FUNCTION 'DYNP_VALUES_UPDATE'
-    EXPORTING
-      dyname     = sy-repid
-      dynumb     = sy-dynnr
-    TABLES
-      dynpfields = lt_dynp
-    EXCEPTIONS
-      OTHERS     = 1.
-ENDFORM.
