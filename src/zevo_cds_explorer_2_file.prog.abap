@@ -231,10 +231,14 @@ CLASS lcl_app IMPLEMENTATION.
 
     DATA lt_res TYPE ty_res_tab.
     LOOP AT mt_views INTO DATA(ls_v).
+      DATA(lv_bound_ok) = xsdbool( lv_bounded = abap_true AND ls_v-delta_field IS NOT INITIAL ).
+      DATA(lv_ent_mode) = COND string( WHEN lv_bound_ok = abap_true THEN `bounded`
+                                       WHEN lv_delta   = abap_true THEN `delta`
+                                       ELSE `full` ).
       DATA(ls_r) = VALUE ty_res(
         entity = ls_v-entity_name
-        mode   = COND #( WHEN lv_bounded = abap_true THEN 'BOUND'
-                         WHEN lv_delta   = abap_true THEN 'DELTA'
+        mode   = COND #( WHEN lv_bound_ok = abap_true THEN 'BOUND'
+                         WHEN lv_delta    = abap_true THEN 'DELTA'
                          ELSE 'FULL' ) ).
 
       " Predictable name: <ENTITY>_<full|delta>_<YYYYMMDD>_<HHMMSS>.<ext>
@@ -246,7 +250,7 @@ CLASS lcl_app IMPLEMENTATION.
           EXPORTING
             logical_filename = p_lfn
             parameter_1      = ls_v-entity_name
-            parameter_2      = to_upper( lv_mode )
+            parameter_2      = to_upper( lv_ent_mode )
           IMPORTING
             file_name        = lv_file
           EXCEPTIONS
@@ -259,7 +263,7 @@ CLASS lcl_app IMPLEMENTATION.
           CONTINUE.
         ENDIF.
       ELSE.
-        lv_file = |{ lv_folder }{ to_upper( ls_v-entity_name ) }_{ lv_mode }_{ lv_stamp }.{ lv_ext }|.
+        lv_file = |{ lv_folder }{ to_upper( ls_v-entity_name ) }_{ lv_ent_mode }_{ lv_stamp }.{ lv_ext }|.
       ENDIF.
 
       DATA(ls_ex) = lo_ext->extract(

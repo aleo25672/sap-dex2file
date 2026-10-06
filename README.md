@@ -1006,7 +1006,7 @@ instead of "since the last run":
   **To date** means open-ended (`>= from`); a blank **From** means open-ended (`<= to`). At least
   one of From / To is required when **Action = Extract to file** (the window is ignored and
   input-disabled for **Display list**).
-- Views **without** a change-timestamp field are skipped (`K`), exactly like Delta.
+- Views **without** a change-timestamp field are **not skipped**: Bounded falls back to a **full** extract (result mode / file tag `full`; message notes the fallback). Delta mode still skips those views (`K`).
 - A bounded run is **ad-hoc**: it does **not** read or advance the `ZEVO_DELTA` high-water, so it
   never disturbs the delta baseline. (Full and Delta still advance the marker.)
 - Same caveats as Delta: **no deletes** (timestamp filter sees inserts/updates only), and the

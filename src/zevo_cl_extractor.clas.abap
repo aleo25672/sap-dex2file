@@ -2,6 +2,7 @@
 "   Full   : SELECT * FROM (entity)
 "   Delta  : SELECT * FROM (entity) WHERE <change-ts field> > <last high-water>
 "   Bounded: SELECT * FROM (entity) WHERE <change-ts field> >= <from> [AND <= <to>]
+"            (full extract if the view has no change-timestamp field)
 "   extract_ex adds OData $filter (as OpenSQL WHERE), Skip/Top pagination,
 "   totalCount, and maxChangedAt for caller-managed delta.
 CLASS zevo_cl_extractor DEFINITION
@@ -90,15 +91,20 @@ ENDCLASS.
 CLASS zevo_cl_extractor IMPLEMENTATION.
 
   METHOD extract.
-    " Delta and Bounded both filter on the change-timestamp field.
-    DATA(lv_needs_ts) = xsdbool( iv_delta = abap_true OR iv_bounded = abap_true ).
-    IF lv_needs_ts = abap_true AND iv_ts_field IS INITIAL.
+    " Delta still requires a change-timestamp (skip). Bounded without one
+    " falls back to a full extract instead of skipping.
+    DATA lv_full_fallback TYPE abap_bool.
+
+    IF iv_delta = abap_true AND iv_ts_field IS INITIAL.
       rs_result-status  = 'K'.
-      rs_result-message = 'Delta/bounded not possible: no change-timestamp field'.
+      rs_result-message = 'Delta not possible: no change-timestamp field'.
       RETURN.
     ENDIF.
 
-    IF iv_bounded = abap_true AND iv_from IS INITIAL AND iv_to IS INITIAL.
+    lv_full_fallback = xsdbool( iv_bounded = abap_true AND iv_ts_field IS INITIAL ).
+
+    IF iv_bounded = abap_true AND lv_full_fallback = abap_false
+        AND iv_from IS INITIAL AND iv_to IS INITIAL.
       rs_result-status  = 'E'.
       rs_result-message = 'Bounded extract needs a from and/or to timestamp'.
       RETURN.
@@ -117,7 +123,7 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
         DATA lv_where TYPE string.
         IF iv_delta = abap_true.
           lv_where = |{ iv_ts_field } > '{ condense( |{ iv_last }| ) }'|.
-        ELSEIF iv_bounded = abap_true.
+        ELSEIF iv_bounded = abap_true AND lv_full_fallback = abap_false.
           IF iv_from IS NOT INITIAL.
             lv_where = |{ iv_ts_field } >= '{ condense( |{ iv_from }| ) }'|.
           ENDIF.
@@ -148,7 +154,11 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
         rs_result-row_count = lines( <lt> ).
         rs_result-new_high  = lv_now.
         rs_result-status    = 'S'.
-        rs_result-message   = |{ rs_result-row_count } row(s) extracted|.
+        IF lv_full_fallback = abap_true.
+          rs_result-message = |{ rs_result-row_count } row(s) extracted (full: no change-timestamp for bounded)|.
+        ELSE.
+          rs_result-message = |{ rs_result-row_count } row(s) extracted|.
+        ENDIF.
 
       CATCH cx_root INTO DATA(lx).
         rs_result-status  = 'E'.
