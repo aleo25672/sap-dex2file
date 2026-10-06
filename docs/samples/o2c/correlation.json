@@ -1,0 +1,827 @@
+{
+  "extractRun": "20261006_154927",
+  "delimiter": ";",
+  "seed": {
+    "salesOrder": "0000006321",
+    "salesOrderShort": "6321",
+    "companyCode": "1710",
+    "salesOrganization": "1710",
+    "customer": "0001000569",
+    "customerName": "Performance bike ltd",
+    "currency": "USD",
+    "ledger": "0L"
+  },
+  "customer": {
+    "customer": "0001000569",
+    "name": "Performance bike ltd",
+    "fullName": "Company Performance bike ltd/80336",
+    "bpFullName": "Performance bike ltd",
+    "accountGroup": "CUST",
+    "country": "DE",
+    "postalCode": "80336",
+    "street": "Strasse QWERTY",
+    "region": "09",
+    "language": "D",
+    "createdByUser": "ARIA",
+    "creationDate": "20261005"
+  },
+  "salesOrder": {
+    "salesOrder": "0000006321",
+    "salesOrderType": "TA",
+    "createdByUser": "ARIA",
+    "creationDate": "20261005",
+    "salesOrderDate": "20261005",
+    "salesOrganization": "1710",
+    "distributionChannel": "10",
+    "division": "00",
+    "soldToParty": "0001000569",
+    "purchaseOrderByCustomer": "PO.51026.569",
+    "customerPurchaseOrderDate": "20261006",
+    "requestedDeliveryDate": "20261005",
+    "totalNetAmount": "14800.00",
+    "currency": "USD",
+    "customerPaymentTerms": "0001",
+    "incoterms": "CFR",
+    "incotermsLocation": "Cost & Freight",
+    "billingCompanyCode": "1710",
+    "creditControlArea": "1000",
+    "overallDeliveryStatus": "C",
+    "overallProcessStatus": "C",
+    "items": [
+      {
+        "salesOrderItem": "000010",
+        "itemCategory": "TAN",
+        "material": "MZ-TG-Y240",
+        "text": "Y240 Bike",
+        "plant": "1710",
+        "storageLocation": "171A",
+        "orderQuantity": "76.000",
+        "unit": "ST",
+        "confirmedQuantity": "76.000",
+        "netPrice": "160.00",
+        "netAmount": "12160.00",
+        "currency": "USD",
+        "profitCenter": "US10_TGY1",
+        "shipToParty": "0001000569",
+        "requestedDeliveryDate": "20261005",
+        "deliveryStatus": "C",
+        "processStatus": "C"
+      },
+      {
+        "salesOrderItem": "000020",
+        "itemCategory": "TAN",
+        "material": "MZ-TG-Y200",
+        "text": "Y200 Bike",
+        "plant": "1710",
+        "storageLocation": "",
+        "orderQuantity": "22.000",
+        "unit": "ST",
+        "confirmedQuantity": "22.000",
+        "netPrice": "120.00",
+        "netAmount": "2640.00",
+        "currency": "USD",
+        "profitCenter": "US10_TGY1",
+        "shipToParty": "0001000569",
+        "requestedDeliveryDate": "20261005",
+        "deliveryStatus": "C",
+        "processStatus": "C"
+      }
+    ]
+  },
+  "deliveries": [
+    {
+      "deliveryDocument": "0080006423",
+      "deliveryDocumentType": "LF",
+      "sdDocumentCategory": "J",
+      "createdByUser": "ARIA",
+      "creationDate": "20261005",
+      "shippingPoint": "1710",
+      "shipToParty": "0001000569",
+      "soldToParty": "0001000569",
+      "pickingDate": "20261005",
+      "plannedGoodsIssueDate": "20261009",
+      "actualGoodsMovementDate": "20261005",
+      "deliveryDate": "20261009",
+      "overallGoodsMovementStatus": "C",
+      "overallPickingStatus": "C",
+      "overallBillingStatus": "C",
+      "overallProcessStatus": "C",
+      "items": [
+        {
+          "deliveryDocumentItem": "000010",
+          "referenceSDDocument": "0000006321",
+          "referenceSDDocumentItem": "000010",
+          "material": "MZ-TG-Y240",
+          "plant": "1710",
+          "storageLocation": "171A",
+          "actualDeliveryQuantity": "15.000",
+          "unit": "ST",
+          "goodsMovementType": "601",
+          "pickingStatus": "C",
+          "goodsMovementStatus": "C",
+          "deliveryRelatedBillingStatus": "C"
+        },
+        {
+          "deliveryDocumentItem": "000020",
+          "referenceSDDocument": "0000006321",
+          "referenceSDDocumentItem": "000020",
+          "material": "MZ-TG-Y200",
+          "plant": "1710",
+          "storageLocation": "171A",
+          "actualDeliveryQuantity": "7.000",
+          "unit": "ST",
+          "goodsMovementType": "601",
+          "pickingStatus": "C",
+          "goodsMovementStatus": "C",
+          "deliveryRelatedBillingStatus": "C"
+        }
+      ]
+    },
+    {
+      "deliveryDocument": "0080006426",
+      "deliveryDocumentType": "LF",
+      "sdDocumentCategory": "J",
+      "createdByUser": "SAP_SYSTEM",
+      "creationDate": "20261006",
+      "shippingPoint": "1710",
+      "shipToParty": "0001000569",
+      "soldToParty": "0001000569",
+      "pickingDate": "20261005",
+      "plannedGoodsIssueDate": "20261009",
+      "actualGoodsMovementDate": "00000000",
+      "deliveryDate": "20261009",
+      "overallGoodsMovementStatus": "A",
+      "overallPickingStatus": "A",
+      "overallBillingStatus": "A",
+      "overallProcessStatus": "A",
+      "items": [
+        {
+          "deliveryDocumentItem": "000010",
+          "referenceSDDocument": "0000006321",
+          "referenceSDDocumentItem": "000010",
+          "material": "MZ-TG-Y240",
+          "plant": "1710",
+          "storageLocation": "171A",
+          "actualDeliveryQuantity": "61.000",
+          "unit": "ST",
+          "goodsMovementType": "601",
+          "pickingStatus": "A",
+          "goodsMovementStatus": "A",
+          "deliveryRelatedBillingStatus": "A"
+        },
+        {
+          "deliveryDocumentItem": "000020",
+          "referenceSDDocument": "0000006321",
+          "referenceSDDocumentItem": "000020",
+          "material": "MZ-TG-Y200",
+          "plant": "1710",
+          "storageLocation": "171A",
+          "actualDeliveryQuantity": "15.000",
+          "unit": "ST",
+          "goodsMovementType": "601",
+          "pickingStatus": "A",
+          "goodsMovementStatus": "A",
+          "deliveryRelatedBillingStatus": "A"
+        }
+      ]
+    }
+  ],
+  "goodsIssues": [
+    {
+      "materialDocument": "4900008955",
+      "materialDocumentYear": "2026",
+      "materialDocumentItem": "0001",
+      "deliveryDocument": "0080006423",
+      "deliveryDocumentItem": "000010",
+      "material": "MZ-TG-Y240",
+      "plant": "1710",
+      "storageLocation": "171A",
+      "goodsMovementType": "601",
+      "inventoryTransactionType": "WL",
+      "goodsMovementRefDocType": "L",
+      "quantity": "15.000",
+      "unit": "ST",
+      "debitCreditCode": "H",
+      "postingDate": "20261005",
+      "customer": "0001000569",
+      "companyCode": "1710",
+      "fiscalYear": "2026"
+    },
+    {
+      "materialDocument": "4900008955",
+      "materialDocumentYear": "2026",
+      "materialDocumentItem": "0002",
+      "deliveryDocument": "0080006423",
+      "deliveryDocumentItem": "000020",
+      "material": "MZ-TG-Y200",
+      "plant": "1710",
+      "storageLocation": "171A",
+      "goodsMovementType": "601",
+      "inventoryTransactionType": "WL",
+      "goodsMovementRefDocType": "L",
+      "quantity": "7.000",
+      "unit": "ST",
+      "debitCreditCode": "H",
+      "postingDate": "20261005",
+      "customer": "0001000569",
+      "companyCode": "1710",
+      "fiscalYear": "2026"
+    }
+  ],
+  "billingDocuments": [
+    {
+      "billingDocument": "0090005785",
+      "billingDocumentType": "F2",
+      "billingDocumentCategory": "L",
+      "billingDocumentDate": "20261005",
+      "createdByUser": "ARIA",
+      "soldToParty": "0001000569",
+      "payerParty": "0001000569",
+      "customerPaymentTerms": "0001",
+      "totalNetAmount": "3240.00",
+      "totalTaxAmount": "0.00",
+      "currency": "USD",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "9400000001",
+      "accountingPostingStatus": "C",
+      "accountingTransferStatus": "C",
+      "isCancelled": "",
+      "items": [
+        {
+          "billingDocumentItem": "000010",
+          "referenceSDDocument": "0080006423",
+          "referenceSDDocumentItem": "000010",
+          "referenceSDDocumentCategory": "J",
+          "salesDocument": "0000006321",
+          "salesDocumentItem": "000010",
+          "material": "MZ-TG-Y240",
+          "text": "Y240 Bike",
+          "billingQuantity": "15.000",
+          "unit": "ST",
+          "netAmount": "2400.00",
+          "costAmount": "1301.70",
+          "profitCenter": "US10_TGY1",
+          "servicesRenderedDate": "20261005"
+        },
+        {
+          "billingDocumentItem": "000020",
+          "referenceSDDocument": "0080006423",
+          "referenceSDDocumentItem": "000020",
+          "referenceSDDocumentCategory": "J",
+          "salesDocument": "0000006321",
+          "salesDocumentItem": "000020",
+          "material": "MZ-TG-Y200",
+          "text": "Y200 Bike",
+          "billingQuantity": "7.000",
+          "unit": "ST",
+          "netAmount": "840.00",
+          "costAmount": "476.49",
+          "profitCenter": "US10_TGY1",
+          "servicesRenderedDate": "20261005"
+        }
+      ]
+    }
+  ],
+  "journalLines": [
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "1400000000",
+      "ledgerGLLineItem": "000001",
+      "accountingDocumentType": "DZ",
+      "postingDate": "20261006",
+      "glAccount": "0011002000",
+      "financialAccountType": "S",
+      "debitCreditCode": "S",
+      "postingKey": "40",
+      "amountInCompanyCodeCurrency": "3240.00",
+      "companyCodeCurrency": "USD",
+      "quantity": "0.000",
+      "customer": "",
+      "salesDocument": "",
+      "salesDocumentItem": "000000",
+      "soldProduct": "",
+      "profitCenter": "US10_TGY1",
+      "referenceDocumentType": "BKPF",
+      "referenceDocument": "1400000000",
+      "referenceDocumentItem": "000001",
+      "assignmentReference": "20261006",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": "",
+      "offsettingAccount": "0001000569",
+      "offsettingAccountType": "D"
+    },
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "1400000000",
+      "ledgerGLLineItem": "000002",
+      "accountingDocumentType": "DZ",
+      "postingDate": "20261006",
+      "glAccount": "0012120000",
+      "financialAccountType": "D",
+      "debitCreditCode": "H",
+      "postingKey": "15",
+      "amountInCompanyCodeCurrency": "-3240.00",
+      "companyCodeCurrency": "USD",
+      "quantity": "0.000",
+      "customer": "0001000569",
+      "salesDocument": "",
+      "salesDocumentItem": "000000",
+      "soldProduct": "",
+      "profitCenter": "US10_TGY1",
+      "referenceDocumentType": "BKPF",
+      "referenceDocument": "1400000000",
+      "referenceDocumentItem": "000002",
+      "assignmentReference": "",
+      "clearingDate": "20261006",
+      "clearingAccountingDocument": "1400000000",
+      "offsettingAccount": "0011002000",
+      "offsettingAccountType": "S"
+    },
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "4900000004",
+      "ledgerGLLineItem": "000001",
+      "accountingDocumentType": "WL",
+      "postingDate": "20261005",
+      "glAccount": "0013600000",
+      "financialAccountType": "M",
+      "debitCreditCode": "H",
+      "postingKey": "99",
+      "amountInCompanyCodeCurrency": "-1301.70",
+      "companyCodeCurrency": "USD",
+      "quantity": "-15.000",
+      "customer": "0001000569",
+      "salesDocument": "",
+      "salesDocumentItem": "000000",
+      "soldProduct": "",
+      "profitCenter": "US10_TGY1",
+      "referenceDocumentType": "MKPF",
+      "referenceDocument": "4900008955",
+      "referenceDocumentItem": "000001",
+      "assignmentReference": "",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": "",
+      "offsettingAccount": "0054083000",
+      "offsettingAccountType": "S"
+    },
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "4900000004",
+      "ledgerGLLineItem": "000002",
+      "accountingDocumentType": "WL",
+      "postingDate": "20261005",
+      "glAccount": "0054083000",
+      "financialAccountType": "S",
+      "debitCreditCode": "S",
+      "postingKey": "81",
+      "amountInCompanyCodeCurrency": "1301.70",
+      "companyCodeCurrency": "USD",
+      "quantity": "15.000",
+      "customer": "0001000569",
+      "salesDocument": "0000006321",
+      "salesDocumentItem": "000010",
+      "soldProduct": "MZ-TG-Y240",
+      "profitCenter": "US10_TGY1",
+      "referenceDocumentType": "MKPF",
+      "referenceDocument": "4900008955",
+      "referenceDocumentItem": "000001",
+      "assignmentReference": "20261005",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": "",
+      "offsettingAccount": "0013600000",
+      "offsettingAccountType": "M"
+    },
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "4900000004",
+      "ledgerGLLineItem": "000003",
+      "accountingDocumentType": "WL",
+      "postingDate": "20261005",
+      "glAccount": "0013600000",
+      "financialAccountType": "M",
+      "debitCreditCode": "H",
+      "postingKey": "99",
+      "amountInCompanyCodeCurrency": "-476.49",
+      "companyCodeCurrency": "USD",
+      "quantity": "-7.000",
+      "customer": "0001000569",
+      "salesDocument": "",
+      "salesDocumentItem": "000000",
+      "soldProduct": "",
+      "profitCenter": "US10_TGY1",
+      "referenceDocumentType": "MKPF",
+      "referenceDocument": "4900008955",
+      "referenceDocumentItem": "000002",
+      "assignmentReference": "",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": "",
+      "offsettingAccount": "0054083000",
+      "offsettingAccountType": "S"
+    },
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "4900000004",
+      "ledgerGLLineItem": "000004",
+      "accountingDocumentType": "WL",
+      "postingDate": "20261005",
+      "glAccount": "0054083000",
+      "financialAccountType": "S",
+      "debitCreditCode": "S",
+      "postingKey": "81",
+      "amountInCompanyCodeCurrency": "476.49",
+      "companyCodeCurrency": "USD",
+      "quantity": "7.000",
+      "customer": "0001000569",
+      "salesDocument": "0000006321",
+      "salesDocumentItem": "000020",
+      "soldProduct": "MZ-TG-Y200",
+      "profitCenter": "US10_TGY1",
+      "referenceDocumentType": "MKPF",
+      "referenceDocument": "4900008955",
+      "referenceDocumentItem": "000002",
+      "assignmentReference": "20261005",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": "",
+      "offsettingAccount": "0013600000",
+      "offsettingAccountType": "M"
+    },
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "9400000001",
+      "ledgerGLLineItem": "000001",
+      "accountingDocumentType": "RV",
+      "postingDate": "20261005",
+      "glAccount": "0012120000",
+      "financialAccountType": "D",
+      "debitCreditCode": "S",
+      "postingKey": "01",
+      "amountInCompanyCodeCurrency": "3240.00",
+      "companyCodeCurrency": "USD",
+      "quantity": "0.000",
+      "customer": "0001000569",
+      "salesDocument": "",
+      "salesDocumentItem": "000000",
+      "soldProduct": "",
+      "profitCenter": "US10_TGY1",
+      "referenceDocumentType": "VBRK",
+      "referenceDocument": "0090005785",
+      "referenceDocumentItem": "000000",
+      "assignmentReference": "",
+      "clearingDate": "20261006",
+      "clearingAccountingDocument": "1400000000",
+      "offsettingAccount": "0041000000",
+      "offsettingAccountType": "S"
+    },
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "9400000001",
+      "ledgerGLLineItem": "000002",
+      "accountingDocumentType": "RV",
+      "postingDate": "20261005",
+      "glAccount": "0041000000",
+      "financialAccountType": "S",
+      "debitCreditCode": "H",
+      "postingKey": "50",
+      "amountInCompanyCodeCurrency": "-2400.00",
+      "companyCodeCurrency": "USD",
+      "quantity": "-15.000",
+      "customer": "0001000569",
+      "salesDocument": "0000006321",
+      "salesDocumentItem": "000010",
+      "soldProduct": "MZ-TG-Y240",
+      "profitCenter": "US10_TGY1",
+      "referenceDocumentType": "VBRK",
+      "referenceDocument": "0090005785",
+      "referenceDocumentItem": "000010",
+      "assignmentReference": "20261005",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": "",
+      "offsettingAccount": "0001000569",
+      "offsettingAccountType": "D"
+    },
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "9400000001",
+      "ledgerGLLineItem": "000003",
+      "accountingDocumentType": "RV",
+      "postingDate": "20261005",
+      "glAccount": "0041000000",
+      "financialAccountType": "S",
+      "debitCreditCode": "H",
+      "postingKey": "50",
+      "amountInCompanyCodeCurrency": "-840.00",
+      "companyCodeCurrency": "USD",
+      "quantity": "-7.000",
+      "customer": "0001000569",
+      "salesDocument": "0000006321",
+      "salesDocumentItem": "000020",
+      "soldProduct": "MZ-TG-Y200",
+      "profitCenter": "US10_TGY1",
+      "referenceDocumentType": "VBRK",
+      "referenceDocument": "0090005785",
+      "referenceDocumentItem": "000020",
+      "assignmentReference": "20261005",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": "",
+      "offsettingAccount": "0001000569",
+      "offsettingAccountType": "D"
+    }
+  ],
+  "glAccounts": [
+    {
+      "glAccount": "0011002000",
+      "companyCode": "1710",
+      "chartOfAccounts": "YCOA",
+      "glAccountGroup": "FIN.",
+      "reconciliationAccountType": "",
+      "isProfitLossAccount": "",
+      "isBalanceSheetAccount": "X",
+      "glAccountExternal": "11002000"
+    },
+    {
+      "glAccount": "0012120000",
+      "companyCode": "1710",
+      "chartOfAccounts": "YCOA",
+      "glAccountGroup": "ABST",
+      "reconciliationAccountType": "D",
+      "isProfitLossAccount": "",
+      "isBalanceSheetAccount": "X",
+      "glAccountExternal": "12120000"
+    },
+    {
+      "glAccount": "0013600000",
+      "companyCode": "1710",
+      "chartOfAccounts": "YCOA",
+      "glAccountGroup": "MAT.",
+      "reconciliationAccountType": "",
+      "isProfitLossAccount": "",
+      "isBalanceSheetAccount": "X",
+      "glAccountExternal": "13600000"
+    },
+    {
+      "glAccount": "0041000000",
+      "companyCode": "1710",
+      "chartOfAccounts": "YCOA",
+      "glAccountGroup": "ERG.",
+      "reconciliationAccountType": "",
+      "isProfitLossAccount": "X",
+      "isBalanceSheetAccount": "",
+      "glAccountExternal": "41000000"
+    },
+    {
+      "glAccount": "0054083000",
+      "companyCode": "1710",
+      "chartOfAccounts": "YCOA",
+      "glAccountGroup": "ERG.",
+      "reconciliationAccountType": "",
+      "isProfitLossAccount": "X",
+      "isBalanceSheetAccount": "",
+      "glAccountExternal": "0054083000"
+    }
+  ],
+  "quantityReconciliation": [
+    {
+      "salesOrderItem": "000010",
+      "material": "MZ-TG-Y240",
+      "orderQuantity": "76.000",
+      "orderNetAmount": "12160.00",
+      "goodsIssuedQuantity": "15.000",
+      "inOpenDeliveryQuantity": "61.000",
+      "billedQuantity": "15.000",
+      "billedNetAmount": "2400.00",
+      "notYetBilledQuantity": "61.000",
+      "notYetBilledNetAmount": "9760.00"
+    },
+    {
+      "salesOrderItem": "000020",
+      "material": "MZ-TG-Y200",
+      "orderQuantity": "22.000",
+      "orderNetAmount": "2640.00",
+      "goodsIssuedQuantity": "7.000",
+      "inOpenDeliveryQuantity": "15.000",
+      "billedQuantity": "7.000",
+      "billedNetAmount": "840.00",
+      "notYetBilledQuantity": "15.000",
+      "notYetBilledNetAmount": "1800.00"
+    }
+  ],
+  "profit": {
+    "revenue": "3240.00",
+    "costOfGoodsSold": "1778.19",
+    "grossMargin": "1461.81",
+    "currency": "USD"
+  },
+  "cash": {
+    "status": "cleared",
+    "receivedAmount": "3240.00",
+    "receivableBalance": "0.00",
+    "currency": "USD",
+    "receivableGlAccount": "0012120000",
+    "bankGlAccount": "0011002000",
+    "accountingDocument": "1400000000",
+    "accountingDocumentType": "DZ",
+    "postingDate": "20261006",
+    "clearingDate": "20261006",
+    "customer": "0001000569",
+    "clearedReceivables": [
+      {
+        "accountingDocument": "9400000001",
+        "billingDocument": "0090005785",
+        "amount": "3240.00",
+        "clearingDate": "20261006",
+        "clearingAccountingDocument": "1400000000"
+      }
+    ],
+    "lines": [
+      {
+        "ledgerGLLineItem": "000001",
+        "glAccount": "0011002000",
+        "financialAccountType": "S",
+        "debitCreditCode": "S",
+        "postingKey": "40",
+        "amountInCompanyCodeCurrency": "3240.00",
+        "customer": "",
+        "offsettingAccount": "0001000569",
+        "assignmentReference": "20261006",
+        "clearingDate": "00000000",
+        "clearingAccountingDocument": ""
+      },
+      {
+        "ledgerGLLineItem": "000002",
+        "glAccount": "0012120000",
+        "financialAccountType": "D",
+        "debitCreditCode": "H",
+        "postingKey": "15",
+        "amountInCompanyCodeCurrency": "-3240.00",
+        "customer": "0001000569",
+        "offsettingAccount": "0011002000",
+        "assignmentReference": "",
+        "clearingDate": "20261006",
+        "clearingAccountingDocument": "1400000000"
+      }
+    ]
+  },
+  "joinKeys": [
+    {
+      "from": "I_SalesOrder",
+      "to": "I_SalesOrderItem",
+      "keys": [
+        "SalesOrder"
+      ]
+    },
+    {
+      "from": "I_SalesOrderItem",
+      "to": "I_DeliveryDocumentItem",
+      "keys": [
+        "SalesOrder = ReferenceSDDocument",
+        "SalesOrderItem = ReferenceSDDocumentItem"
+      ],
+      "note": "ReferenceSDDocumentCategory C = sales order."
+    },
+    {
+      "from": "I_DeliveryDocument",
+      "to": "I_DeliveryDocumentItem",
+      "keys": [
+        "DeliveryDocument"
+      ]
+    },
+    {
+      "from": "I_DeliveryDocumentItem",
+      "to": "I_GoodsMovementDocumentDEX",
+      "keys": [
+        "DeliveryDocument",
+        "DeliveryDocumentItem"
+      ],
+      "note": "GoodsMovementType 601, GoodsMovementRefDocType L. ReferenceDocument is also the delivery."
+    },
+    {
+      "from": "I_DeliveryDocumentItem",
+      "to": "I_BillingDocumentItem",
+      "keys": [
+        "DeliveryDocument = ReferenceSDDocument",
+        "DeliveryDocumentItem = ReferenceSDDocumentItem"
+      ],
+      "note": "ReferenceSDDocumentCategory J = delivery. SalesDocument / SalesDocumentItem point back to the order."
+    },
+    {
+      "from": "I_BillingDocument",
+      "to": "I_BillingDocumentItem",
+      "keys": [
+        "BillingDocument"
+      ]
+    },
+    {
+      "from": "I_BillingDocument",
+      "to": "I_GLAccountLineItemRawData",
+      "keys": [
+        "AccountingDocument + CompanyCode + FiscalYear",
+        "or ReferenceDocumentType VBRK and ReferenceDocument = BillingDocument"
+      ],
+      "note": "I_BillingDocument carries AccountingDocument directly."
+    },
+    {
+      "from": "I_GoodsMovementDocumentDEX",
+      "to": "I_GLAccountLineItemRawData",
+      "keys": [
+        "ReferenceDocumentType MKPF",
+        "ReferenceDocument = MaterialDocument"
+      ],
+      "note": "COGS lines carry SalesDocument and SalesDocumentItem."
+    },
+    {
+      "from": "I_GLAccountLineItemRawData receivable line",
+      "to": "Incoming payment type DZ",
+      "keys": [
+        "ClearingAccountingDocument",
+        "ClearingDate",
+        "Customer"
+      ]
+    },
+    {
+      "from": "I_SalesOrder",
+      "to": "I_Customer",
+      "keys": [
+        "SoldToParty = Customer"
+      ]
+    },
+    {
+      "from": "I_GLAccountLineItemRawData",
+      "to": "I_GLAccount",
+      "keys": [
+        "GLAccount",
+        "CompanyCode"
+      ]
+    }
+  ],
+  "sourceCounts": {
+    "I_SALESORDER": 3,
+    "I_SALESORDERITEM": 6,
+    "I_DELIVERYDOCUMENT": 18,
+    "I_DELIVERYDOCUMENTITEM": 34,
+    "I_BILLINGDOCUMENT": 2,
+    "I_BILLINGDOCUMENTITEM": 4,
+    "I_GOODSMOVEMENTDOCUMENTDEX": 13,
+    "I_GLACCOUNTLINEITEMRAWDATA": 186,
+    "I_CUSTOMER": 216,
+    "I_GLACCOUNT": 34812
+  },
+  "otherSalesOrders": [
+    {
+      "salesOrder": "0000006319",
+      "type": "SRVO",
+      "soldToParty": "0017100001",
+      "totalNetAmount": "105.30"
+    },
+    {
+      "salesOrder": "0000006320",
+      "type": "TA",
+      "soldToParty": "USCU_S01",
+      "totalNetAmount": "6320.00"
+    }
+  ],
+  "gaps": [
+    {
+      "id": "second-delivery-open",
+      "detail": "Delivery 0080006426 (61 of MZ-TG-Y240 and 15 of MZ-TG-Y200) was created by SAP_SYSTEM on 20261006. Picking, goods movement, and billing status are A. It has no material document, no billing item, and no journal line."
+    },
+    {
+      "id": "partial-billing",
+      "detail": "Order net value 14800.00. Billed 3240.00 on 0090005785 for delivery 0080006423. 11560.00 is not yet billed."
+    },
+    {
+      "id": "no-tax",
+      "detail": "TotalTaxAmount is 0.00 on the billing document and no tax line is in the journal."
+    },
+    {
+      "id": "sd-number-vs-fi-number",
+      "detail": "Billing document 0090005785 posts to accounting document 9400000001. Material document 4900008955 posts to accounting document 4900000004. The incoming payment is accounting document 1400000000 with no SD document."
+    },
+    {
+      "id": "parallel-ledger",
+      "detail": "The same FI documents also exist on ledger 2L. The seed keeps 0L."
+    },
+    {
+      "id": "customer-master-encoding",
+      "detail": "I_Customer in source/ is Windows-1252. The seed file is UTF-8."
+    }
+  ]
+}
