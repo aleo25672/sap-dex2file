@@ -39,8 +39,9 @@ FI_DOCS = {
     "5000000003",  # WE for material document 5000002941
     "5100000000",  # RE for supplier invoice 5100001598
     "5100000001",  # RE for supplier invoice 5100001599
+    "1500000000",  # KZ vendor payment clearing both invoices
 }
-GL_ACCOUNTS = {"0013600000", "0021100000", "0021120000"}
+GL_ACCOUNTS = {"0011002000", "0013600000", "0021100000", "0021120000"}
 
 # History document type on C_PurchaseOrderHistoryDEX (EKBE VGABE).
 HIST_GR = "1"
@@ -439,9 +440,44 @@ def main() -> None:
         for line in journal_lines
         if line["financialAccountType"] == "K" and line["glAccount"] == "0021100000"
     ]
+    # Credits are negative. A zero sum means the invoices are cleared.
     open_ap = sum((dec(line["amountInCompanyCodeCurrency"]) for line in ap_lines), Decimal("0"))
-    # Vendor credit is stored as a negative amount. Open payable is the absolute value.
     open_ap_amount = money(abs(open_ap))
+    payment_lines = [
+        line for line in journal_lines if line["accountingDocumentType"] == "KZ"
+    ]
+    payment_docs = sorted({line["accountingDocument"] for line in payment_lines})
+    payment_doc = payment_docs[0] if len(payment_docs) == 1 else ""
+    paid = sum(
+        (
+            dec(line["amountInCompanyCodeCurrency"])
+            for line in payment_lines
+            if line["glAccount"] == "0021100000"
+        ),
+        Decimal("0"),
+    )
+    cleared_invoices = [
+        {
+            "accountingDocument": line["accountingDocument"],
+            "referenceDocument": line["referenceDocument"],
+            "amount": line["amountInCompanyCodeCurrency"],
+            "documentItemText": line["documentItemText"],
+            "clearingDate": line["clearingDate"],
+            "clearingAccountingDocument": line["clearingAccountingDocument"],
+        }
+        for line in journal_lines
+        if line["accountingDocumentType"] == "RE"
+        and line["glAccount"] == "0021100000"
+        and line["clearingAccountingDocument"] not in ("",)
+    ]
+    bank_line = next(
+        (line for line in payment_lines if line["glAccount"] == "0011002000"),
+        None,
+    )
+    vendor_pay_line = next(
+        (line for line in payment_lines if line["glAccount"] == "0021100000"),
+        None,
+    )
 
     grir_net = sum(
         (
@@ -486,7 +522,7 @@ def main() -> None:
             "bounded contract header and item extracts and that also has a "
             "release order in the purchase-order extract. PO 4500002146 is "
             "that release, and it continues through goods receipt, supplier "
-            "invoice, and the universal journal."
+            "invoice, the universal journal, and vendor payment 1500000000."
         ),
         "contract": {
             "purchaseContract": header["PURCHASECONTRACT"],
@@ -527,18 +563,49 @@ def main() -> None:
         "glAccounts": gl_out,
         "quantityReconciliation": rollup,
         "payment": {
-            "status": "open",
+            "status": "cleared" if payment_doc and open_ap_amount == "0.00" else "open",
+            "paidAmount": money(paid),
             "openAmount": open_ap_amount,
             "currency": CURRENCY,
             "glAccount": "0021100000",
-            "clearingDate": "",
-            "clearingAccountingDocument": "",
+            "bankGlAccount": "0011002000",
+            "bankGlAccountExternal": "11002000",
+            "accountingDocument": payment_doc,
+            "accountingDocumentType": "KZ",
+            "fiscalYear": vendor_pay_line["fiscalYear"] if vendor_pay_line else "",
+            "postingDate": vendor_pay_line["postingDate"] if vendor_pay_line else "",
+            "clearingDate": vendor_pay_line["clearingDate"] if vendor_pay_line else "",
+            "clearingAccountingDocument": (
+                vendor_pay_line["clearingAccountingDocument"] if vendor_pay_line else ""
+            ),
+            "supplier": SUPPLIER,
             "grirNetAmount": money(grir_net),
+            "clearedInvoices": cleared_invoices,
+            "lines": [
+                {
+                    "ledgerGLLineItem": line["ledgerGLLineItem"],
+                    "glAccount": line["glAccount"],
+                    "financialAccountType": line["financialAccountType"],
+                    "debitCreditCode": line["debitCreditCode"],
+                    "amountInCompanyCodeCurrency": line["amountInCompanyCodeCurrency"],
+                    "supplier": line["supplier"],
+                    "postingKey": "",
+                    "offsettingAccount": line["offsettingAccount"],
+                    "assignmentReference": line["assignmentReference"],
+                    "clearingDate": line["clearingDate"],
+                    "clearingAccountingDocument": line["clearingAccountingDocument"],
+                }
+                for line in payment_lines
+            ],
             "note": (
-                "No payment or clearing document is in this extract. "
-                "ClearingDate and ClearingAccountingDocument are blank on "
-                "every journal line of the seed. The vendor items on "
-                "21100000 remain open."
+                f"Accounting document {payment_doc} type KZ, posted "
+                f"{vendor_pay_line['postingDate'] if vendor_pay_line else ''}, "
+                f"pays {money(paid)} {CURRENCY}. It credits G/L 0011002000 "
+                f"(external 11002000) and debits vendor account 0021100000 for "
+                f"supplier {SUPPLIER}. ClearingAccountingDocument {payment_doc} "
+                "is on the payment vendor line and on both invoice vendor lines, "
+                "so invoices 5100001598 (120.00) and 5100001599 (40.50) are cleared. "
+                "The vendor balance on 0021100000 is 0.00."
             ),
         },
         "joinKeys": [
@@ -612,6 +679,12 @@ def main() -> None:
                 "note": "The vendor line (21100000) has no PurchasingDocument. Use the GR/IR lines on the same accounting document.",
             },
             {
+                "from": "I_GLAccountLineItemRawData invoice vendor line",
+                "to": "Payment document type KZ",
+                "keys": ["ClearingAccountingDocument", "ClearingDate", "Supplier"],
+                "note": "KZ credits G/L 0011002000 and debits 0021100000. The same clearing document is stored on both invoice vendor lines.",
+            },
+            {
                 "from": "C_PurchaseOrderDEX",
                 "to": "I_BusinessPartner / I_BusinessPartnerSupplierDEX",
                 "keys": ["Supplier = BusinessPartner"],
@@ -639,14 +712,6 @@ def main() -> None:
             "I_BUSINESSPARTNERSUPPLIERDEX": len(suppliers),
         },
         "gaps": [
-            {
-                "id": "no-payment",
-                "detail": (
-                    "ClearingDate is 00000000 and ClearingAccountingDocument is "
-                    "blank. Document types in company 1710 are RE, RV, WA, WE, WL. "
-                    "There is no payment document."
-                ),
-            },
             {
                 "id": "partial-receipt",
                 "detail": (
@@ -730,19 +795,23 @@ def main() -> None:
     assert len(seed_gm) == 3, len(seed_gm)
     assert len(seed_invoices) == 2, len(seed_invoices)
     assert len(seed_invoice_items) == 3, len(seed_invoice_items)
-    assert len(seed_je) == 11, len(seed_je)
-    assert len(seed_gl) == 3, len(seed_gl)
+    assert len(seed_je) == 13, len(seed_je)
+    assert len(seed_gl) == 4, len(seed_gl)
     assert len(seed_bp) == 1 and len(seed_sup) == 1
     assert supplier_name == "EVOLVER DOMESTIC SUPPLIER 1"
-    assert open_ap_amount == "160.50", open_ap_amount
+    assert open_ap_amount == "0.00", open_ap_amount
+    assert money(paid) == "160.50", money(paid)
+    assert payment_doc == "1500000000", payment_doc
     assert money(grir_net) == "0.00", money(grir_net)
     assert mat_docs == {"5000002931", "5000002940", "5000002941"}
     assert invoice_ids == {"5100001598", "5100001599"}
-    assert all(
-        (line["clearingDate"] in ("", "00000000"))
-        and line["clearingAccountingDocument"] == ""
-        for line in journal_lines
-    )
+    assert {row["referenceDocument"] for row in cleared_invoices} == {
+        "5100001598",
+        "5100001599",
+    }
+    assert all(row["clearingAccountingDocument"] == "1500000000" for row in cleared_invoices)
+    assert all(row["clearingDate"] == "20261006" for row in cleared_invoices)
+    assert bank_line is not None and bank_line["amountInCompanyCodeCurrency"] == "-160.50"
     by_item = {row["purchaseOrderItem"]: row for row in rollup if row["purchaseOrderItem"]}
     assert by_item["00020"]["receivedQuantity"] == "10.000"
     assert by_item["00020"]["invoicedQuantity"] == "10.000"
@@ -755,7 +824,10 @@ def main() -> None:
 
     print(f"wrote {out}")
     print(f"seed files: {len(list(SEED.glob('*.csv')))}")
-    print(f"open AP {open_ap_amount} {CURRENCY}; GR/IR net {money(grir_net)}")
+    print(
+        f"payment {payment_doc} {money(paid)} {CURRENCY}; "
+        f"open AP {open_ap_amount}; GR/IR net {money(grir_net)}"
+    )
 
 
 if __name__ == "__main__":

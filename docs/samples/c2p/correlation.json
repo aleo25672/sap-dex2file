@@ -10,7 +10,7 @@
     "currency": "USD",
     "ledger": "0L"
   },
-  "whyThisSeed": "4600000041 is the only purchase contract that is present in the bounded contract header and item extracts and that also has a release order in the purchase-order extract. PO 4500002146 is that release, and it continues through goods receipt, supplier invoice, and the universal journal.",
+  "whyThisSeed": "4600000041 is the only purchase contract that is present in the bounded contract header and item extracts and that also has a release order in the purchase-order extract. PO 4500002146 is that release, and it continues through goods receipt, supplier invoice, the universal journal, and vendor payment 1500000000.",
   "contract": {
     "purchaseContract": "4600000041",
     "purchaseContractType": "MK",
@@ -337,6 +337,56 @@
       "sourceLedger": "0L",
       "companyCode": "1710",
       "fiscalYear": "2026",
+      "accountingDocument": "1500000000",
+      "ledgerGLLineItem": "000001",
+      "accountingDocumentType": "KZ",
+      "postingDate": "20261006",
+      "glAccount": "0011002000",
+      "financialAccountType": "S",
+      "debitCreditCode": "H",
+      "amountInCompanyCodeCurrency": "-160.50",
+      "companyCodeCurrency": "USD",
+      "supplier": "",
+      "purchasingDocument": "",
+      "purchasingDocumentItem": "00000",
+      "referenceDocumentType": "BKPF",
+      "referenceDocument": "1500000000",
+      "referenceDocumentItem": "000001",
+      "assignmentReference": "20261006",
+      "documentItemText": "",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": "",
+      "offsettingAccount": "0001000559"
+    },
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
+      "accountingDocument": "1500000000",
+      "ledgerGLLineItem": "000002",
+      "accountingDocumentType": "KZ",
+      "postingDate": "20261006",
+      "glAccount": "0021100000",
+      "financialAccountType": "K",
+      "debitCreditCode": "S",
+      "amountInCompanyCodeCurrency": "160.50",
+      "companyCodeCurrency": "USD",
+      "supplier": "0001000559",
+      "purchasingDocument": "",
+      "purchasingDocumentItem": "00000",
+      "referenceDocumentType": "BKPF",
+      "referenceDocument": "1500000000",
+      "referenceDocumentItem": "000002",
+      "assignmentReference": "",
+      "documentItemText": "",
+      "clearingDate": "20261006",
+      "clearingAccountingDocument": "1500000000",
+      "offsettingAccount": "0011002000"
+    },
+    {
+      "sourceLedger": "0L",
+      "companyCode": "1710",
+      "fiscalYear": "2026",
       "accountingDocument": "5000000001",
       "ledgerGLLineItem": "000001",
       "accountingDocumentType": "WE",
@@ -504,8 +554,8 @@
       "referenceDocumentItem": "000000",
       "assignmentReference": "",
       "documentItemText": "INVOICE SUPP.INV.0001",
-      "clearingDate": "00000000",
-      "clearingAccountingDocument": "",
+      "clearingDate": "20261006",
+      "clearingAccountingDocument": "1500000000",
       "offsettingAccount": "0021120000"
     },
     {
@@ -579,8 +629,8 @@
       "referenceDocumentItem": "000000",
       "assignmentReference": "",
       "documentItemText": "SUPP.INV.0002",
-      "clearingDate": "00000000",
-      "clearingAccountingDocument": "",
+      "clearingDate": "20261006",
+      "clearingAccountingDocument": "1500000000",
       "offsettingAccount": "0021120000"
     },
     {
@@ -610,6 +660,16 @@
     }
   ],
   "glAccounts": [
+    {
+      "glAccount": "0011002000",
+      "companyCode": "1710",
+      "chartOfAccounts": "YCOA",
+      "glAccountType": "X",
+      "reconciliationAccountType": "",
+      "isOpenItemManaged": "",
+      "glAccountExternal": "11002000",
+      "companyCodeName": "Company Code 1710"
+    },
     {
       "glAccount": "0013600000",
       "companyCode": "1710",
@@ -692,14 +752,68 @@
     }
   ],
   "payment": {
-    "status": "open",
-    "openAmount": "160.50",
+    "status": "cleared",
+    "paidAmount": "160.50",
+    "openAmount": "0.00",
     "currency": "USD",
     "glAccount": "0021100000",
-    "clearingDate": "",
-    "clearingAccountingDocument": "",
+    "bankGlAccount": "0011002000",
+    "bankGlAccountExternal": "11002000",
+    "accountingDocument": "1500000000",
+    "accountingDocumentType": "KZ",
+    "fiscalYear": "2026",
+    "postingDate": "20261006",
+    "clearingDate": "20261006",
+    "clearingAccountingDocument": "1500000000",
+    "supplier": "0001000559",
     "grirNetAmount": "0.00",
-    "note": "No payment or clearing document is in this extract. ClearingDate and ClearingAccountingDocument are blank on every journal line of the seed. The vendor items on 21100000 remain open."
+    "clearedInvoices": [
+      {
+        "accountingDocument": "5100000000",
+        "referenceDocument": "5100001598",
+        "amount": "-120.00",
+        "documentItemText": "INVOICE SUPP.INV.0001",
+        "clearingDate": "20261006",
+        "clearingAccountingDocument": "1500000000"
+      },
+      {
+        "accountingDocument": "5100000001",
+        "referenceDocument": "5100001599",
+        "amount": "-40.50",
+        "documentItemText": "SUPP.INV.0002",
+        "clearingDate": "20261006",
+        "clearingAccountingDocument": "1500000000"
+      }
+    ],
+    "lines": [
+      {
+        "ledgerGLLineItem": "000001",
+        "glAccount": "0011002000",
+        "financialAccountType": "S",
+        "debitCreditCode": "H",
+        "amountInCompanyCodeCurrency": "-160.50",
+        "supplier": "",
+        "postingKey": "",
+        "offsettingAccount": "0001000559",
+        "assignmentReference": "20261006",
+        "clearingDate": "00000000",
+        "clearingAccountingDocument": ""
+      },
+      {
+        "ledgerGLLineItem": "000002",
+        "glAccount": "0021100000",
+        "financialAccountType": "K",
+        "debitCreditCode": "S",
+        "amountInCompanyCodeCurrency": "160.50",
+        "supplier": "0001000559",
+        "postingKey": "",
+        "offsettingAccount": "0011002000",
+        "assignmentReference": "",
+        "clearingDate": "20261006",
+        "clearingAccountingDocument": "1500000000"
+      }
+    ],
+    "note": "Accounting document 1500000000 type KZ, posted 20261006, pays 160.50 USD. It credits G/L 0011002000 (external 11002000) and debits vendor account 0021100000 for supplier 0001000559. ClearingAccountingDocument 1500000000 is on the payment vendor line and on both invoice vendor lines, so invoices 5100001598 (120.00) and 5100001599 (40.50) are cleared. The vendor balance on 0021100000 is 0.00."
   },
   "joinKeys": [
     {
@@ -806,6 +920,16 @@
       "note": "The vendor line (21100000) has no PurchasingDocument. Use the GR/IR lines on the same accounting document."
     },
     {
+      "from": "I_GLAccountLineItemRawData invoice vendor line",
+      "to": "Payment document type KZ",
+      "keys": [
+        "ClearingAccountingDocument",
+        "ClearingDate",
+        "Supplier"
+      ],
+      "note": "KZ credits G/L 0011002000 and debits 0021100000. The same clearing document is stored on both invoice vendor lines."
+    },
+    {
       "from": "C_PurchaseOrderDEX",
       "to": "I_BusinessPartner / I_BusinessPartnerSupplierDEX",
       "keys": [
@@ -832,16 +956,12 @@
     "C_SUPPLIERINVOICEDEX": 2,
     "C_SUPPLIERINVOICEITEMDEX": 3,
     "I_GOODSMOVEMENTDOCUMENTDEX": 13,
-    "I_GLACCOUNTLINEITEMRAWDATA": 178,
+    "I_GLACCOUNTLINEITEMRAWDATA": 182,
     "I_GLACCOUNT": 34812,
     "I_BUSINESSPARTNER": 434,
     "I_BUSINESSPARTNERSUPPLIERDEX": 155
   },
   "gaps": [
-    {
-      "id": "no-payment",
-      "detail": "ClearingDate is 00000000 and ClearingAccountingDocument is blank. Document types in company 1710 are RE, RV, WA, WE, WL. There is no payment document."
-    },
     {
       "id": "partial-receipt",
       "detail": "PO 4500002146 item 00020 ordered 15 and received 10. Item 00010 ordered 10 and received 3. Invoiced quantity equals received quantity on both items."

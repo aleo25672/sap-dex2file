@@ -149,7 +149,7 @@ def add_footer(section):
     footer.is_linked_to_previous = False
     paragraph = footer.paragraphs[0]
     paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    run = paragraph.add_run("Contract 4600000041  ·  PO 4500002146  ·  extract 20261006_094549  ·  ")
+    run = paragraph.add_run("Contract 4600000041  ·  PO 4500002146  ·  payment 1500000000  ·  ")
     set_run_font(run, size=8, color=RGBColor(0x55, 0x55, 0x55))
     fld_begin = OxmlElement("w:fldChar")
     fld_begin.set(qn("w:fldCharType"), "begin")
@@ -212,6 +212,7 @@ def main() -> None:
     run = meta.add_run(
         "Reference documents: purchase contract 4600000041 and purchase order 4500002146\n"
         "SAP S/4HANA DEX extracts · ZEVO_CDS_EXPLORER_2_FILE · run 20261006_094549\n"
+        "Journal refreshed from I_GLAccountLineItemRawData bounded 20261006_104841\n"
         "Company code 1710 · purchasing organization 1710 · USD"
     )
     set_run_font(run, size=10, color=RGBColor(0x33, 0x33, 0x33))
@@ -243,7 +244,7 @@ def main() -> None:
             ["3", "Material documents 5000002931, 5000002940, 5000002941", "Goods receipts, movement type 101"],
             ["4", "Supplier invoices 5100001598 and 5100001599", "Invoice of the received quantities, 160.50 USD"],
             ["5", "Accounting documents 5000000001–5000000003 and 5100000000–5100000001", "Stock, GR/IR, and vendor items on ledger 0L"],
-            ["6", "Payment", "Not in this extract. Vendor account 21100000 remains open for 160.50 USD"],
+            ["6", "Payment 1500000000 (type KZ)", "160.50 USD on 20261006. Clears both invoice vendor lines. Vendor balance 0.00"],
         ],
     )
     add_para(
@@ -565,6 +566,7 @@ def main() -> None:
         doc,
         ["G/L account", "External", "Reconciliation", "Open item", "Role on this chain"],
         [
+            ["0011002000", "11002000", "", "", "Credited by the vendor payment (document type KZ)"],
             ["0013600000", "13600000", "", "", "Stock, debited at goods receipt (financial account type M)"],
             ["0021120000", "21120000", "", "X", "GR/IR (financial account type S)"],
             ["0021100000", "21100000", "K", "", "Vendor payables (financial account type K)"],
@@ -579,7 +581,7 @@ def main() -> None:
     add_para(doc, "Journal lines for this PO", size=11, bold=True, space_after=4)
     add_table(
         doc,
-        ["FI document", "Type", "Line", "G/L account", "D/C", "Amount USD", "PO item", "Ref. type", "Reference document", "Assignment", "Item text"],
+        ["FI document", "Type", "Line", "G/L account", "D/C", "Amount USD", "Ref. type", "Reference document", "Clearing doc", "Clearing date", "Item text"],
         [
             [
                 line["accountingDocument"],
@@ -588,10 +590,10 @@ def main() -> None:
                 line["glAccount"],
                 line["debitCreditCode"],
                 line["amountInCompanyCodeCurrency"],
-                line["purchasingDocumentItem"] if line["purchasingDocument"] else "",
                 line["referenceDocumentType"],
                 line["referenceDocument"],
-                line["assignmentReference"],
+                line["clearingAccountingDocument"],
+                "" if line["clearingDate"] in ("", "00000000") else line["clearingDate"],
                 line["documentItemText"],
             ]
             for line in correlation["journalLines"]
@@ -603,7 +605,7 @@ def main() -> None:
         "Goods-receipt documents 5000000001, 5000000002, and 5000000003 debit stock and "
         "credit GR/IR. Invoice documents 5100000000 and 5100000001 debit GR/IR and credit "
         "payables. GR/IR nets to 0.00 for the quantities that were received and invoiced. "
-        "ClearingDate is 00000000 and ClearingAccountingDocument is blank on every line.",
+        "The two invoice vendor lines are cleared by payment document 1500000000.",
     )
 
     doc.add_heading("10. Quantity and amount reconciliation", level=1)
@@ -639,17 +641,56 @@ def main() -> None:
     doc.add_heading("11. Payment", level=1)
     add_para(
         doc,
-        f"Open vendor balance on G/L account {payment['glAccount']}: "
+        f"Vendor payment {payment['accountingDocument']} "
+        f"(document type {payment['accountingDocumentType']}), "
+        f"posting date {payment['postingDate']}, "
+        f"amount {payment['paidAmount']} {payment['currency']}. "
+        f"Vendor balance on {payment['glAccount']} after clearing: "
         f"{payment['openAmount']} {payment['currency']}. "
-        "That is invoice 5100001598 (120.00) plus invoice 5100001599 (40.50). "
         f"GR/IR net amount is {payment['grirNetAmount']} {payment['currency']}.",
     )
     add_para(doc, payment["note"])
+    add_para(doc, "Payment lines (I_GLAccountLineItemRawData, ledger 0L)", size=11, bold=True, space_after=4)
+    add_table(
+        doc,
+        ["FI document", "Line", "G/L account", "D/C", "Amount USD", "Supplier", "Offsetting account", "Clearing doc", "Clearing date"],
+        [
+            [
+                payment["accountingDocument"],
+                line["ledgerGLLineItem"],
+                line["glAccount"],
+                line["debitCreditCode"],
+                line["amountInCompanyCodeCurrency"],
+                line["supplier"],
+                line["offsettingAccount"],
+                line["clearingAccountingDocument"],
+                "" if line["clearingDate"] in ("", "00000000") else line["clearingDate"],
+            ]
+            for line in payment["lines"]
+        ],
+    )
+    add_para(doc, "Invoice vendor lines cleared by this payment", size=11, bold=True, space_after=4)
+    add_table(
+        doc,
+        ["FI document", "Supplier invoice", "Amount USD", "Item text", "Clearing doc", "Clearing date"],
+        [
+            [
+                line["accountingDocument"],
+                line["referenceDocument"],
+                line["amount"],
+                line["documentItemText"],
+                line["clearingAccountingDocument"],
+                line["clearingDate"],
+            ]
+            for line in payment["clearedInvoices"]
+        ],
+    )
     add_para(
         doc,
-        "Company 1710 in this extract has accounting document types RE, RV, WA, WE, and WL. "
-        "A later payment would be a journal whose clearing fields point at accounting "
-        "documents 5100000000 and 5100000001.",
+        "The credit of 160.50 is on G/L 0011002000 (external 11002000), posting key 50, "
+        "assignment 20261006. The debit of 160.50 is on vendor account 0021100000, "
+        "posting key 25, supplier 0001000559. Reference document type on the payment is BKPF. "
+        "120.00 plus 40.50 equals the payment amount, so one payment clears both invoices.",
     )
 
     doc.add_heading("12. How the documents are correlated", level=1)
@@ -671,6 +712,7 @@ def main() -> None:
             ["Journal vendor line", "PO", "Same AccountingDocument as the GR/IR lines. The vendor line has no PurchasingDocument."],
             ["PO supplier", "I_BusinessPartner", "Supplier = BusinessPartner"],
             ["Journal line", "I_GLAccount", "GLAccount + CompanyCode"],
+            ["Invoice vendor line", "Payment 1500000000 type KZ", "ClearingAccountingDocument + ClearingDate + Supplier"],
         ],
         font=8,
     )
@@ -708,10 +750,10 @@ def main() -> None:
             ["I_GoodsMovementDocumentDEX", "PurchaseOrder eq '4500002146'"],
             ["C_SupplierInvoiceItemDEX", "PurchaseOrder eq '4500002146'"],
             ["C_SupplierInvoiceDEX", "SupplierInvoice eq '5100001598' or SupplierInvoice eq '5100001599'"],
-            ["I_GLAccountLineItemRawData", "CompanyCode eq '1710' and SourceLedger eq '0L' and the five accounting documents in section 9"],
+            ["I_GLAccountLineItemRawData", "CompanyCode eq '1710' and SourceLedger eq '0L' and accounting documents 5000000001, 5000000002, 5000000003, 5100000000, 5100000001, 1500000000"],
             ["I_BusinessPartner", "BusinessPartner eq '0001000559'"],
             ["I_BusinessPartnerSupplierDEX", "Supplier eq '0001000559'"],
-            ["I_GLAccount", "CompanyCode eq '1710' and GLAccount eq '0013600000' or '0021100000' or '0021120000'"],
+            ["I_GLAccount", "CompanyCode eq '1710' and GLAccount eq '0011002000' or '0013600000' or '0021100000' or '0021120000'"],
         ],
         font=8,
     )

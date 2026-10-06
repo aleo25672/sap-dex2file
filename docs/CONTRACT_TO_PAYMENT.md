@@ -19,7 +19,7 @@ flowchart LR
   inv2["Invoice 5100001599 40.50"]
   je1["JE 5100000000 RE"]
   je2["JE 5100000001 RE"]
-  ap["AP 21100000 open 160.50"]
+  pay["Payment 1500000000 KZ 160.50"]
 
   contract --> po
   po --> gr20a
@@ -30,11 +30,11 @@ flowchart LR
   gr10 --> inv2
   inv1 --> je1
   inv2 --> je2
-  je1 --> ap
-  je2 --> ap
+  je1 --> pay
+  je2 --> pay
 ```
 
-There is no inbound delivery on this chain (`DeliveryDocumentItem` is `000000`). There is no payment document in the extract. The vendor items stay open.
+There is no inbound delivery on this chain (`DeliveryDocumentItem` is `000000`). Vendor payment `1500000000` (document type `KZ`, 160.50 USD on `20261006`) clears both invoices. The vendor balance on `0021100000` is 0.00.
 
 ## Sample pack
 
@@ -65,8 +65,8 @@ Extract run `20261006_094549`, delimiter `;`. CSV headers are the CDS element na
 | `I_GoodsMovementDocumentDEX` | bounded | 13 | 3 |
 | `C_SupplierInvoiceDEX` | bounded | 2 | 2 |
 | `C_SupplierInvoiceItemDEX` | bounded | 3 | 3 |
-| `I_GLAccountLineItemRawData` | bounded | 178 | 11 (ledger `0L`) |
-| `I_GLAccount` | full | 34812 | 3 |
+| `I_GLAccountLineItemRawData` | bounded `20261006_104841` | 182 | 13 (ledger `0L`, including payment `1500000000`) |
+| `I_GLAccount` | full | 34812 | 4 |
 | `I_BusinessPartner` | full | 434 | 1 |
 | `I_BusinessPartnerSupplierDEX` | full | 155 | 1 |
 | `I_GoodsMovementRefDocType` / `Text` | full | domain | code `B` only |
@@ -161,7 +161,7 @@ Invoicing party on both headers is `0001000559`. Posting date `20261005`, compan
 
 PO item 00020 is goods-receipt-based (`InvoiceIsGoodsReceiptBased` = `X`). Its invoice items store the material document in `PrmthbReferenceDocument`. PO item 00010 is not goods-receipt-based, and invoice `5100001599` leaves that reference empty. The PO history row for that invoice also leaves `ReferenceDocument` empty. Correlate item 00010 through `PurchaseOrder` + `PurchaseOrderItem`.
 
-### 5. Invoice journal and open payable
+### 5. Invoice journal
 
 Join `SupplierInvoice` to the journal with `ReferenceDocumentType` = `RMRP` and `ReferenceDocument` = `SupplierInvoice`.
 
@@ -170,12 +170,13 @@ Join `SupplierInvoice` to the journal with `ReferenceDocumentType` = `RMRP` and 
 | 5100001598 | 5100000000 | RE | `0021100000` credit 120.00, text `INVOICE SUPP.INV.0001` | debit 36.00 and 84.00 on `0021120000` |
 | 5100001599 | 5100000001 | RE | `0021100000` credit 40.50, text `SUPP.INV.0002` | debit 40.50 on `0021120000` |
 
-The vendor line (`FinancialAccountType` `K`) has an empty `PurchasingDocument`. The GR/IR lines on the **same** `AccountingDocument` carry `PurchasingDocument` `4500002146` and the PO item. `OffsettingAccount` on the vendor line is `0021120000`. `OffsettingAccount` on the GR/IR lines is supplier `0001000559`.
+The vendor line (`FinancialAccountType` `K`) has an empty `PurchasingDocument`. The GR/IR lines on the **same** `AccountingDocument` carry `PurchasingDocument` `4500002146` and the PO item. `OffsettingAccount` on the vendor line is `0021120000`. `OffsettingAccount` on the GR/IR lines is supplier `0001000559`. Both vendor lines are cleared on `20261006` by payment `1500000000`.
 
 G/L master (`I_GLAccount`, chart `YCOA`, company `1710`) has no account-name column. The posting pattern and the account attributes identify the roles:
 
 | G/L account | External | Reconciliation type | Open item managed | Role on this chain |
 |-------------|----------|---------------------|-------------------|--------------------|
+| 0011002000 | 11002000 |  |  | Credited by vendor payment 1500000000 |
 | 0013600000 | 13600000 |  |  | Stock, debited at goods receipt |
 | 0021120000 | 21120000 |  | X | GR/IR |
 | 0021100000 | 21100000 | K |  | Vendor payables |
@@ -194,9 +195,23 @@ Invoiced quantity equals received quantity on both released items. The open amou
 
 ### 6. Payment
 
-`ClearingDate` is `00000000` and `ClearingAccountingDocument` is blank on every seed journal line. Company 1710 in this extract has accounting document types `RE`, `RV`, `WA`, `WE`, and `WL`. There is no payment document.
+Journal extract `I_GLACCOUNTLINEITEMRAWDATA_bounded_20261006_104841`. Accounting document **1500000000**, type **KZ**, posting date **20261006**, company code 1710, ledger `0L`.
 
-Open vendor balance on `0021100000`: **160.50 USD** (120.00 + 40.50). That is the payment this chain is waiting for.
+| Line | G/L account | Posting | Amount USD | Supplier | Clearing |
+|------|-------------|---------|------------|----------|----------|
+| 000001 | `0011002000` (external 11002000) | Credit, posting key 50 | 160.50 |  | Assignment `20261006`. Offsetting account is supplier `0001000559`. |
+| 000002 | `0021100000` | Debit, posting key 25 | 160.50 | `0001000559` | `ClearingDate` `20261006`, `ClearingAccountingDocument` `1500000000` |
+
+The same clearing document is on the invoice vendor lines:
+
+| Invoice journal | Supplier invoice | Vendor amount | Text | Clearing document | Clearing date |
+|-----------------|------------------|---------------|------|-------------------|---------------|
+| 5100000000 | 5100001598 | 120.00 credit | INVOICE SUPP.INV.0001 | 1500000000 | 20261006 |
+| 5100000001 | 5100001599 | 40.50 credit | SUPP.INV.0002 | 1500000000 | 20261006 |
+
+120.00 + 40.50 = 160.50, so one payment clears both invoices. The vendor balance on `0021100000` is **0.00 USD**. GR/IR remains **0.00**. Reference document type on the payment is `BKPF`.
+
+`I_GLAccount` has no account-name column. `0011002000` is a balance-sheet account (group `FIN.`, external `11002000`) credited by the payment.
 
 ## Join keys
 
@@ -216,6 +231,7 @@ Use these in order. Field names are the CDS names (uppercase in the CSV).
 | Supplier invoice | `I_GLAccountLineItemRawData` | `ReferenceDocumentType` = `RMRP`, `ReferenceDocument` = `SupplierInvoice` |
 | Journal GR/IR line | PO item | `PurchasingDocument`, `PurchasingDocumentItem`. `AssignmentReference` is the same pair with no separator. |
 | Journal vendor line | PO | Same `AccountingDocument` as the GR/IR lines. The vendor line itself has no `PurchasingDocument`. |
+| Invoice vendor line | Payment `1500000000` type `KZ` | `ClearingAccountingDocument`, `ClearingDate`, `Supplier` |
 | PO supplier | `I_BusinessPartner` and `I_BusinessPartnerSupplierDEX` | `Supplier` = `BusinessPartner` |
 | Journal line | `I_GLAccount` | `GLAccount`, `CompanyCode` |
 
@@ -247,12 +263,12 @@ Then, still one entity per call:
 | Goods movements | `I_GoodsMovementDocumentDEX` | `PurchaseOrder eq '4500002146'` |
 | Invoice items | `C_SupplierInvoiceItemDEX` | `PurchaseOrder eq '4500002146'` |
 | Invoice headers | `C_SupplierInvoiceDEX` | `SupplierInvoice eq '5100001598' or SupplierInvoice eq '5100001599'` |
-| Journal | `I_GLAccountLineItemRawData` | `CompanyCode eq '1710' and FiscalYear eq '2026' and SourceLedger eq '0L' and (AccountingDocument eq '5000000001' or AccountingDocument eq '5000000002' or AccountingDocument eq '5000000003' or AccountingDocument eq '5100000000' or AccountingDocument eq '5100000001')` |
+| Journal | `I_GLAccountLineItemRawData` | `CompanyCode eq '1710' and FiscalYear eq '2026' and SourceLedger eq '0L' and (AccountingDocument eq '5000000001' or AccountingDocument eq '5000000002' or AccountingDocument eq '5000000003' or AccountingDocument eq '5100000000' or AccountingDocument eq '5100000001' or AccountingDocument eq '1500000000')` |
 | Supplier | `I_BusinessPartner` | `BusinessPartner eq '0001000559'` |
 | Supplier roles | `I_BusinessPartnerSupplierDEX` | `Supplier eq '0001000559'` |
-| G/L | `I_GLAccount` | `CompanyCode eq '1710' and (GLAccount eq '0013600000' or GLAccount eq '0021100000' or GLAccount eq '0021120000')` |
+| G/L | `I_GLAccount` | `CompanyCode eq '1710' and (GLAccount eq '0011002000' or GLAccount eq '0013600000' or GLAccount eq '0021100000' or GLAccount eq '0021120000')` |
 
-`$filter` has no `in` operator. Chain `or` as in the [PO cookbook](../README.md#7-multiple-cds-header--items--history). A follow-on payment extract would be a later journal with `ClearingAccountingDocument` filled, or a payment document whose clearing fields point at `5100000000` and `5100000001`.
+`$filter` has no `in` operator. Chain `or` as in the [PO cookbook](../README.md#7-multiple-cds-header--items--history). The payment is accounting document `1500000000`. The invoice vendor lines point at it through `ClearingAccountingDocument`.
 
 ## Other rows in the same extracts
 
@@ -271,4 +287,4 @@ From a clone, with the source CSVs in place:
 python3 docs/samples/c2p/build_seed.py
 ```
 
-The script rewrites `seed/` and `correlation.json`, and checks the chain: two PO items, three goods receipts, two invoices, eleven `0L` journal lines, GR/IR net `0.00`, open payables `160.50`.
+The script rewrites `seed/` and `correlation.json`, and checks the chain: two PO items, three goods receipts, two invoices, thirteen `0L` journal lines, GR/IR net `0.00`, payment `1500000000` for `160.50`, vendor balance `0.00`.
