@@ -9,7 +9,7 @@
 "       2. @Semantics.systemDateTime.localInstanceLastChangedAt
 "       3. field named LastChangeDateTime (DDFIELDANNO / DD03L /
 "          DDLDEPENDENCY SQL view / DDIF_FIELDINFO_GET fallback)
-"       4. CREATIONDATE + CREATIONTIME pair (token CREATIONDATE|CREATIONTIME)
+"       4. CREATIONDATE + CREATIONTIME pair — not used for master-data CDS
 "       5. DOCUMENTDATE (date-only) — not used for master-data CDS
 "   - Entity filters are select-option ranges (single values and CP wildcards)
 "     on CDS entity name, DDLNAME, and/or DBTABNAME (AND when several filled).
@@ -363,9 +363,9 @@ CLASS zevo_cl_catalog IMPLEMENTATION.
           ENDIF.
         ENDIF.
 
-        IF ls_out-delta_capable = abap_false.
+        IF ls_out-delta_capable = abap_false AND ls_out-family <> 'MASTER'.
           ls_out-delta_field = zevo_cl_cds_meta=>creation_pair_token( CONV string( lv_ent_up ) ).
-          IF ls_out-delta_field IS INITIAL AND ls_out-family <> 'MASTER'.
+          IF ls_out-delta_field IS INITIAL.
             ls_out-delta_field = zevo_cl_cds_meta=>document_date_token( CONV string( lv_ent_up ) ).
           ENDIF.
           IF ls_out-delta_field IS NOT INITIAL.
@@ -495,9 +495,9 @@ CLASS zevo_cl_catalog IMPLEMENTATION.
           ENDIF.
         ENDIF.
 
-        IF ls_out-delta_capable = abap_false.
+        IF ls_out-delta_capable = abap_false AND ls_out-family <> 'MASTER'.
           ls_out-delta_field = zevo_cl_cds_meta=>creation_pair_token( CONV string( lv_ent_up ) ).
-          IF ls_out-delta_field IS INITIAL AND ls_out-family <> 'MASTER'.
+          IF ls_out-delta_field IS INITIAL.
             ls_out-delta_field = zevo_cl_cds_meta=>document_date_token( CONV string( lv_ent_up ) ).
           ENDIF.
           IF ls_out-delta_field IS NOT INITIAL.

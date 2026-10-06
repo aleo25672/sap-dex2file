@@ -696,7 +696,7 @@ Unlike the file report (which writes `ZEVO_DELTA`), this service **never** persi
 1. `@Semantics.systemDateTime.lastChangedAt`
 2. `@Semantics.systemDateTime.localInstanceLastChangedAt`
 3. Element / DDIC field named `LastChangeDateTime`
-4. Pair `CREATIONDATE` + `CREATIONTIME` (returned as `CREATIONDATE|CREATIONTIME`)
+4. Pair `CREATIONDATE` + `CREATIONTIME` (returned as `CREATIONDATE|CREATIONTIME`; **not** for master-data CDS)
 5. `DOCUMENTDATE` (date-only; **not** for master-data CDS)
 
 If none is found → `deltaCapable: false`. Passing `DeltaSince` then returns a skipped/business error.
@@ -951,9 +951,10 @@ this order (first match wins):
 3. Field named **`LastChangeDateTime`** via annotations, `DD03L`, CDS→SQL mapping
    (`DDLDEPENDENCY`), or `DDIF_FIELDINFO_GET` - common on API / `A_*` projection views
 4. Pair **`CREATIONDATE` + `CREATIONTIME`** (token `CREATIONDATE|CREATIONTIME`) when no
-   timestamp field exists — e.g. `I_GoodsMovementDocumentDEX`
+   timestamp field exists — e.g. `I_GoodsMovementDocumentDEX`. **Not used for master-data**
+   CDS (`@ObjectModel.usageType.dataClass: #MASTER`)
 5. Field **`DOCUMENTDATE`** (date-only watermark) when no timestamp / creation pair exists —
-   **not used for master-data** CDS (`@ObjectModel.usageType.dataClass: #MASTER`)
+   **also not used for master-data** CDS
 
 If found, the view is **delta-capable**. The display list shows the field (or pair token) in
 column **Delta field** and marks **Delta capable**; otherwise those columns stay empty.

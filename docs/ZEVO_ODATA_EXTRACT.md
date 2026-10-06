@@ -445,7 +445,7 @@ Unlike the file report (which writes `ZEVO_DELTA`), this service **never** persi
 1. `@Semantics.systemDateTime.lastChangedAt`
 2. `@Semantics.systemDateTime.localInstanceLastChangedAt`
 3. Element / DDIC field named `LastChangeDateTime`
-4. Pair `CREATIONDATE` + `CREATIONTIME` (returned as `CREATIONDATE|CREATIONTIME`)
+4. Pair `CREATIONDATE` + `CREATIONTIME` (returned as `CREATIONDATE|CREATIONTIME`; **not** for master-data CDS)
 5. `DOCUMENTDATE` (date-only; **not** for master-data CDS)
 
 If none is found → `deltaCapable: false`. Passing `DeltaSince` then returns a skipped/business error.

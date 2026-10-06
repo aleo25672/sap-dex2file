@@ -34,12 +34,11 @@ CLASS zevo_cl_cds_meta DEFINITION
       IMPORTING iv_entity TYPE clike
       RETURNING VALUE(rt_fields) TYPE zevo_cl_filter_parser=>ty_fields.
 
-    " CREATIONDATE|CREATIONTIME when both exist and no timestamp field.
+    " CREATIONDATE|CREATIONTIME / DOCUMENTDATE: never for master-data CDS.
     CLASS-METHODS creation_pair_token
       IMPORTING iv_entity TYPE clike
       RETURNING VALUE(rv_token) TYPE string.
 
-    " DOCUMENTDATE when present; never for master-data CDS.
     CLASS-METHODS document_date_token
       IMPORTING iv_entity TYPE clike
       RETURNING VALUE(rv_token) TYPE string.
@@ -207,9 +206,11 @@ CLASS zevo_cl_cds_meta IMPLEMENTATION.
       ENDIF.
     ENDIF.
 
-    rv_field = creation_pair_token( iv_entity ).
-    IF rv_field IS INITIAL AND is_master_data( iv_entity ) = abap_false.
-      rv_field = document_date_token( iv_entity ).
+    IF is_master_data( iv_entity ) = abap_false.
+      rv_field = creation_pair_token( iv_entity ).
+      IF rv_field IS INITIAL.
+        rv_field = document_date_token( iv_entity ).
+      ENDIF.
     ENDIF.
   ENDMETHOD.
 
