@@ -39,7 +39,15 @@ SELECTION-SCREEN END OF BLOCK b_act.
 SELECTION-SCREEN BEGIN OF BLOCK b_mod WITH FRAME TITLE TEXT-b03.
 PARAMETERS p_full  RADIOBUTTON GROUP mod DEFAULT 'X'. " full load
 PARAMETERS p_delta RADIOBUTTON GROUP mod.             " delta (change-timestamp)
+PARAMETERS p_bound RADIOBUTTON GROUP mod.             " bounded date/time window
 SELECTION-SCREEN END OF BLOCK b_mod.
+
+SELECTION-SCREEN BEGIN OF BLOCK b_bnd WITH FRAME TITLE TEXT-b07.
+PARAMETERS p_bfdat TYPE d.  " bounded: from date (UTC)
+PARAMETERS p_bftim TYPE t.  " bounded: from time (UTC; blank = 00:00:00)
+PARAMETERS p_btdat TYPE d.  " bounded: to date   (blank = open-ended)
+PARAMETERS p_bttim TYPE t.  " bounded: to time   (UTC; blank = 23:59:59)
+SELECTION-SCREEN END OF BLOCK b_bnd.
 
 SELECTION-SCREEN BEGIN OF BLOCK b_out WITH FRAME TITLE TEXT-b04.
 PARAMETERS p_local  RADIOBUTTON GROUP tgt DEFAULT 'X'." download to local frontend
@@ -146,9 +154,30 @@ CLASS lcl_app IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD extract_all.
-    DATA(lo_ext)   = NEW zcl_dxf_extractor( ).
-    DATA(lo_wr)    = NEW zcl_dxf_file_writer( ).
-    DATA(lv_delta) = xsdbool( p_delta = abap_true ).
+    DATA(lo_ext)     = NEW zcl_dxf_extractor( ).
+    DATA(lo_wr)      = NEW zcl_dxf_file_writer( ).
+    DATA(lv_delta)   = xsdbool( p_delta = abap_true ).
+    DATA(lv_bounded) = xsdbool( p_bound = abap_true ).
+
+    " file-name / mode tag for the chosen extraction mode
+    DATA(lv_tag) = COND string( WHEN lv_bounded = abap_true THEN `bounded`
+                                WHEN lv_delta   = abap_true THEN `delta`
+                                ELSE `full` ).
+
+    " Bounded window, built from the from/to date+time. Interpreted as UTC to
+    " match the UTC change-timestamp stored by delta-capable CDS views. A blank
+    " "to" time defaults to end-of-day so the end date is inclusive.
+    DATA lv_from TYPE timestampl.
+    DATA lv_to   TYPE timestampl.
+    IF lv_bounded = abap_true.
+      IF p_bfdat IS NOT INITIAL.
+        lv_from = |{ p_bfdat }{ p_bftim }|.
+      ENDIF.
+      IF p_btdat IS NOT INITIAL.
+        DATA(lv_bttim) = COND t( WHEN p_bttim IS INITIAL THEN '235959' ELSE p_bttim ).
+        lv_to = |{ p_btdat }{ lv_bttim }|.
+      ENDIF.
+    ENDIF.
 
     " separator + file extension from the chosen format
     DATA lv_sep TYPE string.
@@ -179,7 +208,9 @@ CLASS lcl_app IMPLEMENTATION.
     LOOP AT mt_views INTO DATA(ls_v).
       DATA(ls_r) = VALUE ty_res(
         entity = ls_v-entity_name
-        mode   = COND #( WHEN lv_delta = abap_true THEN 'DELTA' ELSE 'FULL' ) ).
+        mode   = COND #( WHEN lv_bounded = abap_true THEN 'BOUND'
+                         WHEN lv_delta   = abap_true THEN 'DELTA'
+                         ELSE 'FULL' ) ).
 
       " target path: logical file name (transaction FILE) or built folder path
       DATA lv_file TYPE string.
@@ -189,7 +220,7 @@ CLASS lcl_app IMPLEMENTATION.
           EXPORTING
             logical_filename = p_lfn
             parameter_1      = ls_v-entity_name
-            parameter_2      = COND string( WHEN lv_delta = abap_true THEN `DELTA` ELSE `FULL` )
+            parameter_2      = to_upper( lv_tag )
           IMPORTING
             file_name        = lv_file
           EXCEPTIONS
@@ -202,16 +233,18 @@ CLASS lcl_app IMPLEMENTATION.
           CONTINUE.
         ENDIF.
       ELSE.
-        lv_file = |{ lv_folder }{ ls_v-entity_name }_| &&
-                  |{ COND string( WHEN lv_delta = abap_true THEN `delta` ELSE `full` ) }_| &&
+        lv_file = |{ lv_folder }{ ls_v-entity_name }_{ lv_tag }_| &&
                   |{ sy-datum }_{ sy-uzeit }.{ lv_ext }|.
       ENDIF.
 
       DATA(ls_ex) = lo_ext->extract(
         iv_entity   = ls_v-entity_name
         iv_delta    = lv_delta
+        iv_bounded  = lv_bounded
         iv_ts_field = ls_v-delta_field
         iv_last     = ls_v-last_delta_ts
+        iv_from     = lv_from
+        iv_to       = lv_to
         iv_max_rows = p_max ).
 
       ls_r-rows    = ls_ex-row_count.
@@ -224,8 +257,11 @@ CLASS lcl_app IMPLEMENTATION.
                         iv_sep    = lv_sep
                         iv_server = lv_srv ) = abap_true.
           ls_r-file = lv_file.
-          " advance the delta marker only after a successful save
-          io_store->set_last( iv_view = ls_v-entity_name iv_last = ls_ex-new_high ).
+          " advance the delta marker only after a successful save; a bounded
+          " (ad-hoc window) run never touches the delta baseline
+          IF lv_bounded = abap_false.
+            io_store->set_last( iv_view = ls_v-entity_name iv_last = ls_ex-new_high ).
+          ENDIF.
         ELSE.
           ls_r-status  = 'E'.
           ls_r-message = COND #( WHEN lv_srv = abap_true
@@ -257,7 +293,9 @@ CLASS lcl_app IMPLEMENTATION.
         set_col_text( io_cols = lo_cols iv_col = 'STATUS'  iv_text = 'Status' ).
         set_col_text( io_cols = lo_cols iv_col = 'MESSAGE' iv_text = 'Message' ).
         lo_res->get_display_settings( )->set_list_header(
-          |Extraction results ({ COND string( WHEN p_delta = abap_true THEN `delta` ELSE `full` ) })| ).
+          |Extraction results ({ COND string( WHEN p_bound = abap_true THEN `bounded`
+                                               WHEN p_delta = abap_true THEN `delta`
+                                               ELSE `full` ) })| ).
         lo_res->display( ).
       CATCH cx_salv_msg INTO DATA(lx).
         MESSAGE lx->get_text( ) TYPE 'I'.
@@ -309,6 +347,14 @@ AT SELECTION-SCREEN ON VALUE-REQUEST FOR p_lfn.
   READ TABLE lt_ret INTO DATA(ls_ret) INDEX 1.
   IF sy-subrc = 0.
     p_lfn = ls_ret-fieldval.
+  ENDIF.
+
+*----------------------------------------------------------------------*
+* Bounded mode needs at least one of the from / to dates
+*----------------------------------------------------------------------*
+AT SELECTION-SCREEN.
+  IF p_bound = abap_true AND p_bfdat IS INITIAL AND p_btdat IS INITIAL.
+    MESSAGE 'Bounded mode: enter a from and/or to date'(m02) TYPE 'E'.
   ENDIF.
 
 *----------------------------------------------------------------------*

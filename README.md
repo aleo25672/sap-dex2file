@@ -2,7 +2,8 @@
 
 ABAP tool for **S/4HANA** that discovers **CDS views** — **DEX** (data-extraction enabled)
 and/or **API CDS** entities named like `I_*API*` — and downloads their data to a **file**:
-a **full** load (`SELECT *`) or a **timestamp-based delta** (changes since the last run).
+a **full** load (`SELECT *`), a **timestamp-based delta** (changes since the last run), or a
+**bounded** extract (rows whose change-timestamp falls in a date/time window).
 
 Companion to [`sap-dex2odata`](../sap-dex2odata) (which exposes views as OData services);
 this one extracts straight to a file instead.
@@ -72,13 +73,30 @@ from the full-load point.
 - The change-timestamp field's data type governs the `WHERE` literal; if a view's delta returns
   nothing or errors, its timestamp type may need a small tweak in `ZCL_DXF_EXTRACTOR`.
 
+## Bounded (date/time) extraction
+
+Where a view is **delta-capable** (it has the `@Semantics.systemDateTime.lastChangedAt` field),
+**Mode = Bounded** extracts rows whose change-timestamp falls in an explicit **date/time window**
+instead of "since the last run":
+
+- `SELECT * … WHERE <ts field> >= <from> [AND <ts field> <= <to>]`.
+- Enter **From** / **To** as date + time on the selection screen, in **UTC** (to match the UTC
+  change-timestamp stored by CDS). A blank **To time** means end-of-day (inclusive); a blank
+  **To date** means open-ended (`>= from`); a blank **From** means open-ended (`<= to`). At least
+  one of From / To is required.
+- Views **without** a change-timestamp field are skipped (`K`), exactly like Delta.
+- A bounded run is **ad-hoc**: it does **not** read or advance the `ZDXF_DELTA` high-water, so it
+  never disturbs the delta baseline. (Full and Delta still advance the marker.)
+- Same caveats as Delta: **no deletes** (timestamp filter sees inserts/updates only), and the
+  timestamp field's data type governs the `WHERE` literal format.
+
 ## Objects
 
 | Object | Type | Purpose |
 |--------|------|---------|
 | `Z_DEX2FILE` | report | selection screen + `CL_SALV_TABLE` grid + extract/download |
 | `ZCL_DXF_CATALOG` | class | discover DEX (`IXTRCTNENBLDVW`) and/or API CDS (`TADIR`/`DDLS`) + detect the delta timestamp field (`DDFIELDANNO`) |
-| `ZCL_DXF_EXTRACTOR` | class | dynamic `SELECT * FROM (entity)` — full, or delta `WHERE ts > last` |
+| `ZCL_DXF_EXTRACTOR` | class | dynamic `SELECT * FROM (entity)` — full, delta `WHERE ts > last`, or bounded `WHERE ts >= from [AND ts <= to]` |
 | `ZCL_DXF_FILE_WRITER` | class | serialize the table → delimited text → `gui_download` / `OPEN DATASET` |
 | `ZCL_DXF_DELTA_STORE` | class | read/update the last-run high-water per view |
 | `ZDXF_DELTA` | table | delta high-water per view (`VIEWNAME` → `LAST_TS`) |
@@ -96,7 +114,8 @@ Selection screen:
 | **DEX entity pattern** | case-sensitive filter for DEX views; plain text = contains, `*` = wildcard, blank = all |
 | **Data class** | *All* / *Master data* / *Transactional* — from `@ObjectModel.usageType.dataClass`, **not** the `I_`/`C_` prefix |
 | **Action** | *Display list only* / *Extract to file* — runs on the filtered set |
-| **Mode** | *Full load* / *Delta (change timestamp)* |
+| **Mode** | *Full load* / *Delta (change timestamp)* / *Bounded (date/time range)* |
+| **Date/time window** | *From* / *To* date + time for **Bounded** mode (UTC); shown in the "Date/time window" block |
 | **Target** | *Local frontend (download)* / *Application server (AL11)* |
 | **Format** | *CSV* / *Tab (.txt)* / *Excel (tab, .xls)* |
 | **CSV delimiter** | separator for CSV (default `;`) |

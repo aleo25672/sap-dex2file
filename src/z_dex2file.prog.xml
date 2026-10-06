@@ -12,8 +12,8 @@
    <TPOOL>
     <item>
      <ID>R</ID>
-     <ENTRY>Extract DEX/API CDS views to file (full/delta)</ENTRY>
-     <LENGTH>46</LENGTH>
+     <ENTRY>Extract DEX/API CDS views to file (full/delta/bounded)</ENTRY>
+     <LENGTH>54</LENGTH>
     </item>
     <item>
      <ID>I</ID>
@@ -53,9 +53,21 @@
     </item>
     <item>
      <ID>I</ID>
+     <KEY>B07</KEY>
+     <ENTRY>Date/time window (bounded, UTC)</ENTRY>
+     <LENGTH>31</LENGTH>
+    </item>
+    <item>
+     <ID>I</ID>
      <KEY>M01</KEY>
      <ENTRY>No CDS views found for the source / filter</ENTRY>
      <LENGTH>42</LENGTH>
+    </item>
+    <item>
+     <ID>I</ID>
+     <KEY>M02</KEY>
+     <ENTRY>Bounded mode: enter a from and/or to date</ENTRY>
+     <LENGTH>41</LENGTH>
     </item>
     <item>
      <ID>S</ID>
@@ -77,9 +89,39 @@
     </item>
     <item>
      <ID>S</ID>
+     <KEY>P_BFDAT</KEY>
+     <ENTRY>From date (UTC)</ENTRY>
+     <LENGTH>15</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_BFTIM</KEY>
+     <ENTRY>From time (UTC)</ENTRY>
+     <LENGTH>15</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
      <KEY>P_BOTH</KEY>
      <ENTRY>Both (DEX + API)</ENTRY>
      <LENGTH>17</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_BOUND</KEY>
+     <ENTRY>Bounded (date/time range)</ENTRY>
+     <LENGTH>25</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_BTDAT</KEY>
+     <ENTRY>To date (UTC)</ENTRY>
+     <LENGTH>13</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_BTTIM</KEY>
+     <ENTRY>To time (UTC)</ENTRY>
+     <LENGTH>13</LENGTH>
     </item>
     <item>
      <ID>S</ID>
