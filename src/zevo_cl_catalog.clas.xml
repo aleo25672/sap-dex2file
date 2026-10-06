@@ -3,9 +3,9 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <VSEOCLASS>
-    <CLSNAME>ZCL_DXF_FILE_WRITER</CLSNAME>
+    <CLSNAME>ZEVO_CL_CATALOG</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>DEX2FILE - serialize table to delimited file</DESCRIPT>
+    <DESCRIPT>ZEVO CDS Explorer - discover DEX/API CDS + delta field</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>

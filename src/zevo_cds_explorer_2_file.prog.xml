@@ -3,8 +3,9 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <PROGDIR>
-    <NAME>Z_DEX2FILE</NAME>
+    <NAME>ZEVO_CDS_EXPLORER_2_FILE</NAME>
     <SUBC>1</SUBC>
+    <RSTAT>T</RSTAT>
     <RLOAD>E</RLOAD>
     <FIXPT>X</FIXPT>
     <UCCHECK>X</UCCHECK>
@@ -18,8 +19,8 @@
     <item>
      <ID>I</ID>
      <KEY>B01</KEY>
-     <ENTRY>DEX entity filter</ENTRY>
-     <LENGTH>17</LENGTH>
+     <ENTRY>Entity selection</ENTRY>
+     <LENGTH>16</LENGTH>
     </item>
     <item>
      <ID>I</ID>
@@ -83,9 +84,27 @@
     </item>
     <item>
      <ID>S</ID>
-     <KEY>P_APIPAT</KEY>
-     <ENTRY>API CDS pattern</ENTRY>
-     <LENGTH>16</LENGTH>
+     <KEY>S_API</KEY>
+     <ENTRY>API CDS entity</ENTRY>
+     <LENGTH>14</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>S_NAME</KEY>
+     <ENTRY>CDS entity</ENTRY>
+     <LENGTH>11</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>S_DDL</KEY>
+     <ENTRY>DDLNAME</ENTRY>
+     <LENGTH>7</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>S_DBTAB</KEY>
+     <ENTRY>DBTABNAME</ENTRY>
+     <LENGTH>9</LENGTH>
     </item>
     <item>
      <ID>S</ID>
@@ -193,12 +212,6 @@
      <ID>S</ID>
      <KEY>P_MAX</KEY>
      <ENTRY>Max rows (0 = all)</ENTRY>
-     <LENGTH>18</LENGTH>
-    </item>
-    <item>
-     <ID>S</ID>
-     <KEY>P_NAME</KEY>
-     <ENTRY>DEX entity pattern</ENTRY>
      <LENGTH>18</LENGTH>
     </item>
     <item>

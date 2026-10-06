@@ -15,7 +15,7 @@
   },
   "syntax": {
     "version": {
-      "release": "v754",
+      "release": "v757",
       "language": "Normal"
     },
     "errorNamespace": "^(Z|Y|LCL_|TY_|LIF_)",
@@ -42,11 +42,7 @@
       "exclude": [],
       "severity": "Error"
     },
-    "align_type_expressions": {
-      "exclude": [],
-      "severity": "Error",
-      "ignoreExceptions": true
-    },
+    "align_type_expressions": false,
     "allowed_object_naming": {
       "exclude": [],
       "severity": "Error"
@@ -56,10 +52,7 @@
       "severity": "Error",
       "allowed": []
     },
-    "ambiguous_statement": {
-      "exclude": [],
-      "severity": "Error"
-    },
+    "ambiguous_statement": false,
     "avoid_use": false,
     "begin_end_names": {
       "exclude": [],
@@ -131,11 +124,7 @@
       "check": true,
       "sort": true
     },
-    "change_if_to_case": {
-      "exclude": [],
-      "severity": "Error",
-      "skipNames": []
-    },
+    "change_if_to_case": false,
     "check_abstract": {
       "exclude": [],
       "severity": "Error"
@@ -193,11 +182,7 @@
       "exclude": [],
       "severity": "Error"
     },
-    "commented_code": {
-      "exclude": [],
-      "severity": "Error",
-      "allowIncludeInFugr": true
-    },
+    "commented_code": false,
     "constant_classes": {
       "exclude": [],
       "severity": "Error",
@@ -221,10 +206,7 @@
     },
     "cyclomatic_complexity": false,
     "dangerous_statement": false,
-    "db_operation_in_loop": {
-      "exclude": [],
-      "severity": "Error"
-    },
+    "db_operation_in_loop": false,
     "definitions_top": false,
     "description_empty": {
       "exclude": [],
@@ -682,12 +664,7 @@
       "exclude": [],
       "severity": "Error"
     },
-    "line_length": {
-      "exclude": [],
-      "severity": "Error",
-      "length": 120,
-      "maxIssuesPerFile": 10
-    },
+    "line_length": false,
     "line_only_punc": {
       "exclude": [],
       "severity": "Error",
@@ -740,18 +717,7 @@
       "exclude": [],
       "severity": "Error"
     },
-    "method_parameter_names": {
-      "exclude": [],
-      "severity": "Error",
-      "patternKind": "required",
-      "ignoreNames": [],
-      "ignorePatterns": [],
-      "ignoreExceptions": true,
-      "importing": "^I._.+$",
-      "returning": "^R._.+$",
-      "changing": "^C._.+$",
-      "exporting": "^E._.+$"
-    },
+    "method_parameter_names": false,
     "mix_returning": {
       "exclude": [],
       "severity": "Error"
@@ -771,11 +737,7 @@
       "exclude": [],
       "severity": "Error"
     },
-    "nesting": {
-      "exclude": [],
-      "severity": "Error",
-      "depth": 5
-    },
+    "nesting": false,
     "newline_between_methods": {
       "exclude": [],
       "severity": "Error",
@@ -835,7 +797,7 @@
       "patternKind": "required",
       "ignoreNames": [],
       "ignorePatterns": [],
-      "clas": "^ZC(L|X)",
+      "clas": "^Z",
       "intf": "^ZIF",
       "prog": "^Z",
       "fugr": "^Z",
@@ -1078,10 +1040,7 @@
       "ignoreGlobalDefinition": true,
       "ignoreExceptions": true
     },
-    "sql_escape_host_variables": {
-      "exclude": [],
-      "severity": "Error"
-    },
+    "sql_escape_host_variables": false,
     "sql_value_conversion": {
       "exclude": [],
       "severity": "Error"
@@ -1095,10 +1054,7 @@
       "severity": "Error",
       "allowInTestclassIncludes": false
     },
-    "strict_sql": {
-      "exclude": [],
-      "severity": "Error"
-    },
+    "strict_sql": false,
     "superclass_final": {
       "exclude": [],
       "severity": "Error"
@@ -1131,11 +1087,7 @@
       "exclude": [],
       "severity": "Error"
     },
-    "types_naming": {
-      "exclude": [],
-      "severity": "Error",
-      "pattern": "^TY_.+$"
-    },
+    "types_naming": false,
     "uncaught_exception": {
       "exclude": [],
       "severity": "Error",
@@ -1183,11 +1135,7 @@
       "exclude": [],
       "severity": "Error"
     },
-    "unused_types": {
-      "exclude": [],
-      "severity": "Error",
-      "skipNames": []
-    },
+    "unused_types": false,
     "unused_variables": false,
     "use_bool_expression": {
       "exclude": [],
@@ -1198,10 +1146,7 @@
       "severity": "Error"
     },
     "use_line_exists": false,
-    "use_new": {
-      "exclude": [],
-      "severity": "Error"
-    },
+    "use_new": false,
     "when_others_last": {
       "exclude": [],
       "severity": "Error"

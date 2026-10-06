@@ -3,7 +3,7 @@
 " The caller chooses the separator (`;`/`,`/tab) and the file name + extension
 " (.csv / .txt / .xls), so this class is format-agnostic: header row from the
 " component names, one delimited line per record, minimal CSV quoting.
-CLASS zcl_dxf_file_writer DEFINITION
+CLASS zevo_cl_file_writer DEFINITION
   PUBLIC
   CREATE PUBLIC.
 
@@ -32,14 +32,16 @@ CLASS zcl_dxf_file_writer DEFINITION
 ENDCLASS.
 
 
-CLASS zcl_dxf_file_writer IMPLEMENTATION.
+CLASS zevo_cl_file_writer IMPLEMENTATION.
 
   METHOD save.
     DATA(lt_lines) = build_text( ir_table = ir_table iv_sep = iv_sep ).
 
     IF iv_server = abap_true.
       " application-server file (AL11) - needs S_DATASET authorization
-      OPEN DATASET iv_path FOR OUTPUT IN TEXT MODE ENCODING UTF-8.
+      " MESSAGE addition requires a flat C field (not string) on many releases.
+      DATA lv_msg TYPE c LENGTH 255.
+      OPEN DATASET iv_path FOR OUTPUT IN TEXT MODE ENCODING UTF-8 MESSAGE lv_msg.
       IF sy-subrc <> 0.
         rv_ok = abap_false.
         RETURN.
