@@ -18,6 +18,7 @@ Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the ge
 | [P2P call flow (Word)](docs/P2P_OData_Extract_Call_Flow.docx) | PO → Item → History → GR / IR extract sequence |
 | [Contract to Payment (Word)](docs/CONTRACT_TO_PAYMENT.docx) | Contract 4600000041 → PO 4500002146 → GR → invoice → payment 1500000000, with sample data |
 | [Order to Cash (Word)](docs/ORDER_TO_CASH.docx) | Sales order 6321 → delivery → goods issue → billing 0090005785 → receipt 1400000000, with sample data |
+| [Requisition to Order (Word)](docs/REQUISITION_TO_ORDER.docx) | Requisition 10001624 → PO 4500002147, asset assignment, partial GR and invoice |
 | [Session readme](docs/README.md) | Use cases plus the live path from requisition 10001624 through invoice and payment |
 | [Source types](#source-types) | DEX / API CDS / Both (file report) |
 | [How delta works](#how-delta-works) | Timestamp delta for the **file** report (`ZEVO_DELTA`) |

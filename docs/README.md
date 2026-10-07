@@ -12,6 +12,7 @@ ZEVO writes one CDS view per file. The use cases show how to correlate those fil
 |----------|---------------|-----------|-------------|
 | Contract to Payment | [CONTRACT_TO_PAYMENT.docx](CONTRACT_TO_PAYMENT.docx) | Contract **4600000041**, release PO **4500002146** | [samples/c2p](samples/c2p) |
 | Order to Cash | [ORDER_TO_CASH.docx](ORDER_TO_CASH.docx) | Sales order **6321** (`0000006321`) | [samples/o2c](samples/o2c) |
+| Requisition to Order | [REQUISITION_TO_ORDER.docx](REQUISITION_TO_ORDER.docx) | Requisition **10001624**, PO **4500002147** | [samples/r2o](samples/r2o) |
 
 Both documents were merged to `main` in pull request [#25](https://github.com/aleo25672/sap-dex2file/pull/25).
 
@@ -147,13 +148,24 @@ Transaction **F-53**, Post Outgoing Payment.
 
 The payment document type is **KZ**. It debits the vendor and clears the invoice.
 
+## Requisition to Order
+
+Added from the extract run `20261007_121746`. Purchase requisition **0010001624** (LAPTOP MACBOOK PRO 20 × 2,000.00 and KEYBOARD 20 × 150.00, account assignment A) is purchase order **4500002147**, total **43,000.00** USD, supplier **0001000579** (Office equipment supplier domestic 1). Both items are assigned to asset **000000600004** and G/L **0016014000**. Goods receipts and invoice **5100001600** (21,500.00, reference SUPP.INV.0003) cover 10 of 20 on each item.
+
+```bash
+python3 docs/samples/r2o/build_seed.py
+python3 docs/samples/r2o/build_use_case_docx.py
+```
+
 ## File map
 
 ```text
 docs/CONTRACT_TO_PAYMENT.docx          Contract-to-Payment use case
 docs/CONTRACT_TO_PAYMENT.md            Same walkthrough in markdown
 docs/ORDER_TO_CASH.docx                Order-to-Cash use case
+docs/REQUISITION_TO_ORDER.docx         Requisition-to-Order use case
 docs/samples/c2p/                      Contract 4600000041 / PO 4500002146
 docs/samples/o2c/                      Sales order 6321
+docs/samples/r2o/                      Requisition 10001624 / PO 4500002147
 docs/README.md                         This file
 ```

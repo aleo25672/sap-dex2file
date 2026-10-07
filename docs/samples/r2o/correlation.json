@@ -1,0 +1,340 @@
+{
+  "extractRun": "20261007_121746",
+  "delimiter": ";",
+  "seed": {
+    "purchaseRequisition": "0010001624",
+    "purchaseOrder": "4500002147",
+    "companyCode": "1710",
+    "supplier": "0001000579",
+    "supplierName": "Office equipment supplier domestic 1",
+    "currency": "USD"
+  },
+  "supplier": {
+    "supplier": "0001000579",
+    "name": "Office equipment supplier domestic 1"
+  },
+  "purchaseOrder": {
+    "purchaseOrder": "4500002147",
+    "purchaseOrderType": "NB",
+    "supplier": "0001000579",
+    "invoicingParty": "0001000579",
+    "companyCode": "1710",
+    "purchasingOrganization": "1710",
+    "purchasingGroup": "001",
+    "purchaseOrderDate": "20261007",
+    "documentCurrency": "USD",
+    "paymentTerms": "0004",
+    "purchasingProcessingStatus": "05",
+    "totalAmount": "43000.00",
+    "createdByUser": "ARIA",
+    "items": [
+      {
+        "purchaseOrderItem": "00010",
+        "purchaseRequisition": "0010001624",
+        "purchaseRequisitionItem": "00010",
+        "text": "LAPTOP MACBOOK PRO",
+        "material": "",
+        "orderQuantity": "20.000",
+        "unit": "ST",
+        "netPrice": "2000.00",
+        "netAmount": "40000.00",
+        "accountAssignmentCategory": "A",
+        "plant": "1710",
+        "goodsReceiptIsExpected": "X",
+        "invoiceIsExpected": "X"
+      },
+      {
+        "purchaseOrderItem": "00020",
+        "purchaseRequisition": "0010001624",
+        "purchaseRequisitionItem": "00020",
+        "text": "KEYBOARD",
+        "material": "",
+        "orderQuantity": "20.000",
+        "unit": "ST",
+        "netPrice": "150.00",
+        "netAmount": "3000.00",
+        "accountAssignmentCategory": "A",
+        "plant": "1710",
+        "goodsReceiptIsExpected": "X",
+        "invoiceIsExpected": "X"
+      }
+    ]
+  },
+  "requisitionItems": [
+    {
+      "purchaseRequisitionItem": "00010",
+      "text": "LAPTOP MACBOOK PRO",
+      "material": "",
+      "requestedQuantity": "20.000",
+      "unit": "ST",
+      "price": "2000.00",
+      "netAmount": "40000.00",
+      "deliveryDate": "20261012",
+      "plant": "1710",
+      "purchasingGroup": "001",
+      "supplier": "0001000579",
+      "accountAssignmentCategory": "A",
+      "releaseStatus": "05",
+      "releaseDate": "20261007",
+      "processingStatus": "B",
+      "createdByUser": "ARIA",
+      "creationDate": "20261007",
+      "requisitionType": "NB",
+      "companyCode": "1710"
+    },
+    {
+      "purchaseRequisitionItem": "00020",
+      "text": "KEYBOARD",
+      "material": "",
+      "requestedQuantity": "20.000",
+      "unit": "ST",
+      "price": "150.00",
+      "netAmount": "3000.00",
+      "deliveryDate": "20261012",
+      "plant": "1710",
+      "purchasingGroup": "001",
+      "supplier": "0001000579",
+      "accountAssignmentCategory": "A",
+      "releaseStatus": "05",
+      "releaseDate": "20261007",
+      "processingStatus": "B",
+      "createdByUser": "ARIA",
+      "creationDate": "20261007",
+      "requisitionType": "NB",
+      "companyCode": "1710"
+    }
+  ],
+  "accountAssignments": [
+    {
+      "purchaseOrderItem": "00010",
+      "accountAssignmentNumber": "01",
+      "masterFixedAsset": "000000600004",
+      "fixedAsset": "0000",
+      "glAccount": "0016014000",
+      "quantity": "20.000",
+      "profitCenter": "YB110",
+      "accountAssignmentCategory": "A"
+    },
+    {
+      "purchaseOrderItem": "00020",
+      "accountAssignmentNumber": "01",
+      "masterFixedAsset": "000000600004",
+      "fixedAsset": "0000",
+      "glAccount": "0016014000",
+      "quantity": "20.000",
+      "profitCenter": "YB110",
+      "accountAssignmentCategory": "A"
+    }
+  ],
+  "glAccount": {
+    "glAccount": "0016014000",
+    "external": "16014000",
+    "group": "ANL.",
+    "reconciliationAccountType": "A",
+    "isBalanceSheetAccount": "X"
+  },
+  "asset": "000000600004",
+  "history": [
+    {
+      "purchaseOrderItem": "00010",
+      "documentType": "1",
+      "category": "E",
+      "document": "5000002950",
+      "documentItem": "0001",
+      "goodsMovementType": "101",
+      "quantity": "10.000",
+      "amount": "0.00",
+      "postingDate": "20261007",
+      "accountAssignmentNumber": "00"
+    },
+    {
+      "purchaseOrderItem": "00010",
+      "documentType": "2",
+      "category": "Q",
+      "document": "5100001600",
+      "documentItem": "0001",
+      "goodsMovementType": "",
+      "quantity": "10.000",
+      "amount": "20000.00",
+      "postingDate": "20261012",
+      "accountAssignmentNumber": "01"
+    },
+    {
+      "purchaseOrderItem": "00020",
+      "documentType": "1",
+      "category": "E",
+      "document": "5000002951",
+      "documentItem": "0001",
+      "goodsMovementType": "101",
+      "quantity": "10.000",
+      "amount": "0.00",
+      "postingDate": "20261008",
+      "accountAssignmentNumber": "00"
+    },
+    {
+      "purchaseOrderItem": "00020",
+      "documentType": "2",
+      "category": "Q",
+      "document": "5100001600",
+      "documentItem": "0002",
+      "goodsMovementType": "",
+      "quantity": "10.000",
+      "amount": "1500.00",
+      "postingDate": "20261012",
+      "accountAssignmentNumber": "01"
+    }
+  ],
+  "goodsReceipts": [
+    {
+      "materialDocument": "5000002950",
+      "materialDocumentYear": "2026",
+      "materialDocumentItem": "0001",
+      "purchaseOrderItem": "00010",
+      "goodsMovementType": "101",
+      "quantity": "10.000",
+      "postingDate": "20261007",
+      "companyCode": "1710"
+    },
+    {
+      "materialDocument": "5000002951",
+      "materialDocumentYear": "2026",
+      "materialDocumentItem": "0001",
+      "purchaseOrderItem": "00020",
+      "goodsMovementType": "101",
+      "quantity": "10.000",
+      "postingDate": "20261008",
+      "companyCode": "1710"
+    }
+  ],
+  "supplierInvoice": {
+    "supplierInvoice": "5100001600",
+    "fiscalYear": "2026",
+    "companyCode": "1710",
+    "postingDate": "20261012",
+    "invoicingParty": "0001000579",
+    "reference": "SUPP.INV.0003",
+    "grossAmount": "21500.00",
+    "currency": "USD",
+    "status": "5",
+    "items": [
+      {
+        "supplierInvoiceItem": "000001",
+        "purchaseOrderItem": "00010",
+        "quantity": "10.000",
+        "amount": "20000.00"
+      },
+      {
+        "supplierInvoiceItem": "000002",
+        "purchaseOrderItem": "00020",
+        "quantity": "10.000",
+        "amount": "1500.00"
+      }
+    ]
+  },
+  "quantityReconciliation": [
+    {
+      "purchaseRequisitionItem": "00010",
+      "purchaseOrderItem": "00010",
+      "text": "LAPTOP MACBOOK PRO",
+      "orderedQuantity": "20.000",
+      "orderedAmount": "40000.00",
+      "receivedQuantity": "10.000",
+      "invoicedQuantity": "10.000",
+      "invoicedAmount": "20000.00",
+      "openQuantity": "10.000",
+      "openAmount": "20000.00"
+    },
+    {
+      "purchaseRequisitionItem": "00020",
+      "purchaseOrderItem": "00020",
+      "text": "KEYBOARD",
+      "orderedQuantity": "20.000",
+      "orderedAmount": "3000.00",
+      "receivedQuantity": "10.000",
+      "invoicedQuantity": "10.000",
+      "invoicedAmount": "1500.00",
+      "openQuantity": "10.000",
+      "openAmount": "1500.00"
+    }
+  ],
+  "joinKeys": [
+    {
+      "from": "C_PurchaseRequisitionItemDEX",
+      "to": "C_PurchaseOrderItemDEX",
+      "keys": [
+        "PurchaseRequisition",
+        "PurchaseRequisitionItem"
+      ],
+      "note": "The purchase order number is not stored on the requisition item in this extract. The PO item points back to the requisition."
+    },
+    {
+      "from": "C_PurchaseOrderDEX",
+      "to": "C_PurchaseOrderItemDEX",
+      "keys": [
+        "PurchaseOrder"
+      ]
+    },
+    {
+      "from": "C_PurchaseOrderItemDEX",
+      "to": "C_PurOrdAccountAssignmentDEX",
+      "keys": [
+        "PurchaseOrder",
+        "PurchaseOrderItem"
+      ],
+      "note": "Account assignment category A. MasterFixedAsset is the asset. GLAccount 0016014000 is the asset reconciliation account."
+    },
+    {
+      "from": "C_PurchaseOrderDEX",
+      "to": "I_BusinessPartner",
+      "keys": [
+        "Supplier = BusinessPartner"
+      ]
+    },
+    {
+      "from": "C_PurOrdAccountAssignmentDEX",
+      "to": "I_GLAccount",
+      "keys": [
+        "GLAccount",
+        "CompanyCode"
+      ]
+    }
+  ],
+  "sourceCounts": {
+    "C_PURCHASEREQUISITIONITEMDEX": 3,
+    "C_PURCHASEORDERDEX": 1,
+    "C_PURCHASEORDERITEMDEX": 2,
+    "C_PURCHASEORDERHISTORYDEX": 4,
+    "C_PURORDACCOUNTASSIGNMENTDEX": 2,
+    "C_SUPPLIERINVOICEDEX": 1,
+    "C_SUPPLIERINVOICEITEMDEX": 2,
+    "I_GOODSMOVEMENTDOCUMENTDEX": 2,
+    "I_BUSINESSPARTNER": 435,
+    "I_BUSINESSPARTNERSUPPLIERDEX": 156,
+    "I_GLACCOUNT": 34812
+  },
+  "otherRequisitions": [
+    "0010001573"
+  ],
+  "gaps": [
+    {
+      "id": "requisition-has-no-po-number",
+      "detail": "C_PurchaseRequisitionItemDEX in this extract does not carry PurchaseOrder. Follow PurchaseRequisition and PurchaseRequisitionItem on the PO item."
+    },
+    {
+      "id": "partial-follow-on",
+      "detail": "Each PO item is ordered for 20. Goods receipt and invoice so far cover 10. 10 remain open on each item."
+    },
+    {
+      "id": "no-contract",
+      "detail": "The bounded contract header and item extracts in this run contain no rows."
+    },
+    {
+      "id": "other-requisition",
+      "detail": "Requisition 0010001573 item 00010 (RM2_DS, 150 at 5.25) is in the same extract with processing status N and has no purchase order here."
+    },
+    {
+      "id": "no-journal",
+      "detail": "This extract set has no universal-journal file, so the invoice payment is not in the sample."
+    }
+  ]
+}
