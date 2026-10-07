@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build docs/REQUISITION_TO_ORDER.docx from correlation.json.
+"""Build docs/REQUISITION_TO_PAYMENT_1.docx from correlation.json.
 
     python3 docs/samples/r2o/build_use_case_docx.py
 """
