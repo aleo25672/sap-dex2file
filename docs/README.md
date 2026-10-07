@@ -168,9 +168,10 @@ Extract run `20261007_142521`. Purchase order **4500002148** is a release of con
 | Contract 4600000042 | Type CWK, valid through 20271231 | Same quantities. Prices 4.90 and 24.20 |
 | Purchase order 4500002148 | Release on 20261007 | 20 paper (98.00) and 5 toner (121.00). Total 219.00 |
 | Goods receipt 5000002952 | Movement 101, 20261009 | The full release quantity |
-| Invoice 5100001601 | SUPP.INV.0004, posted 20261012 | Item amounts 98.00 and 121.00. Header gross 221.00 |
+| Invoice 5100001601 | SUPP.INV.0004, journal 5100000003 | Item amounts 98.00 and 121.00, plus 2.00. Header gross 221.00 |
+| Payment 1500000002 | Type KZ, 20261013 | 221.00. Clears the vendor line. Balance 0.00 |
 
-The requisition item does not store the contract number. The purchase-order item and the contract history do. The contract still has 980 paper and 95 toner not released. This extract set has no journal file, so the payment that would clear invoice **5100001601** is not in the sample.
+The requisition item does not store the contract number. The purchase-order item and the contract history do. The contract still has 980 paper and 95 toner not released. Goods receipt 5000002952 posts to accounting document **5000000004** (expense 54400000, GR/IR 21120000). Journal extract `I_GLAccountLineItemRawData` bounded `20261007_143416`.
 
 ```bash
 python3 docs/samples/rtp/build_seed.py
