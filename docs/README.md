@@ -13,6 +13,7 @@ ZEVO writes one CDS view per file. The use cases show how to correlate those fil
 | Contract to Payment | [CONTRACT_TO_PAYMENT.docx](CONTRACT_TO_PAYMENT.docx) | Contract **4600000041**, release PO **4500002146** | [samples/c2p](samples/c2p) |
 | Order to Cash | [ORDER_TO_CASH.docx](ORDER_TO_CASH.docx) | Sales order **6321** (`0000006321`) | [samples/o2c](samples/o2c) |
 | Requisition to Order | [REQUISITION_TO_ORDER.docx](REQUISITION_TO_ORDER.docx) | Requisition **10001624**, PO **4500002147** | [samples/r2o](samples/r2o) |
+| Requisition to Payment | [REQUISITION_TO_PAYMENT.docx](REQUISITION_TO_PAYMENT.docx) | Requisition **10001634**, contract **4600000042**, PO **4500002148** | [samples/rtp](samples/rtp) |
 
 Both documents were merged to `main` in pull request [#25](https://github.com/aleo25672/sap-dex2file/pull/25).
 
@@ -164,8 +165,10 @@ docs/CONTRACT_TO_PAYMENT.docx          Contract-to-Payment use case
 docs/CONTRACT_TO_PAYMENT.md            Same walkthrough in markdown
 docs/ORDER_TO_CASH.docx                Order-to-Cash use case
 docs/REQUISITION_TO_ORDER.docx         Requisition-to-Order use case
+docs/REQUISITION_TO_PAYMENT.docx       Requisition-to-Payment use case, via contract 4600000042
 docs/samples/c2p/                      Contract 4600000041 / PO 4500002146
 docs/samples/o2c/                      Sales order 6321
 docs/samples/r2o/                      Requisition 10001624 / PO 4500002147
+docs/samples/rtp/                      Requisition 10001634 / contract 4600000042 / PO 4500002148
 docs/README.md                         This file
 ```
