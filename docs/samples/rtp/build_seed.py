@@ -88,6 +88,7 @@ def main() -> None:
     bp_h, partners = load("I_BUSINESSPARTNER")
     sup_h, suppliers = load("I_BUSINESSPARTNERSUPPLIERDEX")
     gl_h, gl_accounts = load("I_GLACCOUNT")
+    je_h, journal = load("I_GLACCOUNTLINEITEMRAWDATA")
 
     seed_pr = [r for r in prs if r["PURCHASEREQUISITION"] == REQUISITION]
     seed_ch = [r for r in contracts if r["PURCHASECONTRACT"] == CONTRACT]
@@ -103,7 +104,20 @@ def main() -> None:
     seed_gm = [r for r in movements if r.get("PURCHASEORDER") == PURCHASE_ORDER]
     seed_bp = [r for r in partners if r.get("BUSINESSPARTNER") == SUPPLIER]
     seed_sup = [r for r in suppliers if r.get("SUPPLIER") == SUPPLIER]
-    seed_gl = [r for r in gl_accounts if r["COMPANYCODE"] == COMPANY and r["GLACCOUNT"] == GL_ACCOUNT]
+    seed_gl = [
+        r
+        for r in gl_accounts
+        if r["COMPANYCODE"] == COMPANY
+        and r["GLACCOUNT"] in {"0011002000", "0021100000", "0021120000", "0052060000", "0054400000"}
+    ]
+    fi_docs = {"5000000004", "5100000003", "1500000002"}
+    seed_je = [
+        r
+        for r in journal
+        if r["COMPANYCODE"] == COMPANY
+        and r["SOURCELEDGER"] == "0L"
+        and r["ACCOUNTINGDOCUMENT"] in fi_docs
+    ]
 
     for entity, headers, rows in [
         ("C_PURCHASEREQUISITIONITEMDEX", pr_h, seed_pr),
@@ -120,6 +134,7 @@ def main() -> None:
         ("I_BUSINESSPARTNER", bp_h, seed_bp),
         ("I_BUSINESSPARTNERSUPPLIERDEX", sup_h, seed_sup),
         ("I_GLACCOUNT", gl_h, seed_gl),
+        ("I_GLACCOUNTLINEITEMRAWDATA", je_h, seed_je),
     ]:
         write_seed(entity, headers, rows)
 
@@ -234,6 +249,30 @@ def main() -> None:
             }
         )
 
+    journal_lines = []
+    for row in sorted(seed_je, key=lambda r: (r["ACCOUNTINGDOCUMENT"], r["LEDGERGLLINEITEM"])):
+        journal_lines.append(
+            {
+                "accountingDocument": row["ACCOUNTINGDOCUMENT"],
+                "line": row["LEDGERGLLINEITEM"],
+                "documentType": row["ACCOUNTINGDOCUMENTTYPE"],
+                "postingDate": row["POSTINGDATE"],
+                "glAccount": row["GLACCOUNT"],
+                "debitCreditCode": row["DEBITCREDITCODE"],
+                "postingKey": row["POSTINGKEY"],
+                "amount": row["AMOUNTINCOMPANYCODECURRENCY"],
+                "supplier": row.get("SUPPLIER", ""),
+                "costCenter": row.get("COSTCENTER", ""),
+                "purchasingDocument": row.get("PURCHASINGDOCUMENT", ""),
+                "purchasingDocumentItem": row.get("PURCHASINGDOCUMENTITEM", ""),
+                "referenceDocumentType": row.get("REFERENCEDOCUMENTTYPE", ""),
+                "referenceDocument": row.get("REFERENCEDOCUMENT", ""),
+                "clearingDate": row.get("CLEARINGDATE", ""),
+                "clearingAccountingDocument": row.get("CLEARINGACCOUNTINGDOCUMENT", ""),
+                "offsettingAccount": row.get("OFFSETTINGACCOUNT", ""),
+            }
+        )
+
     invoice = {
         "supplierInvoice": invoice_header["SUPPLIERINVOICE"],
         "fiscalYear": invoice_header["FISCALYEAR"],
@@ -344,6 +383,23 @@ def main() -> None:
         "materialDocuments": material_docs,
         "invoiceHistory": invoices_hist,
         "supplierInvoice": invoice,
+        "journalLines": journal_lines,
+        "clearing": {
+            "goodsReceiptDocument": "5000000004",
+            "invoiceDocument": "5100000003",
+            "paymentDocument": "1500000002",
+            "paymentDocumentType": "KZ",
+            "postingDate": "20261013",
+            "amount": "221.00",
+            "currency": "USD",
+            "supplier": SUPPLIER,
+            "bankGlAccount": "0011002000",
+            "vendorGlAccount": "0021100000",
+            "grirGlAccount": "0021120000",
+            "extraGlAccount": "0052060000",
+            "extraAmount": "2.00",
+            "extraCostCenter": "0017101101",
+        },
         "quantityReconciliation": rollup,
         "joinKeys": [
             {
@@ -418,6 +474,11 @@ def main() -> None:
     assert by_text["Printer A4 paper"]["unreleasedQuantity"] == "980.000"
     assert by_text["Printer Toner"]["releasedQuantity"] == "5.000"
     assert by_text["Printer Toner"]["invoicedAmount"] == "121.00"
+    assert len(seed_je) == 10, len(seed_je)
+    pay = [r for r in journal_lines if r["accountingDocument"] == "1500000002" and r["glAccount"] == "0021100000"]
+    assert pay and pay[0]["amount"] == "221.00" and pay[0]["clearingAccountingDocument"] == "1500000002"
+    vendor = [r for r in journal_lines if r["accountingDocument"] == "5100000003" and r["glAccount"] == "0021100000"]
+    assert vendor and vendor[0]["clearingAccountingDocument"] == "1500000002" and vendor[0]["clearingDate"] == "20261013"
     assert by_text["Printer Toner"]["unreleasedQuantity"] == "95.000"
     assert assignments[0]["costCenter"] == COST_CENTER
     print(f"PR {REQUISITION} -> contract {CONTRACT} -> PO {PURCHASE_ORDER} invoice {invoice['grossAmount']}")

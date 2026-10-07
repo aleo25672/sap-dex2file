@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build docs/REQUISITION_TO_ORDER.docx from correlation.json.
+"""Build docs/REQUISITION_TO_PAYMENT_1.docx from correlation.json.
 
     python3 docs/samples/r2o/build_use_case_docx.py
 """
@@ -18,7 +18,7 @@ from docx.shared import Cm, Inches, Pt, RGBColor
 
 ROOT = Path(__file__).resolve().parent
 DOCS = ROOT.parents[1]
-OUT = DOCS / "REQUISITION_TO_ORDER.docx"
+OUT = DOCS / "REQUISITION_TO_PAYMENT_1.docx"
 
 sys.path.insert(0, str(ROOT.parent / "c2p"))
 from build_use_case_docx import BLACK, add_para, add_table, set_run_font  # noqa: E402
@@ -72,16 +72,16 @@ def main() -> None:
         style.font.bold = True
 
     core = doc.core_properties
-    core.title = "Requisition to Order — 10001624 / 4500002147"
+    core.title = "Requisition to Payment 1 — 10001624 / 4500002147"
     core.subject = "ZEVO CDS extract use case with sample data"
-    core.category = "Requisition to Order"
+    core.category = "Requisition to Payment 1"
 
     title = doc.add_paragraph()
     title.paragraph_format.space_after = Pt(2)
-    set_run_font(title.add_run("Requisition to Order"), size=22, bold=True, color=RGBColor(0x1F, 0x4E, 0x79))
+    set_run_font(title.add_run("Requisition to Payment 1"), size=22, bold=True, color=RGBColor(0x1F, 0x4E, 0x79))
     subtitle = doc.add_paragraph()
     subtitle.paragraph_format.space_after = Pt(2)
-    set_run_font(subtitle.add_run("Use case with sample data"), size=14, color=RGBColor(0x1F, 0x4E, 0x79))
+    set_run_font(subtitle.add_run("No contract. Use case with sample data"), size=14, color=RGBColor(0x1F, 0x4E, 0x79))
     meta = doc.add_paragraph()
     meta.paragraph_format.space_after = Pt(12)
     set_run_font(
@@ -97,9 +97,9 @@ def main() -> None:
     doc.add_heading("1. Purpose", level=1)
     add_para(
         doc,
-        "This use case shows how a released purchase requisition becomes a purchase order. "
-        "The sample rows are the ZEVO extracts for requisition 10001624 and purchase order "
-        "4500002147. Both items are account-assigned to the same fixed asset.",
+        "This use case follows released purchase requisition 10001624 into purchase order "
+        "4500002147, the partial goods receipt, the supplier invoice, and the payment. "
+        "There is no contract. Both items are account-assigned to the same fixed asset.",
     )
     add_para(
         doc,
@@ -118,14 +118,13 @@ def main() -> None:
             ["2", "Purchase order 4500002147", "Same two items, same quantities and prices, total 43,000.00 USD"],
             ["3", "Account assignment", "Both items to asset 000000600004 and G/L 0016014000"],
             ["4", "Goods receipts 5000002950 and 5000002951", "10 of 20 received on each item"],
-            ["5", "Supplier invoice 5100001600", "10 of 20 invoiced, gross 21,500.00 USD"],
+            ["5", "Supplier invoice 5100001600", "10 of 20 invoiced, gross 21,500.00 USD, journal 5100000002"],
+            ["6", "Payment 1500000001 (type KZ)", "21,500.00 USD on 20261013. Clears the vendor line."],
         ],
     )
     add_para(
         doc,
-        "Steps 4 and 5 are the follow-on documents already posted against the order. "
-        "Half of each item is still open. This extract set has no journal file, so the "
-        "payment of the invoice is not in the sample.",
+        "Half of each ordered quantity is still open. The received half is invoiced and paid.",
     )
 
     doc.add_heading("3. Business partner", level=1)
@@ -269,8 +268,30 @@ def main() -> None:
         f"{c['glAccount']['glAccount']} (external {c['glAccount']['external']}), "
         f"group {c['glAccount']['group']}, reconciliation type "
         f"{c['glAccount']['reconciliationAccountType']}. That is the asset reconciliation account. "
-        "This extract set has no universal-journal file, so the accounting document posted "
-        "by the invoice is not in the sample.",
+        "Invoice 5100001600 posts to accounting document 5100000002: debit 0016014000 and credit "
+        "vendor 0021100000 for 21,500.00. Asset document 0100000000 then moves that amount from "
+        "0016014000 to asset account 0016007000. There is no goods-receipt accounting document: "
+        "the value is posted at invoice.",
+    )
+    add_table(
+        doc,
+        ["FI document", "Type", "Line", "G/L", "D/C", "Amount", "PO item", "Reference", "Clearing doc"],
+        [
+            [
+                row["accountingDocument"],
+                row["documentType"],
+                row["line"],
+                row["glAccount"],
+                row["debitCreditCode"],
+                row["amount"],
+                row["purchasingDocumentItem"] if row["purchasingDocument"] else "",
+                row["referenceDocument"],
+                row["clearingAccountingDocument"],
+            ]
+            for row in c["journalLines"]
+            if row["documentType"] != "KZ"
+        ],
+        font=7,
     )
     add_table(
         doc,
@@ -316,11 +337,36 @@ def main() -> None:
     )
 
     doc.add_heading("10. Clearing", level=1)
+    clearing = c["clearing"]
     add_para(
         doc,
-        "The supplier invoice is posted. This extract set does not include the universal "
-        "journal, so the vendor line and any payment that clears it are not in the sample. "
-        "The open quantity on the order is the part that has not been received or invoiced.",
+        f"Payment {clearing['paymentDocument']}, document type {clearing['paymentDocumentType']}, "
+        f"posting date {clearing['postingDate']}, amount {clearing['amount']} {clearing['currency']}. "
+        f"It credits bank G/L {clearing['bankGlAccount']} and debits vendor "
+        f"{clearing['vendorGlAccount']} for supplier {clearing['supplier']}. "
+        f"The vendor line of invoice journal {clearing['invoiceDocument']} is cleared by "
+        f"{clearing['paymentDocument']} on {clearing['postingDate']}. The vendor balance for "
+        "this invoice is 0.00. Ten of each item are still not received, so they are not in this payment.",
+    )
+    add_table(
+        doc,
+        ["FI document", "Type", "Line", "G/L", "D/C", "Amount", "Supplier", "Clearing doc", "Clearing date"],
+        [
+            [
+                row["accountingDocument"],
+                row["documentType"],
+                row["line"],
+                row["glAccount"],
+                row["debitCreditCode"],
+                row["amount"],
+                row["supplier"],
+                row["clearingAccountingDocument"],
+                "" if row["clearingDate"] in ("", "00000000") else row["clearingDate"],
+            ]
+            for row in c["journalLines"]
+            if row["accountingDocument"] == "1500000001"
+            or (row["accountingDocument"] == "5100000002" and row["glAccount"] == "0021100000")
+        ],
     )
 
     doc.add_heading("11. How the documents are correlated", level=1)

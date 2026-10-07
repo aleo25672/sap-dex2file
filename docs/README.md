@@ -12,8 +12,8 @@ ZEVO writes one CDS view per file. The use cases show how to correlate those fil
 |----------|---------------|-----------|-------------|
 | Contract to Payment | [CONTRACT_TO_PAYMENT.docx](CONTRACT_TO_PAYMENT.docx) | Contract **4600000041**, release PO **4500002146** | [samples/c2p](samples/c2p) |
 | Order to Cash | [ORDER_TO_CASH.docx](ORDER_TO_CASH.docx) | Sales order **6321** (`0000006321`) | [samples/o2c](samples/o2c) |
-| Requisition to Order | [REQUISITION_TO_ORDER.docx](REQUISITION_TO_ORDER.docx) | Requisition **10001624**, PO **4500002147** | [samples/r2o](samples/r2o) |
-| Requisition to Payment | [REQUISITION_TO_PAYMENT.docx](REQUISITION_TO_PAYMENT.docx) | Requisition **10001634**, contract **4600000042**, PO **4500002148** | [samples/rtp](samples/rtp) |
+| Requisition to Payment 1 | [REQUISITION_TO_PAYMENT_1.docx](REQUISITION_TO_PAYMENT_1.docx) | Requisition **10001624**, PO **4500002147**. No contract | [samples/r2o](samples/r2o) |
+| Requisition to Payment 2 | [REQUISITION_TO_PAYMENT_2.docx](REQUISITION_TO_PAYMENT_2.docx) | Requisition **10001634**, contract **4600000042**, PO **4500002148** | [samples/rtp](samples/rtp) |
 
 The four Word documents use the same 13 chapters: Purpose, Document flow, Business partner, Source document, Follow-on document, Goods movement, Invoice, Accounting, Quantity and amount reconciliation, Clearing, How the documents are correlated, Extract calls for this reference, and Sample-data files.
 
@@ -21,8 +21,8 @@ Download a document from GitHub while signed in to an account that can read this
 
 - https://github.com/aleo25672/sap-dex2file/blob/main/docs/CONTRACT_TO_PAYMENT.docx
 - https://github.com/aleo25672/sap-dex2file/blob/main/docs/ORDER_TO_CASH.docx
-- https://github.com/aleo25672/sap-dex2file/blob/main/docs/REQUISITION_TO_ORDER.docx
-- https://github.com/aleo25672/sap-dex2file/blob/main/docs/REQUISITION_TO_PAYMENT.docx
+- https://github.com/aleo25672/sap-dex2file/blob/main/docs/REQUISITION_TO_PAYMENT_1.docx
+- https://github.com/aleo25672/sap-dex2file/blob/main/docs/REQUISITION_TO_PAYMENT_2.docx
 
 ### Contract to Payment
 
@@ -149,18 +149,18 @@ Transaction **F-53**, Post Outgoing Payment.
 
 The payment document type is **KZ**. It debits the vendor and clears the invoice.
 
-## Requisition to Order
+## Requisition to Payment 1
 
-Added from the extract run `20261007_121746`. Purchase requisition **0010001624** (LAPTOP MACBOOK PRO 20 × 2,000.00 and KEYBOARD 20 × 150.00, account assignment A) is purchase order **4500002147**, total **43,000.00** USD, supplier **0001000579** (Office equipment supplier domestic 1). Both items are assigned to asset **000000600004** and G/L **0016014000**. Goods receipts and invoice **5100001600** (21,500.00, reference SUPP.INV.0003) cover 10 of 20 on each item.
+No contract. Extract run `20261007_121746`, journal `20261007_143416`. Purchase requisition **0010001624** (LAPTOP MACBOOK PRO 20 × 2,000.00 and KEYBOARD 20 × 150.00, account assignment A) is purchase order **4500002147**, total **43,000.00** USD, supplier **0001000579**. Both items are assigned to asset **000000600004** and G/L **0016014000**. Goods receipts and invoice **5100001600** (21,500.00, reference SUPP.INV.0003, journal **5100000002**) cover 10 of 20 on each item. Payment **1500000001** (KZ, 20261013) clears that vendor line. Ten of each item remain open.
 
 ```bash
 python3 docs/samples/r2o/build_seed.py
 python3 docs/samples/r2o/build_use_case_docx.py
 ```
 
-## Requisition to Payment
+## Requisition to Payment 2
 
-Extract run `20261007_142521`. Purchase order **4500002148** is a release of contract **4600000042**, created from requisition **0010001634**. Supplier **0001000579**, Office equipment supplier domestic 1. Account assignment **K**, cost center **0017100100**, G/L **0054400000**.
+With a contract. Extract run `20261007_142521`. Purchase order **4500002148** is a release of contract **4600000042**, created from requisition **0010001634**. Supplier **0001000579**, Office equipment supplier domestic 1. Account assignment **K**, cost center **0017100100**, G/L **0054400000**.
 
 | Step | Document | Values |
 |------|----------|--------|
@@ -168,9 +168,10 @@ Extract run `20261007_142521`. Purchase order **4500002148** is a release of con
 | Contract 4600000042 | Type CWK, valid through 20271231 | Same quantities. Prices 4.90 and 24.20 |
 | Purchase order 4500002148 | Release on 20261007 | 20 paper (98.00) and 5 toner (121.00). Total 219.00 |
 | Goods receipt 5000002952 | Movement 101, 20261009 | The full release quantity |
-| Invoice 5100001601 | SUPP.INV.0004, posted 20261012 | Item amounts 98.00 and 121.00. Header gross 221.00 |
+| Invoice 5100001601 | SUPP.INV.0004, journal 5100000003 | Item amounts 98.00 and 121.00, plus 2.00. Header gross 221.00 |
+| Payment 1500000002 | Type KZ, 20261013 | 221.00. Clears the vendor line. Balance 0.00 |
 
-The requisition item does not store the contract number. The purchase-order item and the contract history do. The contract still has 980 paper and 95 toner not released. This extract set has no journal file, so the payment that would clear invoice **5100001601** is not in the sample.
+The requisition item does not store the contract number. The purchase-order item and the contract history do. The contract still has 980 paper and 95 toner not released. Goods receipt 5000002952 posts to accounting document **5000000004** (expense 54400000, GR/IR 21120000). Journal extract `I_GLAccountLineItemRawData` bounded `20261007_143416`.
 
 ```bash
 python3 docs/samples/rtp/build_seed.py
@@ -183,8 +184,8 @@ python3 docs/samples/rtp/build_use_case_docx.py
 docs/CONTRACT_TO_PAYMENT.docx          Contract-to-Payment use case
 docs/CONTRACT_TO_PAYMENT.md            Same walkthrough in markdown
 docs/ORDER_TO_CASH.docx                Order-to-Cash use case
-docs/REQUISITION_TO_ORDER.docx         Requisition-to-Order use case
-docs/REQUISITION_TO_PAYMENT.docx       Requisition-to-Payment use case, via contract 4600000042
+docs/REQUISITION_TO_PAYMENT_1.docx     Requisition to Payment 1, no contract
+docs/REQUISITION_TO_PAYMENT_2.docx     Requisition to Payment 2, via contract 4600000042
 docs/samples/c2p/                      Contract 4600000041 / PO 4500002146
 docs/samples/o2c/                      Sales order 6321
 docs/samples/r2o/                      Requisition 10001624 / PO 4500002147
