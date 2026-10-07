@@ -231,7 +231,16 @@ CLASS lcl_app IMPLEMENTATION.
 
     DATA lt_res TYPE ty_res_tab.
     LOOP AT mt_views INTO DATA(ls_v).
-      DATA(lv_bound_ok) = xsdbool( lv_bounded = abap_true AND ls_v-delta_field IS NOT INITIAL ).
+      DATA lv_ts_field TYPE string.
+      lv_ts_field = ls_v-delta_field.
+      IF lv_bounded = abap_true.
+        " Prefer POSTINGDATE / DOCUMENTDATE for the window (not LastChangeDateTime).
+        DATA(lv_bound_field) = zevo_cl_cds_meta=>get_bounded_field( CONV string( ls_v-entity_name ) ).
+        IF lv_bound_field IS NOT INITIAL.
+          lv_ts_field = lv_bound_field.
+        ENDIF.
+      ENDIF.
+      DATA(lv_bound_ok) = xsdbool( lv_bounded = abap_true AND lv_ts_field IS NOT INITIAL ).
       DATA(lv_ent_mode) = COND string( WHEN lv_bound_ok = abap_true THEN `bounded`
                                        WHEN lv_delta   = abap_true THEN `delta`
                                        ELSE `full` ).
@@ -270,7 +279,7 @@ CLASS lcl_app IMPLEMENTATION.
         iv_entity   = ls_v-entity_name
         iv_delta    = lv_delta
         iv_bounded  = lv_bounded
-        iv_ts_field = ls_v-delta_field
+        iv_ts_field = lv_ts_field
         iv_last     = ls_v-last_delta_ts
         iv_from     = lv_from
         iv_to       = lv_to

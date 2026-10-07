@@ -186,7 +186,9 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
         rs_result-new_high  = lv_now.
         rs_result-status    = 'S'.
         IF lv_full_fallback = abap_true.
-          rs_result-message = |{ rs_result-row_count } row(s) extracted (full: no change-timestamp for bounded)|.
+          rs_result-message = |{ rs_result-row_count } row(s) extracted (full: no date/timestamp field for bounded)|.
+        ELSEIF iv_bounded = abap_true.
+          rs_result-message = |{ rs_result-row_count } row(s) extracted (bounded on { to_upper( condense( CONV string( iv_ts_field ) ) ) })|.
         ELSE.
           rs_result-message = |{ rs_result-row_count } row(s) extracted|.
         ENDIF.
@@ -351,7 +353,6 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
     DATA lv_op   TYPE string.
     DATA lv_sqlop TYPE string.
     DATA lv_field TYPE string.
-    DATA lv_ts    TYPE string.
 
     CLEAR rv_sql.
     split_pair(
@@ -390,13 +391,15 @@ CLASS zevo_cl_extractor IMPLEMENTATION.
           lv_sqlop = '>'.
       ENDCASE.
       lv_field = to_upper( condense( CONV string( iv_ts_field ) ) ).
-      " DOCUMENTDATE is DATS — compare YYYYMMDD, not the full timestamp literal.
-      IF lv_field = 'DOCUMENTDATE'.
+      " Date-only DATS fields: compare YYYYMMDD (not full timestampl literal).
+      IF lv_field = 'DOCUMENTDATE'
+          OR lv_field = 'POSTINGDATE'
+          OR lv_field = 'CREATIONDATE'.
         rv_sql = |{ lv_field } { lv_sqlop } '{ lv_date }'|.
       ELSE.
-        lv_ts = |{ iv_ts }|.
-        CONDENSE lv_ts.
-        rv_sql = |{ lv_field } { lv_sqlop } '{ lv_ts }'|.
+        " Compact YYYYMMDDHHMMSS — matches LASTCHANGEDATETIME / CREATIONDATETIME
+        " packed values better than TIMESTAMPL with decimal fraction.
+        rv_sql = |{ lv_field } { lv_sqlop } '{ lv_date }{ lv_time }'|.
       ENDIF.
     ENDIF.
   ENDMETHOD.
