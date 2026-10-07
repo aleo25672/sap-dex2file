@@ -231,6 +231,166 @@
       }
     ]
   },
+  "journalLines": [
+    {
+      "accountingDocument": "0100000000",
+      "line": "000001",
+      "documentType": "AA",
+      "postingDate": "20261012",
+      "glAccount": "0016007000",
+      "debitCreditCode": "S",
+      "amount": "20000.00",
+      "supplier": "",
+      "purchasingDocument": "4500002147",
+      "purchasingDocumentItem": "00010",
+      "referenceDocumentType": "RMRP",
+      "referenceDocument": "5100001600",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": ""
+    },
+    {
+      "accountingDocument": "0100000000",
+      "line": "000002",
+      "documentType": "AA",
+      "postingDate": "20261012",
+      "glAccount": "0016007000",
+      "debitCreditCode": "S",
+      "amount": "1500.00",
+      "supplier": "",
+      "purchasingDocument": "4500002147",
+      "purchasingDocumentItem": "00020",
+      "referenceDocumentType": "RMRP",
+      "referenceDocument": "5100001600",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": ""
+    },
+    {
+      "accountingDocument": "0100000000",
+      "line": "000003",
+      "documentType": "AA",
+      "postingDate": "20261012",
+      "glAccount": "0016014000",
+      "debitCreditCode": "H",
+      "amount": "-20000.00",
+      "supplier": "",
+      "purchasingDocument": "4500002147",
+      "purchasingDocumentItem": "00010",
+      "referenceDocumentType": "RMRP",
+      "referenceDocument": "5100001600",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": ""
+    },
+    {
+      "accountingDocument": "0100000000",
+      "line": "000004",
+      "documentType": "AA",
+      "postingDate": "20261012",
+      "glAccount": "0016014000",
+      "debitCreditCode": "H",
+      "amount": "-1500.00",
+      "supplier": "",
+      "purchasingDocument": "4500002147",
+      "purchasingDocumentItem": "00020",
+      "referenceDocumentType": "RMRP",
+      "referenceDocument": "5100001600",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": ""
+    },
+    {
+      "accountingDocument": "1500000001",
+      "line": "000001",
+      "documentType": "KZ",
+      "postingDate": "20261013",
+      "glAccount": "0011002000",
+      "debitCreditCode": "H",
+      "amount": "-21500.00",
+      "supplier": "",
+      "purchasingDocument": "",
+      "purchasingDocumentItem": "00000",
+      "referenceDocumentType": "BKPF",
+      "referenceDocument": "1500000001",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": ""
+    },
+    {
+      "accountingDocument": "1500000001",
+      "line": "000002",
+      "documentType": "KZ",
+      "postingDate": "20261013",
+      "glAccount": "0021100000",
+      "debitCreditCode": "S",
+      "amount": "21500.00",
+      "supplier": "0001000579",
+      "purchasingDocument": "",
+      "purchasingDocumentItem": "00000",
+      "referenceDocumentType": "BKPF",
+      "referenceDocument": "1500000001",
+      "clearingDate": "20261013",
+      "clearingAccountingDocument": "1500000001"
+    },
+    {
+      "accountingDocument": "5100000002",
+      "line": "000001",
+      "documentType": "RE",
+      "postingDate": "20261012",
+      "glAccount": "0021100000",
+      "debitCreditCode": "H",
+      "amount": "-21500.00",
+      "supplier": "0001000579",
+      "purchasingDocument": "",
+      "purchasingDocumentItem": "00000",
+      "referenceDocumentType": "RMRP",
+      "referenceDocument": "5100001600",
+      "clearingDate": "20261013",
+      "clearingAccountingDocument": "1500000001"
+    },
+    {
+      "accountingDocument": "5100000002",
+      "line": "000002",
+      "documentType": "RE",
+      "postingDate": "20261012",
+      "glAccount": "0016014000",
+      "debitCreditCode": "S",
+      "amount": "20000.00",
+      "supplier": "",
+      "purchasingDocument": "4500002147",
+      "purchasingDocumentItem": "00010",
+      "referenceDocumentType": "RMRP",
+      "referenceDocument": "5100001600",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": ""
+    },
+    {
+      "accountingDocument": "5100000002",
+      "line": "000003",
+      "documentType": "RE",
+      "postingDate": "20261012",
+      "glAccount": "0016014000",
+      "debitCreditCode": "S",
+      "amount": "1500.00",
+      "supplier": "",
+      "purchasingDocument": "4500002147",
+      "purchasingDocumentItem": "00020",
+      "referenceDocumentType": "RMRP",
+      "referenceDocument": "5100001600",
+      "clearingDate": "00000000",
+      "clearingAccountingDocument": ""
+    }
+  ],
+  "clearing": {
+    "invoiceDocument": "5100000002",
+    "assetDocument": "0100000000",
+    "paymentDocument": "1500000001",
+    "paymentDocumentType": "KZ",
+    "postingDate": "20261013",
+    "amount": "21500.00",
+    "currency": "USD",
+    "supplier": "0001000579",
+    "bankGlAccount": "0011002000",
+    "vendorGlAccount": "0021100000",
+    "assetClearingGlAccount": "0016014000",
+    "assetGlAccount": "0016007000"
+  },
   "quantityReconciliation": [
     {
       "purchaseRequisitionItem": "00010",
@@ -331,10 +491,6 @@
     {
       "id": "other-requisition",
       "detail": "Requisition 0010001573 item 00010 (RM2_DS, 150 at 5.25) is in the same extract with processing status N and has no purchase order here."
-    },
-    {
-      "id": "no-journal",
-      "detail": "This extract set has no universal-journal file, so the invoice payment is not in the sample."
     }
   ]
 }

@@ -97,7 +97,12 @@ def main() -> None:
     seed_gm = [r for r in movements if r.get("PURCHASEORDER") == PURCHASE_ORDER]
     seed_bp = [r for r in partners if r.get("BUSINESSPARTNER") == SUPPLIER]
     seed_sup = [r for r in suppliers if r.get("SUPPLIER") == SUPPLIER]
-    seed_gl = [r for r in gl_accounts if r["COMPANYCODE"] == COMPANY and r["GLACCOUNT"] == GL_ACCOUNT]
+    seed_gl = [
+        r
+        for r in gl_accounts
+        if r["COMPANYCODE"] == COMPANY
+        and r["GLACCOUNT"] in {GL_ACCOUNT, "0016007000", "0011002000", "0021100000"}
+    ]
 
     write_seed("C_PURCHASEREQUISITIONITEMDEX", pr_h, seed_pr)
     write_seed("C_PURCHASEORDERDEX", po_h, seed_po)
@@ -113,7 +118,7 @@ def main() -> None:
 
     header = seed_po[0]
     supplier_name = seed_bp[0].get("BUSINESSPARTNERFULLNAME", "")
-    gl = seed_gl[0]
+    gl = next(r for r in seed_gl if r["GLACCOUNT"] == GL_ACCOUNT)
 
     requisition_items = []
     for row in sorted(seed_pr, key=lambda r: r["PURCHASEREQUISITIONITEM"]):
@@ -276,6 +281,39 @@ def main() -> None:
 
     other_requisitions = sorted({r["PURCHASEREQUISITION"] for r in prs if r["PURCHASEREQUISITION"] != REQUISITION})
 
+    journal_path = next((ROOT.parent / "rtp" / "source").glob("I_GLACCOUNTLINEITEMRAWDATA_*.csv"))
+    je_text = read_text(journal_path)
+    je_reader = csv.DictReader(je_text.splitlines(), delimiter=";")
+    je_headers = list(je_reader.fieldnames or [])
+    journal = list(je_reader)
+    fi_docs = {"5100000002", "0100000000", "1500000001"}
+    seed_je = [
+        r
+        for r in journal
+        if r["COMPANYCODE"] == COMPANY and r["SOURCELEDGER"] == "0L" and r["ACCOUNTINGDOCUMENT"] in fi_docs
+    ]
+    write_seed("I_GLACCOUNTLINEITEMRAWDATA", je_headers, seed_je)
+    journal_lines = []
+    for row in sorted(seed_je, key=lambda r: (r["ACCOUNTINGDOCUMENT"], r["LEDGERGLLINEITEM"])):
+        journal_lines.append(
+            {
+                "accountingDocument": row["ACCOUNTINGDOCUMENT"],
+                "line": row["LEDGERGLLINEITEM"],
+                "documentType": row["ACCOUNTINGDOCUMENTTYPE"],
+                "postingDate": row["POSTINGDATE"],
+                "glAccount": row["GLACCOUNT"],
+                "debitCreditCode": row["DEBITCREDITCODE"],
+                "amount": row["AMOUNTINCOMPANYCODECURRENCY"],
+                "supplier": row.get("SUPPLIER", ""),
+                "purchasingDocument": row.get("PURCHASINGDOCUMENT", ""),
+                "purchasingDocumentItem": row.get("PURCHASINGDOCUMENTITEM", ""),
+                "referenceDocumentType": row.get("REFERENCEDOCUMENTTYPE", ""),
+                "referenceDocument": row.get("REFERENCEDOCUMENT", ""),
+                "clearingDate": row.get("CLEARINGDATE", ""),
+                "clearingAccountingDocument": row.get("CLEARINGACCOUNTINGDOCUMENT", ""),
+            }
+        )
+
     correlation = {
         "extractRun": "20261007_121746",
         "delimiter": ";",
@@ -320,6 +358,21 @@ def main() -> None:
         "history": history,
         "goodsReceipts": goods_receipts,
         "supplierInvoice": invoice,
+        "journalLines": journal_lines,
+        "clearing": {
+            "invoiceDocument": "5100000002",
+            "assetDocument": "0100000000",
+            "paymentDocument": "1500000001",
+            "paymentDocumentType": "KZ",
+            "postingDate": "20261013",
+            "amount": "21500.00",
+            "currency": "USD",
+            "supplier": SUPPLIER,
+            "bankGlAccount": "0011002000",
+            "vendorGlAccount": "0021100000",
+            "assetClearingGlAccount": "0016014000",
+            "assetGlAccount": "0016007000",
+        },
         "quantityReconciliation": rollup,
         "joinKeys": [
             {
@@ -390,10 +443,6 @@ def main() -> None:
                     "extract with processing status N and has no purchase order here."
                 ),
             },
-            {
-                "id": "no-journal",
-                "detail": "This extract set has no universal-journal file, so the invoice payment is not in the sample.",
-            },
         ],
     }
 
@@ -416,6 +465,9 @@ def main() -> None:
     assert by_item["00020"]["invoicedAmount"] == "1500.00"
     assert by_item["00020"]["openQuantity"] == "10.000"
     assert gl["RECONCILIATIONACCOUNTTYPE"] == "A"
+    assert len(seed_je) == 9, len(seed_je)
+    vendor = [r for r in journal_lines if r["accountingDocument"] == "5100000002" and r["glAccount"] == "0021100000"]
+    assert vendor and vendor[0]["amount"] == "-21500.00" and vendor[0]["clearingAccountingDocument"] == "1500000001"
     print(f"wrote {out}")
     print(f"PR {REQUISITION} -> PO {PURCHASE_ORDER} {header['PURGRELEASETIMETOTALAMOUNT']} USD; invoiced {invoice['grossAmount']}")
 

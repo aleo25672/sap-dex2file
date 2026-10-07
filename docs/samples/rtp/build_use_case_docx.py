@@ -17,7 +17,7 @@ from docx.oxml.ns import qn
 from docx.shared import Cm, Inches, Pt, RGBColor
 
 ROOT = Path(__file__).resolve().parent
-OUT = ROOT.parents[1] / "REQUISITION_TO_PAYMENT.docx"
+OUT = ROOT.parents[1] / "REQUISITION_TO_PAYMENT_2.docx"
 
 sys.path.insert(0, str(ROOT.parent / "c2p"))
 from build_use_case_docx import BLACK, add_para, add_table, set_run_font  # noqa: E402
@@ -70,16 +70,16 @@ def main() -> None:
         style.font.color.rgb = RGBColor(0x1F, 0x4E, 0x79)
         style.font.size = Pt(size)
         style.font.bold = True
-    doc.core_properties.title = "Requisition to Payment — 10001634 / 4600000042 / 4500002148"
+    doc.core_properties.title = "Requisition to Payment 2 — 10001634 / 4600000042 / 4500002148"
     doc.core_properties.subject = "ZEVO CDS extract use case with sample data"
     doc.core_properties.category = "Requisition to Payment"
 
     title = doc.add_paragraph()
     title.paragraph_format.space_after = Pt(2)
-    set_run_font(title.add_run("Requisition to Payment"), size=22, bold=True, color=RGBColor(0x1F, 0x4E, 0x79))
+    set_run_font(title.add_run("Requisition to Payment 2"), size=22, bold=True, color=RGBColor(0x1F, 0x4E, 0x79))
     subtitle = doc.add_paragraph()
     subtitle.paragraph_format.space_after = Pt(2)
-    set_run_font(subtitle.add_run("Use case with sample data"), size=14, color=RGBColor(0x1F, 0x4E, 0x79))
+    set_run_font(subtitle.add_run("With contract. Use case with sample data"), size=14, color=RGBColor(0x1F, 0x4E, 0x79))
     meta = doc.add_paragraph()
     meta.paragraph_format.space_after = Pt(12)
     set_run_font(
