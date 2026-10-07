@@ -1,0 +1,366 @@
+{
+  "extractRun": "20261007_142521",
+  "seed": {
+    "purchaseRequisition": "0010001634",
+    "purchaseContract": "4600000042",
+    "purchaseOrder": "4500002148",
+    "companyCode": "1710",
+    "supplier": "0001000579",
+    "supplierName": "Office equipment supplier domestic 1",
+    "currency": "USD"
+  },
+  "requisitionItems": [
+    {
+      "item": "00010",
+      "text": "Printer A4 paper",
+      "quantity": "1000.000",
+      "unit": "ST",
+      "price": "5.00",
+      "netAmount": "5000.00",
+      "deliveryDate": "20261009",
+      "plant": "1710",
+      "supplier": "0001000579",
+      "accountAssignmentCategory": "K",
+      "releaseStatus": "05",
+      "releaseDate": "20261007",
+      "processingStatus": "K",
+      "purchaseContract": "",
+      "createdByUser": "ARIA",
+      "creationDate": "20261007",
+      "requisitionType": "NB",
+      "companyCode": "1710",
+      "purchasingGroup": "001"
+    },
+    {
+      "item": "00020",
+      "text": "Printer Toner",
+      "quantity": "100.000",
+      "unit": "ST",
+      "price": "25.00",
+      "netAmount": "2500.00",
+      "deliveryDate": "20261012",
+      "plant": "1710",
+      "supplier": "0001000579",
+      "accountAssignmentCategory": "K",
+      "releaseStatus": "05",
+      "releaseDate": "20261007",
+      "processingStatus": "K",
+      "purchaseContract": "",
+      "createdByUser": "ARIA",
+      "creationDate": "20261007",
+      "requisitionType": "NB",
+      "companyCode": "1710",
+      "purchasingGroup": "001"
+    }
+  ],
+  "contract": {
+    "purchaseContract": "4600000042",
+    "purchaseContractType": "CWK",
+    "supplier": "0001000579",
+    "companyCode": "1710",
+    "purchasingOrganization": "1710",
+    "purchasingGroup": "001",
+    "validityStartDate": "20261007",
+    "validityEndDate": "20271231",
+    "documentCurrency": "USD",
+    "paymentTerms": "0004",
+    "createdByUser": "ARIA",
+    "creationDate": "20261007",
+    "items": [
+      {
+        "item": "00010",
+        "text": "Printer A4 paper",
+        "targetQuantity": "1000.000",
+        "netPrice": "4.90",
+        "targetAmount": "4900.00",
+        "unit": "ST",
+        "plant": "1710",
+        "accountAssignmentCategory": "K"
+      },
+      {
+        "item": "00020",
+        "text": "Printer Toner",
+        "targetQuantity": "100.000",
+        "netPrice": "24.20",
+        "targetAmount": "2420.00",
+        "unit": "ST",
+        "plant": "1710",
+        "accountAssignmentCategory": "K"
+      }
+    ]
+  },
+  "purchaseOrder": {
+    "purchaseOrder": "4500002148",
+    "purchaseOrderType": "NB",
+    "supplier": "0001000579",
+    "companyCode": "1710",
+    "purchaseOrderDate": "20261007",
+    "documentCurrency": "USD",
+    "paymentTerms": "0004",
+    "totalAmount": "219.00",
+    "createdByUser": "ARIA",
+    "purchasingProcessingStatus": "05",
+    "items": [
+      {
+        "item": "00010",
+        "text": "Printer A4 paper",
+        "quantity": "20.000",
+        "unit": "ST",
+        "netPrice": "4.90",
+        "netAmount": "98.00",
+        "purchaseContract": "4600000042",
+        "purchaseContractItem": "00010",
+        "accountAssignmentCategory": "K",
+        "plant": "1710"
+      },
+      {
+        "item": "00020",
+        "text": "Printer Toner",
+        "quantity": "5.000",
+        "unit": "ST",
+        "netPrice": "24.20",
+        "netAmount": "121.00",
+        "purchaseContract": "4600000042",
+        "purchaseContractItem": "00020",
+        "accountAssignmentCategory": "K",
+        "plant": "1710"
+      }
+    ]
+  },
+  "accountAssignments": [
+    {
+      "purchaseOrderItem": "00010",
+      "accountAssignmentNumber": "01",
+      "costCenter": "0017100100",
+      "glAccount": "0054400000",
+      "quantity": "20.000",
+      "profitCenter": "YB600",
+      "accountAssignmentCategory": "K"
+    },
+    {
+      "purchaseOrderItem": "00020",
+      "accountAssignmentNumber": "01",
+      "costCenter": "0017100100",
+      "glAccount": "0054400000",
+      "quantity": "5.000",
+      "profitCenter": "YB600",
+      "accountAssignmentCategory": "K"
+    }
+  ],
+  "glAccount": {
+    "glAccount": "0054400000",
+    "external": "54400000",
+    "group": "ERG.",
+    "isProfitLossAccount": "X",
+    "costCenter": "0017100100"
+  },
+  "goodsReceipts": [
+    {
+      "purchaseOrderItem": "00010",
+      "document": "5000002952",
+      "documentItem": "0001",
+      "quantity": "20.000",
+      "amount": "98.00",
+      "postingDate": "20261009",
+      "purchaseContract": "4600000042",
+      "purchaseContractItem": "00010",
+      "goodsMovementType": "101"
+    },
+    {
+      "purchaseOrderItem": "00020",
+      "document": "5000002952",
+      "documentItem": "0002",
+      "quantity": "5.000",
+      "amount": "121.00",
+      "postingDate": "20261009",
+      "purchaseContract": "4600000042",
+      "purchaseContractItem": "00020",
+      "goodsMovementType": "101"
+    }
+  ],
+  "materialDocuments": [
+    {
+      "materialDocument": "5000002952",
+      "year": "2026",
+      "item": "0001",
+      "purchaseOrderItem": "00010",
+      "goodsMovementType": "101",
+      "quantity": "20.000",
+      "postingDate": "20261009"
+    },
+    {
+      "materialDocument": "5000002952",
+      "year": "2026",
+      "item": "0002",
+      "purchaseOrderItem": "00020",
+      "goodsMovementType": "101",
+      "quantity": "5.000",
+      "postingDate": "20261009"
+    }
+  ],
+  "invoiceHistory": [
+    {
+      "purchaseOrderItem": "00010",
+      "document": "5100001601",
+      "documentItem": "0001",
+      "quantity": "20.000",
+      "amount": "98.00",
+      "postingDate": "20261012",
+      "purchaseContract": "4600000042",
+      "purchaseContractItem": "00010",
+      "goodsMovementType": ""
+    },
+    {
+      "purchaseOrderItem": "00020",
+      "document": "5100001601",
+      "documentItem": "0002",
+      "quantity": "5.000",
+      "amount": "121.00",
+      "postingDate": "20261012",
+      "purchaseContract": "4600000042",
+      "purchaseContractItem": "00020",
+      "goodsMovementType": ""
+    }
+  ],
+  "supplierInvoice": {
+    "supplierInvoice": "5100001601",
+    "fiscalYear": "2026",
+    "postingDate": "20261012",
+    "reference": "SUPP.INV.0004",
+    "invoicingParty": "0001000579",
+    "grossAmount": "221.00",
+    "currency": "USD",
+    "status": "5",
+    "items": [
+      {
+        "item": "000001",
+        "purchaseOrderItem": "00010",
+        "quantity": "20.000",
+        "amount": "98.00"
+      },
+      {
+        "item": "000002",
+        "purchaseOrderItem": "00020",
+        "quantity": "5.000",
+        "amount": "121.00"
+      }
+    ]
+  },
+  "quantityReconciliation": [
+    {
+      "text": "Printer A4 paper",
+      "requisitionItem": "00010",
+      "contractItem": "00010",
+      "purchaseOrderItem": "00010",
+      "requisitionQuantity": "1000.000",
+      "requisitionPrice": "5.00",
+      "contractTargetQuantity": "1000.000",
+      "contractPrice": "4.90",
+      "contractTargetAmount": "4900.00",
+      "releasedQuantity": "20.000",
+      "releasedAmount": "98.00",
+      "receivedQuantity": "20.000",
+      "invoicedQuantity": "20.000",
+      "invoicedAmount": "98.00",
+      "unreleasedQuantity": "980.000"
+    },
+    {
+      "text": "Printer Toner",
+      "requisitionItem": "00020",
+      "contractItem": "00020",
+      "purchaseOrderItem": "00020",
+      "requisitionQuantity": "100.000",
+      "requisitionPrice": "25.00",
+      "contractTargetQuantity": "100.000",
+      "contractPrice": "24.20",
+      "contractTargetAmount": "2420.00",
+      "releasedQuantity": "5.000",
+      "releasedAmount": "121.00",
+      "receivedQuantity": "5.000",
+      "invoicedQuantity": "5.000",
+      "invoicedAmount": "121.00",
+      "unreleasedQuantity": "95.000"
+    }
+  ],
+  "joinKeys": [
+    {
+      "from": "C_PurchaseRequisitionItemDEX",
+      "to": "C_PurchaseContractItemDEX",
+      "keys": [
+        "Same item text, supplier, plant, account assignment category, and target quantity"
+      ],
+      "note": "Processing status K means the requisition item was converted to a contract. PurchaseContract on the requisition item is blank in this extract. The contract price is lower than the requisition price."
+    },
+    {
+      "from": "C_PurchaseContractDEX",
+      "to": "C_PurchaseContractItemDEX",
+      "keys": [
+        "PurchaseContract"
+      ]
+    },
+    {
+      "from": "C_PurchaseContractItemDEX",
+      "to": "C_PurchaseContractHistoryDEX",
+      "keys": [
+        "PurchaseContract",
+        "PurchaseContractItem"
+      ],
+      "note": "ReleaseOrder / ReleaseOrderItem is purchase order 4500002148."
+    },
+    {
+      "from": "C_PurchaseContractItemDEX",
+      "to": "C_PurchaseOrderItemDEX",
+      "keys": [
+        "PurchaseContract",
+        "PurchaseContractItem"
+      ]
+    },
+    {
+      "from": "C_PurchaseOrderDEX",
+      "to": "C_PurchaseOrderItemDEX",
+      "keys": [
+        "PurchaseOrder"
+      ]
+    },
+    {
+      "from": "C_PurchaseOrderItemDEX",
+      "to": "C_PurOrdAccountAssignmentDEX",
+      "keys": [
+        "PurchaseOrder",
+        "PurchaseOrderItem"
+      ],
+      "note": "Account assignment category K. Cost center 0017100100. G/L 0054400000."
+    },
+    {
+      "from": "C_PurchaseOrderHistoryDEX type 1",
+      "to": "I_GoodsMovementDocumentDEX",
+      "keys": [
+        "PurchasingHistoryDocument = MaterialDocument",
+        "PurchaseOrder",
+        "PurchaseOrderItem"
+      ]
+    },
+    {
+      "from": "C_PurchaseOrderHistoryDEX type 2",
+      "to": "C_SupplierInvoiceDEX",
+      "keys": [
+        "PurchasingHistoryDocument = SupplierInvoice"
+      ]
+    },
+    {
+      "from": "C_PurchaseOrderDEX",
+      "to": "I_BusinessPartner",
+      "keys": [
+        "Supplier = BusinessPartner"
+      ]
+    },
+    {
+      "from": "C_PurOrdAccountAssignmentDEX",
+      "to": "I_GLAccount",
+      "keys": [
+        "GLAccount",
+        "CompanyCode"
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Session readme
 
-Record of the work done in this session: two sample-data use cases checked into the repository, and the SAP GUI path used to take one live purchase requisition through approval, purchase order, goods receipt, supplier invoice, and payment.
+Record of the work done in this session: four sample-data use cases, and the SAP GUI path used to take one live purchase requisition through approval, purchase order, goods receipt, supplier invoice, and payment.
 
 Company code throughout the live process is **1710**.
 
@@ -13,15 +13,16 @@ ZEVO writes one CDS view per file. The use cases show how to correlate those fil
 | Contract to Payment | [CONTRACT_TO_PAYMENT.docx](CONTRACT_TO_PAYMENT.docx) | Contract **4600000041**, release PO **4500002146** | [samples/c2p](samples/c2p) |
 | Order to Cash | [ORDER_TO_CASH.docx](ORDER_TO_CASH.docx) | Sales order **6321** (`0000006321`) | [samples/o2c](samples/o2c) |
 | Requisition to Order | [REQUISITION_TO_ORDER.docx](REQUISITION_TO_ORDER.docx) | Requisition **10001624**, PO **4500002147** | [samples/r2o](samples/r2o) |
+| Requisition to Payment | [REQUISITION_TO_PAYMENT.docx](REQUISITION_TO_PAYMENT.docx) | Requisition **10001634**, contract **4600000042**, PO **4500002148** | [samples/rtp](samples/rtp) |
 
-Both documents were merged to `main` in pull request [#25](https://github.com/aleo25672/sap-dex2file/pull/25).
+The four Word documents use the same 13 chapters: Purpose, Document flow, Business partner, Source document, Follow-on document, Goods movement, Invoice, Accounting, Quantity and amount reconciliation, Clearing, How the documents are correlated, Extract calls for this reference, and Sample-data files.
 
-Download a document from GitHub while signed in to an account that can read this private repository:
+Download a document from GitHub while signed in to an account that can read this private repository. On the file page, use **Download**.
 
 - https://github.com/aleo25672/sap-dex2file/blob/main/docs/CONTRACT_TO_PAYMENT.docx
 - https://github.com/aleo25672/sap-dex2file/blob/main/docs/ORDER_TO_CASH.docx
-
-On the file page, use **Download**.
+- https://github.com/aleo25672/sap-dex2file/blob/main/docs/REQUISITION_TO_ORDER.docx
+- https://github.com/aleo25672/sap-dex2file/blob/main/docs/REQUISITION_TO_PAYMENT.docx
 
 ### Contract to Payment
 
@@ -157,6 +158,25 @@ python3 docs/samples/r2o/build_seed.py
 python3 docs/samples/r2o/build_use_case_docx.py
 ```
 
+## Requisition to Payment
+
+Extract run `20261007_142521`. Purchase order **4500002148** is a release of contract **4600000042**, created from requisition **0010001634**. Supplier **0001000579**, Office equipment supplier domestic 1. Account assignment **K**, cost center **0017100100**, G/L **0054400000**.
+
+| Step | Document | Values |
+|------|----------|--------|
+| Requisition 0010001634 | Processing status K | Paper 1,000 at 5.00 and toner 100 at 25.00 |
+| Contract 4600000042 | Type CWK, valid through 20271231 | Same quantities. Prices 4.90 and 24.20 |
+| Purchase order 4500002148 | Release on 20261007 | 20 paper (98.00) and 5 toner (121.00). Total 219.00 |
+| Goods receipt 5000002952 | Movement 101, 20261009 | The full release quantity |
+| Invoice 5100001601 | SUPP.INV.0004, posted 20261012 | Item amounts 98.00 and 121.00. Header gross 221.00 |
+
+The requisition item does not store the contract number. The purchase-order item and the contract history do. The contract still has 980 paper and 95 toner not released. This extract set has no journal file, so the payment that would clear invoice **5100001601** is not in the sample.
+
+```bash
+python3 docs/samples/rtp/build_seed.py
+python3 docs/samples/rtp/build_use_case_docx.py
+```
+
 ## File map
 
 ```text
@@ -164,8 +184,10 @@ docs/CONTRACT_TO_PAYMENT.docx          Contract-to-Payment use case
 docs/CONTRACT_TO_PAYMENT.md            Same walkthrough in markdown
 docs/ORDER_TO_CASH.docx                Order-to-Cash use case
 docs/REQUISITION_TO_ORDER.docx         Requisition-to-Order use case
+docs/REQUISITION_TO_PAYMENT.docx       Requisition-to-Payment use case, via contract 4600000042
 docs/samples/c2p/                      Contract 4600000041 / PO 4500002146
 docs/samples/o2c/                      Sales order 6321
 docs/samples/r2o/                      Requisition 10001624 / PO 4500002147
+docs/samples/rtp/                      Requisition 10001634 / contract 4600000042 / PO 4500002148
 docs/README.md                         This file
 ```

@@ -1,0 +1,274 @@
+GOODSMOVEMENTREFDOCTYPE;LANGUAGE;GOODSMOVEMENTREFDOCTYPENAME;DOMAINVALUE
+;E;Goods movement w/o reference;
+;D;Warenbewegung ohne Referenz;
+;P;Movimento de mercadoria sem referência;
+;R;######## ######### ### ######;
+;F;Mouvement de stock sans référence;
+;S;Movimiento de mercancías sin ref.;
+;1;########;
+;J;########;
+;I;Movimento merci senza riferimento;
+;H;Anyagmozgás referencia nélkül;
+;N;Goederenbeweging zonder referentie;
+;C;Pohyb mater. bez reference;
+;3;## ## ## ##;
+;L;Przesuni#cie materia#ów bez referencji;
+;B;##### ##### ### #######;
+;T;Referanssız mal hareketi;
+;G;###### ###### ##### #######;
+;U;Varastotapahtuma ilman viitettä;
+;A;#### ####### #### ####;
+;Q;Pohyb mater.bez referencie;
+;M;#########;
+;K;Varebevægelse uden reference;
+;V;Materialrörelse utan referens;
+;8;### ####### ### #########;
+;O;Varebevegelse uten referanse;
+;5;Premik blaga brez reference;
+;4;Mi#care de bunuri f#r# referin##;
+;W;######## ## ##### ### ##########;
+;6;Kretanje robe s/bez reference;
+;d;Kretanje robe bez reference;
+;2;######################################;
+;c;Moviment mercaderies sense referència;
+;#;Chuyê#n ha#ng không tham chiê#u;
+;#;###### #### ##### #######;
+;7;Pergerakan barangan tanpa rujukan;
+;#;######### ### ##### #########;
+;X;Preki# jud#jimas be nuorodos;
+;Y;Pre#u kust#ba bez atsauces;
+;9;Kaubaliikumine ilma viiteta;
+B;E;Goods movement for purchase order;B
+F;E;Goods movement for production order;F
+O;E;"Subsequent adjustment of ""material-provided"" consumption";O
+L;E;Goods movement for delivery note;L
+W;E;Subsequent adjustment of proportion/product unit material;W
+K;E;Goods movement for kanban requirement (WM - internal only);K
+B;D;Warenbewegung zur Bestellung;B
+O;D;Nachverrechnung von Beistellmaterial;O
+L;D;Warenbewegung zum Lieferschein;L
+F;D;Warenbewegung zum Auftrag;F
+W;D;Nachverrechnung von Anteils-/Produkt ME Material;W
+K;D;Warenbewegung zur Kanban-Anforderung (Nur WM intern);K
+B;J;############;B
+F;J;############;F
+L;J;###########;L
+K;J;############ (#### - ####);K
+O;J;"""####"" #######";O
+W;J;####/###########;W
+B;F;Mouvement de stock pour commande;B
+F;F;Mouvement de stock pour ordre;F
+L;F;Mouvement de stock pour bon de livraison;L
+K;F;Mvt de stock pour demande Kanban (seulement WM interne);K
+O;F;Chargement ultérieur des articles fournis;O
+W;F;Imputation ultérieure UQ Proportion/Produit de l'article;W
+B;P;Movimento de mercadoria por pedido;B
+F;P;Movimento de mercadoria para a ordem;F
+L;P;Movimento mercadoria por nota de remessa;L
+K;P;Movimento mercadoria por necess.Kanban (só interno WM);K
+O;P;Alocação posterior de material colocado à disposição;O
+W;P;Ajuste posterior de UM proporcional/produto do material;W
+B;S;Movimiento de mercancías para pedido;B
+F;S;Movimiento de mercancías p.orden;F
+L;S;Movimiento de mercancías para nota de entrega;L
+K;S;Movimiento mercancía para solicitud Kanban (sólo WM interno);K
+O;S;Imputación posterior del material facilitado;O
+W;S;Liquidación posterior de material UM producto/proporción;W
+B;I;Movimento merci relativo a ord. acq.;B
+F;I;Movimento merci relativo a ordine;F
+L;I;Mov. merci rel. a bolla consegna;L
+K;I;Movimento merci per richiesta Kanban (solo WM interno);K
+O;I;Imputazione succ. di materiale messo a disp.;O
+W;I;Imputazione succ. di mat. con UM prop./prod.;W
+B;C;Pohyb mater. k objednávce;B
+F;C;Pohyb materiálu k zakázce;F
+L;C;Pohyb mater. k dodacímu listu;L
+K;C;Pohyb materiálu pro po#adavek-Kanban (nen PM intern#);K
+O;C;Dodat. zú#tování poskyt. materiálu;O
+W;C;Dodat.zú#tování materiálu podílov#ch MJ a MJ produktu;W
+B;1;##########;B
+F;1;##########;F
+L;1;###########;L
+K;1;##########WM######;K
+O;1;"""####""#######";O
+W;1;#######/######;W
+B;R;######## ######### # ###### ## ########;B
+F;R;######## ######### # ######;F
+L;R;######## ######### # #########;L
+K;R;######## ######### # ####### ###### (###### #####. ###);K
+O;R;############# ####### ############# #########;O
+W;R;############# ####### #########, ## #######/########;W
+B;N;Goederenbeweging voor bestelling;B
+F;N;Goederenbeweging voor order;F
+L;N;Goederenbeweging voor afleveringsbewijs;L
+K;N;Goederenbeweging van Kanban-aanvraag (alleen WM-intern);K
+O;N;Naverrekening van meeleverartikelen;O
+W;N;Naverrekening van aandeel-/product-HE artikel;W
+B;L;Przesuni#cie materia#ów dla zamówienia;B
+F;L;Przesuni#cie materia#ów dla zlecenia produkcyjnego;F
+L;L;Przesuni#cie materia#ów dla dowodu dostawy;L
+K;L;Ruchy materia#ów dla wymaga# kanban (WM - tylko wewn.);K
+O;L;Rozliczenie uzup. materia#u do dost.;O
+W;L;Kolejna korekta udzia#u/produktu - jedn. miary materia#u;W
+B;H;Anyagmozgás megrendeléshez;B
+F;H;Anyagmozgás rendeléshez;F
+L;H;Anyagmozgás szállítólevélhez;L
+K;H;Anyagmozgás kanban-igényhez (csak WM-en belüli);K
+O;H;Bérfeld.szánt anyag utólagos elszám.;O
+W;H;Arány/termék utólagos elszámolása anyag ME;W
+B;Q;Pohyb mater.k objednávke;B
+F;Q;Pohyb materiálu pre zákazku;F
+L;Q;Pohyb mater.k dodaciemu listu;L
+K;Q;Pohyb materiálu pre po#iadavku-Kanban (iba PM interne);K
+O;Q;Dodato#né zú#tovanie poskytovaného materiálu;O
+W;Q;Dodat.zú#tovanie materiálu podiel.MJ a MJ produktu;W
+B;B;##### ##### #### ##### ###;B
+F;B;##### ##### #### ##### #####;F
+L;B;##### ##### #### ##### #####;L
+K;B;##### ##### #### ###### WM- kanban - ##### ####;K
+O;B;"##### ##### ## ## ##### ""#### #####""";O
+W;B;Subsequent adjustment of proportion/product unit material;W
+B;3;## ## ## ## ##;B
+F;3;## ### ## ## ##;F
+L;3;#### ## ## ##;L
+K;3;## ### ## ## ##(WM - ## ##);K
+O;3;"""## ##"" ### ## ##";O
+W;3;##/## ##### ####;W
+B;G;###### ###### ### ###### ######;B
+F;G;###### ###### ### ###### π########;F
+L;G;###### ###### ### ###### #π#######;L
+K;G;###### ###### ### #π###### kanban (WM - ######### µ###);K
+O;G;"#π#µ### π#####µ### ######## ""######µ#### ######""";O
+W;G;#π#µ### π#####µ### #########/###### µ###### π########;W
+B;T;Satınalma sipari#i için mal hareketi;B
+F;T;Üretim sipari#i için mal hareketi;F
+L;T;#rsaliye için mal hareketi;L
+K;T;Kanban talebi için mal hareketi (yalnzca dahili WM);K
+O;T;Temin edilen malzemenin sonradan mahsupla#tırılması;O
+W;T;Oran- /ürün birim malzemesinin sonradan mahsupla#tırması;W
+B;K;Varebevægelse til indkøbsordre;B
+F;K;Varebevægelse til ordre;F
+L;K;Varebevægelse til følgeseddel;L
+K;K;Varebevægelse til kanbankrav (kun WM-intern);K
+O;K;Efterafregning af medleveringsmat.;O
+W;K;Efterafregning af andels-/produkt ME materiale;W
+B;U;Varastotapahtuma ostotilaukselle;B
+F;U;Varastotapahtuma tuotantotilaukselle;F
+L;U;Varastotapahtuma lähetyslistalle;L
+K;U;Varastotapahtuma Kanban-ehdotukselle (vain sis. WM);K
+O;U;Alihankintanimikkeen jälkikirjaus;O
+W;U;Nimike - osuus-/tuotemääräyksikön jälkikirjaus;W
+B;V;Materialrörelse till beställning;B
+F;V;Materialrörelse till order;F
+L;V;Materialrörelse till följesedel;L
+K;V;Materialrörelse till kanban-begäran (enb. WM-intern);K
+O;V;Avräkning i efterhand av legokomponent;O
+W;V;Avräkning i efterhand av andels-/produktmängdenhet material;W
+B;4;Mi#care de bunuri pt.cd# aprovizionare;B
+F;4;Mi#care de bunuri pt.cd# de produc#ie;F
+L;4;Mi#care de bunuri pt.aviz de expedi#ie;L
+K;4;Mi#care de bunuri pt.necesar kanban (WM - intern numai);K
+O;4;"Corec#ie consecutiv# de consum ""material furnizat""";O
+W;4;Corec#ie consecutiv# de unitate propor#ional#/mat.produs;W
+B;O;Varebevegelse for innkjøpsordre;B
+F;O;Varebevegelse for ordre;F
+L;O;Varebevegelse for følgeseddel;L
+K;O;Varebevegelse - Kanban-rekvisisjon (bare internt - WM);K
+O;O;Avregning i etterhånd for viderebearbeidingsmaterial;O
+W;O;Avregning i etterhånd for andels-/prod.kvantumsenhet - mat.;W
+B;W;######## ## ##### ## ####### ## ########;B
+F;W;######## ## ##### ## ######## ## ############;F
+L;W;######## ## ##### ## ############# #######;L
+K;W;######## ## ##### ## ######### ## ###### (### - #### ####.);K
+O;W;"############## ######## ## ""######.# #########"" ###########";O
+W;W;############## ######## ##### ####### ## #####. ###/#######;W
+B;5;Premik blaga za naro#ilo;B
+F;5;Premik blaga za nalog;F
+L;5;Premik blaga za dobavnico;L
+K;5;Premik blaga za kanban zahtevo (WM - samo interno);K
+O;5;Naknadni obra#un za razpolo#ljivi material;O
+W;5;Naknadni obra#un za EM dele#a/produkta materiala;W
+B;6;Kretanje robe za narud#benicu;B
+F;6;Kretanje robe za radni nalog;F
+L;6;Kretanje robe za obavijest o isporuci;L
+K;6;Kretanje robe za kanban potrebe (WM - samo unutra#nji);K
+O;6;"Naknadno uskla#enje potro#nje ""osiguranog materijala""";O
+W;6;Naknadno uskla#ivanje udio/proizvod jedinica materijala;W
+B;2;####################################;B
+F;2;####################################;F
+L;2;##################################;L
+K;2;##################################### kanban (########## WM);K
+O;2;"###################### ""#############"" ###########";O
+W;2;#############################################/#########;W
+B;M;########;B
+F;M;#########;F
+L;M;#########;L
+K;M;##########WM######;K
+O;M;"""####""#######";O
+W;M;## / ###########;W
+B;d;Kretanje robe za nalog za nabavku;B
+F;d;Kretanje robe za proizvodni nalog;F
+L;d;Kretanje robe za otpremnicu;L
+K;d;Kretanje robe za kanban zahtev (WM - samo interno);K
+O;d;Naknadno uskla#ivanje potro#nje obezbe#enog materijala;O
+W;d;Naknadno uskla#ivanje materijala jedinice mere udela/proizv.;W
+B;A;#### ####### #### ######;B
+F;A;#### ####### #### #######;F
+L;A;#### ####### ###### #######;L
+K;A;#### ####### ###### WM) kanban - ##### ###);K
+O;A;"### #### ######## ""###### ########""";O
+W;A;### #### ##### #### #######/######;W
+B;c;Moviment mercaderies p.comanda;B
+F;c;Moviment mercaderies p.ordre;F
+L;c;Moviment mercaderies p.nota lliurament;L
+K;c;Moviment mercaderies p.sol.licitud Kanban (només WM int.);K
+O;c;Imputació posterior de material facilitat;O
+W;c;Liquidació posterior de material UM producte/proporció;W
+B;#;Chuyê#n ha#ng cho ##n mua ha#ng;B
+F;#;Chuyê#n ha#ng cho lê#nh sa#n xuâ#t;F
+L;#;Chuyê#n ha#ng #ô#i v##i phiê#u giao ha#ng;L
+K;#;Chuyê#n ha#ng cho yêu câ#u kaban (WM - nô#i bô#);K
+O;#;"#iê#u chi#nh kê# tiê#p s##c tiêu thu# ""NVL ####c cung câ#p""";O
+W;#;#iê#u chi#nh kê# tiê#p nguyên liê#u ##n vi S.phâ#m/ ti# lê#;W
+B;#;#### ##### #### ##### #######;B
+F;#;####### ##### #### ##### #######;F
+L;#;##### ### #### ##### #######;L
+K;#;###### ######## #### ##### ########(WM -#### ###### );K
+O;#;''#######-#######'' ##### ## ######## #######;O
+W;#;########/###### #### ####### ## ######## #######;W
+B;8;### ####### ### ########## ## #########;B
+F;8;### ####### ### ########### ##########;F
+L;8;### ####### ### ############ #########;L
+K;8;### ####### ### ####### ###### (## - #### #######.);K
+O;8;"######## ########## ""############# ##########"" ##########";O
+W;8;######## ########## #########/####### ###### #########;W
+B;#;##### ### ########### ######## ##### #########;B
+F;#;########## ########## ######## ##### #########;F
+L;#;####### ############ ######## ##### #########;L
+K;#;kanban ######## ###.##### ######### (WM - ### ####);K
+O;#;"""########## ####### ########"" ####### ####### ######";O
+W;#;####/#### ####### ########## ####### ######;W
+B;7;Pergerakan barangan untuk pesanan belian;B
+F;7;Pergerakan barangan untuk pesanan pengeluaran;F
+L;7;Pergerakan barangan untuk nota penghantaran;L
+K;7;Pergerakan barangan untuk keperluan kanban (WM - dalaman shj;K
+O;7;"Pelarasan berikutan penggunaan ""bahan dibekalkan""";O
+W;7;Pelarasan berikutan perkadaran/bahan unit produk;W
+B;Y;Pre#u kust#ba saist#b# ar pirk#anas pas#t#jumu;B
+F;Y;Pre#u kust#ba ra#o#anas pas#t#jumam;F
+L;Y;Pre#u kust#ba saist#b# ar pavadz#mi;L
+K;Y;Pre#u kust#ba saist#b# ar Kanban pras#bu (WM — tikai iek#.);K
+O;Y;Turpm#ka nodro#in#t# materi#la pat#ri#a piel#go#ana;O
+W;Y;Turpm#ka materi#la proporcijas/produkta vien#bas korekcija;W
+B;9;Kaubaliikumine ostutellimuse jaoks;B
+F;9;Kaubaliikumine tootmistellimuse jaoks;F
+L;9;Kaubaliikumine tarneteate jaoks;L
+K;9;Kaubaliikumine kanbani vajaduse jaoks (WM – ainult sisene);K
+O;9;Esitatud materjalide tarbimise järelkorrigeerimine;O
+W;9;Propotsionaalse / tooteühiku materjali järelkorrigeerimine;W
+B;X;Pirkimo u#sakymo preki# jud#jimas;B
+F;X;Gamybos u#sakymo preki# jud#jimas;F
+L;X;Va#tara##io preki# jud#jimas;L
+K;X;KANBAN u#klausos preki# jud#jimas (WM – tik viduje);K
+O;X;Pateiktos med#iagos sunaudojimo paskesnis perskai#iavimas;O
+W;X;Paskesnis med#iagos dalies/produkto vieneto perskai#iavimas;W
