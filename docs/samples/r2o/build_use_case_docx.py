@@ -128,15 +128,7 @@ def main() -> None:
         "payment of the invoice is not in the sample.",
     )
 
-    doc.add_heading("3. Why this requisition", level=1)
-    add_para(
-        doc,
-        "Requisition 0010001624 is the only requisition in the extract whose items appear "
-        "on a purchase order. Requisition 0010001573 item 00010 (material RM2_DS, quantity "
-        "150, price 5.25, processing status N) has no purchase order in this run.",
-    )
-
-    doc.add_heading("4. Supplier", level=1)
+    doc.add_heading("3. Business partner", level=1)
     add_para(
         doc,
         f"Supplier {c['supplier']['supplier']} is {c['supplier']['name']}. "
@@ -144,7 +136,7 @@ def main() -> None:
         "the supplier on the purchase order, and the invoicing party.",
     )
 
-    doc.add_heading("5. Purchase requisition 0010001624", level=1)
+    doc.add_heading("4. Source document", level=1)
     first = c["requisitionItems"][0]
     add_para(
         doc,
@@ -182,7 +174,7 @@ def main() -> None:
         "The short text is the description. Account assignment category A is asset.",
     )
 
-    doc.add_heading("6. Purchase order 4500002147", level=1)
+    doc.add_heading("5. Follow-on document", level=1)
     add_para(
         doc,
         f"Type {po['purchaseOrderType']}, date {po['purchaseOrderDate']}, created by "
@@ -217,39 +209,12 @@ def main() -> None:
         "unchanged. Goods receipt and invoice are expected on both items.",
     )
 
-    doc.add_heading("7. Asset account assignment", level=1)
-    add_para(
-        doc,
-        f"C_PurOrdAccountAssignmentDEX assigns both items to master fixed asset {c['asset']}, "
-        f"assignment number 01, profit center YB110. The G/L account is "
-        f"{c['glAccount']['glAccount']} (external {c['glAccount']['external']}), "
-        f"group {c['glAccount']['group']}, reconciliation type "
-        f"{c['glAccount']['reconciliationAccountType']}. That is the asset reconciliation account.",
-    )
-    add_table(
-        doc,
-        ["PO item", "Assignment", "Asset", "G/L account", "Quantity", "Profit center"],
-        [
-            [
-                row["purchaseOrderItem"],
-                row["accountAssignmentNumber"],
-                row["masterFixedAsset"],
-                row["glAccount"],
-                row["quantity"],
-                row["profitCenter"],
-            ]
-            for row in c["accountAssignments"]
-        ],
-    )
-
-    doc.add_heading("8. Follow-on documents already on the order", level=1)
+    doc.add_heading("6. Goods movement", level=1)
     add_para(
         doc,
         "C_PurchaseOrderHistoryDEX type 1, category E, is the goods receipt. The history "
-        "document is the material document. Type 2, category Q, is the invoice receipt. "
-        "The history document is the supplier invoice.",
+        "document is the material document. Movement type 101.",
     )
-    add_para(doc, "Goods receipts", size=11, bold=True, space_after=4)
     add_table(
         doc,
         ["Material document", "Year", "PO item", "Qty", "Movement", "Posting date"],
@@ -265,7 +230,12 @@ def main() -> None:
             for row in c["goodsReceipts"]
         ],
     )
-    add_para(doc, "Supplier invoice", size=11, bold=True, space_after=4)
+    doc.add_heading("7. Invoice", level=1)
+    add_para(
+        doc,
+        "C_PurchaseOrderHistoryDEX type 2, category Q, is the invoice receipt. The history "
+        "document is the supplier invoice.",
+    )
     add_table(
         doc,
         ["Invoice", "Party reference", "Item", "PO item", "Qty", "Amount", "Posting date", "Status"],
@@ -291,7 +261,34 @@ def main() -> None:
         "20 ordered.",
     )
 
-    doc.add_heading("9. Quantity reconciliation", level=1)
+    doc.add_heading("8. Accounting", level=1)
+    add_para(
+        doc,
+        f"C_PurOrdAccountAssignmentDEX assigns both items to master fixed asset {c['asset']}, "
+        f"assignment number 01, profit center YB110. The G/L account is "
+        f"{c['glAccount']['glAccount']} (external {c['glAccount']['external']}), "
+        f"group {c['glAccount']['group']}, reconciliation type "
+        f"{c['glAccount']['reconciliationAccountType']}. That is the asset reconciliation account. "
+        "This extract set has no universal-journal file, so the accounting document posted "
+        "by the invoice is not in the sample.",
+    )
+    add_table(
+        doc,
+        ["PO item", "Assignment", "Asset", "G/L account", "Quantity", "Profit center"],
+        [
+            [
+                row["purchaseOrderItem"],
+                row["accountAssignmentNumber"],
+                row["masterFixedAsset"],
+                row["glAccount"],
+                row["quantity"],
+                row["profitCenter"],
+            ]
+            for row in c["accountAssignments"]
+        ],
+    )
+
+    doc.add_heading("9. Quantity and amount reconciliation", level=1)
     add_table(
         doc,
         ["Req. item", "PO item", "Text", "Ordered", "Order amount", "Received", "Invoiced qty", "Invoiced amount", "Still open qty", "Still open amount"],
@@ -318,7 +315,15 @@ def main() -> None:
         "not yet received: 10 laptops (20,000.00) and 10 keyboards (1,500.00).",
     )
 
-    doc.add_heading("10. How the documents are correlated", level=1)
+    doc.add_heading("10. Clearing", level=1)
+    add_para(
+        doc,
+        "The supplier invoice is posted. This extract set does not include the universal "
+        "journal, so the vendor line and any payment that clears it are not in the sample. "
+        "The open quantity on the order is the part that has not been received or invoiced.",
+    )
+
+    doc.add_heading("11. How the documents are correlated", level=1)
     add_table(
         doc,
         ["From", "To", "Keys"],
@@ -329,7 +334,7 @@ def main() -> None:
         font=8,
     )
 
-    doc.add_heading("11. Extract calls for this reference", level=1)
+    doc.add_heading("12. Extract calls for this reference", level=1)
     add_para(
         doc,
         "One ExtractCds call per entity. Example for the requisition items:",
@@ -359,7 +364,7 @@ def main() -> None:
         font=8,
     )
 
-    doc.add_heading("12. Sample-data files", level=1)
+    doc.add_heading("13. Sample-data files", level=1)
     add_para(
         doc,
         "CSV delimiter is semicolon. Rebuild with python3 docs/samples/r2o/build_seed.py "

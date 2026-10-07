@@ -228,7 +228,7 @@ def main() -> None:
     add_para(
         doc,
         "ZEVO writes one CDS entity per file and one entity per ExtractCds call. It does "
-        "not join documents. The client correlates the files with the keys in section 12. "
+        "not join documents. The client correlates the files with the keys in section 11. "
         "Full extracts are in docs/samples/c2p/source. The rows used here are in "
         "docs/samples/c2p/seed. Dates in the tables are YYYYMMDD, as stored in the CSV.",
     )
@@ -255,17 +255,7 @@ def main() -> None:
         "C_PurOrdAccountAssignmentDEX contains a header and zero rows.",
     )
 
-    doc.add_heading("3. Why these two documents", level=1)
-    add_para(doc, correlation["whyThisSeed"])
-    add_para(
-        doc,
-        "Contracts 4600000031 and 4600000040 are in the same contract extract and have no "
-        "release rows. Purchase orders 4500002142 through 4500002145 release contract "
-        "4600000038, which is not in the contract header or item files. Only 4500002143 "
-        "has a goods receipt, and none of those orders has a supplier invoice in this extract.",
-    )
-
-    doc.add_heading("4. Supplier", level=1)
+    doc.add_heading("3. Business partner", level=1)
     add_para(
         doc,
         "Supplier 0001000559 is EVOLVER DOMESTIC SUPPLIER 1. The same number is the "
@@ -291,7 +281,7 @@ def main() -> None:
     add_para(doc, "I_BusinessPartnerSupplierDEX", size=11, bold=True, space_after=4)
     add_field_table(doc, nonempty_pairs(sup))
 
-    doc.add_heading("5. Purchase contract 4600000041", level=1)
+    doc.add_heading("4. Source document", level=1)
     add_para(
         doc,
         "Quantity contract (type MK, purchasing-document category K), created by ARIA "
@@ -328,7 +318,7 @@ def main() -> None:
         "item 00020 (TG20) is goods-receipt-based and item 00010 (TG11) is not.",
     )
 
-    doc.add_heading("6. Release purchase order 4500002146", level=1)
+    doc.add_heading("5. Follow-on document", level=1)
     add_para(
         doc,
         "Standard PO (type NB), date 20261002, purchasing group 001, processing status 05, "
@@ -401,7 +391,7 @@ def main() -> None:
         ],
     )
 
-    doc.add_heading("7. Goods receipts", level=1)
+    doc.add_heading("6. Goods movement", level=1)
     add_para(
         doc,
         "C_PurchaseOrderHistoryDEX rows with PurchasingHistoryDocumentType 1 and "
@@ -472,7 +462,7 @@ def main() -> None:
         ],
     )
 
-    doc.add_heading("8. Supplier invoices", level=1)
+    doc.add_heading("7. Invoice", level=1)
     add_para(
         doc,
         "C_PurchaseOrderHistoryDEX rows with PurchasingHistoryDocumentType 2 and "
@@ -550,7 +540,7 @@ def main() -> None:
         ],
     )
 
-    doc.add_heading("9. Universal journal", level=1)
+    doc.add_heading("8. Accounting", level=1)
     add_para(
         doc,
         "I_GLAccountLineItemRawData, company code 1710, fiscal year 2026, source ledger 0L. "
@@ -608,7 +598,7 @@ def main() -> None:
         "The two invoice vendor lines are cleared by payment document 1500000000.",
     )
 
-    doc.add_heading("10. Quantity and amount reconciliation", level=1)
+    doc.add_heading("9. Quantity and amount reconciliation", level=1)
     add_para(
         doc,
         "Invoiced quantity equals received quantity on both released items. The open "
@@ -638,7 +628,7 @@ def main() -> None:
         font=7,
     )
 
-    doc.add_heading("11. Payment", level=1)
+    doc.add_heading("10. Clearing", level=1)
     add_para(
         doc,
         f"Vendor payment {payment['accountingDocument']} "
@@ -693,7 +683,7 @@ def main() -> None:
         "120.00 plus 40.50 equals the payment amount, so one payment clears both invoices.",
     )
 
-    doc.add_heading("12. How the documents are correlated", level=1)
+    doc.add_heading("11. How the documents are correlated", level=1)
     add_table(
         doc,
         ["From", "To", "Keys"],
@@ -723,7 +713,7 @@ def main() -> None:
         "Join logistics documents to the journal on ReferenceDocument and ReferenceDocumentType.",
     )
 
-    doc.add_heading("13. Extract calls for this reference", level=1)
+    doc.add_heading("12. Extract calls for this reference", level=1)
     add_para(
         doc,
         "The files in this use case were written by ZEVO_CDS_EXPLORER_2_FILE in run "
@@ -758,7 +748,7 @@ def main() -> None:
         font=8,
     )
 
-    doc.add_heading("14. Sample-data files", level=1)
+    doc.add_heading("13. Sample-data files", level=1)
     add_para(
         doc,
         "CSV delimiter is semicolon. Headers are the CDS element names in uppercase. "

@@ -129,7 +129,7 @@ def main() -> None:
     add_para(
         doc,
         "ZEVO writes one CDS entity per file and one entity per ExtractCds call. It does "
-        "not join documents. The client correlates the files with the keys in section 12. "
+        "not join documents. The client correlates the files with the keys in section 11. "
         "Full extracts are in docs/samples/o2c/source. The rows used here are in "
         "docs/samples/o2c/seed. Dates are YYYYMMDD, as stored in the CSV. Document numbers "
         "keep their leading zeros as extracted.",
@@ -155,16 +155,7 @@ def main() -> None:
         "in an open delivery and has no goods issue, billing, or journal line yet.",
     )
 
-    doc.add_heading("3. Why this order", level=1)
-    add_para(
-        doc,
-        "Sales order 6321 is the only order in the extract that runs from order entry "
-        "through billing to a cleared customer receipt. The extract also contains order "
-        "0000006320 (customer USCU_S01, billed on 0090005784, not paid) and service order "
-        "0000006319 (type SRVO, no delivery or billing).",
-    )
-
-    doc.add_heading("4. Customer", level=1)
+    doc.add_heading("3. Business partner", level=1)
     add_para(
         doc,
         f"Sold-to, ship-to, and payer are all {cust['customer']}: {cust['bpFullName']} "
@@ -194,7 +185,7 @@ def main() -> None:
         ),
     )
 
-    doc.add_heading("5. Sales order 0000006321", level=1)
+    doc.add_heading("4. Source document", level=1)
     add_para(
         doc,
         f"Standard order (type {so['salesOrderType']}), created by {so['createdByUser']} on "
@@ -267,7 +258,7 @@ def main() -> None:
         "assigns 171A.",
     )
 
-    doc.add_heading("6. Outbound deliveries", level=1)
+    doc.add_heading("5. Follow-on document", level=1)
     add_para(
         doc,
         "I_DeliveryDocumentItem points back to the order with ReferenceSDDocument and "
@@ -327,7 +318,7 @@ def main() -> None:
         "20261006 for the remaining quantities and has no follow-on documents.",
     )
 
-    doc.add_heading("7. Goods issue", level=1)
+    doc.add_heading("6. Goods movement", level=1)
     add_para(
         doc,
         "I_GoodsMovementDocumentDEX carries DeliveryDocument and DeliveryDocumentItem. "
@@ -364,7 +355,7 @@ def main() -> None:
         "The COGS lines carry SalesDocument and SalesDocumentItem.",
     )
 
-    doc.add_heading("8. Billing", level=1)
+    doc.add_heading("7. Invoice", level=1)
     bd = c["billingDocuments"][0]
     add_para(
         doc,
@@ -438,7 +429,7 @@ def main() -> None:
         "1,778.19) equal the COGS posted by the goods issue.",
     )
 
-    doc.add_heading("9. Universal journal", level=1)
+    doc.add_heading("8. Accounting", level=1)
     add_para(
         doc,
         "I_GLAccountLineItemRawData, company code 1710, fiscal year 2026, ledger 0L. "
@@ -497,7 +488,7 @@ def main() -> None:
         "carries the same clearing document and date.",
     )
 
-    doc.add_heading("10. Quantity and amount reconciliation", level=1)
+    doc.add_heading("9. Quantity and amount reconciliation", level=1)
     add_table(
         doc,
         ["SO item", "Material", "Ordered", "Order net", "Goods issued", "In open delivery", "Billed qty", "Billed net", "Not yet billed qty", "Not yet billed net"],
@@ -526,7 +517,7 @@ def main() -> None:
         "to be delivered and billed.",
     )
 
-    doc.add_heading("11. Cash", level=1)
+    doc.add_heading("10. Clearing", level=1)
     add_para(
         doc,
         f"Incoming payment {cash['accountingDocument']} (document type "
@@ -578,7 +569,7 @@ def main() -> None:
         "to the billing document is ClearingAccountingDocument on the RV receivable line.",
     )
 
-    doc.add_heading("12. How the documents are correlated", level=1)
+    doc.add_heading("11. How the documents are correlated", level=1)
     add_table(
         doc,
         ["From", "To", "Keys"],
@@ -593,7 +584,7 @@ def main() -> None:
         "ReferenceDocumentType, or use AccountingDocument on I_BillingDocument.",
     )
 
-    doc.add_heading("13. Extract calls for this reference", level=1)
+    doc.add_heading("12. Extract calls for this reference", level=1)
     add_para(
         doc,
         "The files were written by ZEVO_CDS_EXPLORER_2_FILE in run 20261006_154927. The "
@@ -629,7 +620,7 @@ def main() -> None:
         "no in operator; chain or conditions.",
     )
 
-    doc.add_heading("14. Sample-data files", level=1)
+    doc.add_heading("13. Sample-data files", level=1)
     add_para(
         doc,
         "CSV delimiter is semicolon. Headers are the CDS element names in uppercase. "
