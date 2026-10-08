@@ -28,7 +28,7 @@ define view ZEVO_C_PurchContractItem
       Plant,
       EvaldRcptSettlmtIsAllowed,
       TargetAmount,
-      PurchaseContractType,
+      PurchaseContractType as PurchaseContractTypeCode,
       PurchasingDocumentCategory,
       PurchasingGroup,
       PurchasingOrganization,

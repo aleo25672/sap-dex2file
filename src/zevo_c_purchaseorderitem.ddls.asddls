@@ -12,7 +12,7 @@ define view ZEVO_C_PurchaseOrderItem
 {
   key PurchaseOrder,
   key PurchaseOrderItem,
-      PurchaseOrderType,
+      PurchaseOrderType as PurchaseOrderTypeCode,
       PurchasingGroup,
       PurchasingOrganization,
       PurchasingDocumentOrigin,

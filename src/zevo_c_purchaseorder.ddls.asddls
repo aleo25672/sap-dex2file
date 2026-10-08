@@ -13,7 +13,7 @@ define view ZEVO_C_PurchaseOrder
     on $projection.Supplier = _BPSupplier.Supplier
 {
   key PurchaseOrder,
-      PurchaseOrderType,
+      PurchaseOrderType as PurchaseOrderTypeCode,
       PurchaseOrderSubtype,
       PurchasingDocumentOrigin,
       CreatedByUser,
