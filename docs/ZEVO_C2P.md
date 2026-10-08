@@ -54,7 +54,7 @@ One-way associations only (avoids CDS activation cycles). Aligned with pack corr
 
 **Note:** History → goods movement / invoice joins are on document numbers. Filter `PurchasingHistoryDocumentType` (`1` = GR, `2` = IR) when expanding from history.
 
-**Activation tip:** mass-activate all `ZEVO_C_*` together after pull. Goods movement keys are `MaterialDocumentYear`, `MaterialDocument`, `MaterialDocumentItem` (not `MaterialDocumentKey*`, which are `@Consumption.hidden` on the SAP DEX and block OData V4 binding). `ZEVO_C_PurOrdAcctAssgmt` exposes `RealEstateObject` as `cast(… as abap.char(8))` so OData V4 Web API binding does not inherit conversion exit `IMKEY`.
+**Activation tip:** mass-activate all `ZEVO_C_*` together after pull. Goods movement keys are `MaterialDocumentYear`, `MaterialDocument`, `MaterialDocumentItem` (not `MaterialDocumentKey*`, which are `@Consumption.hidden` on the SAP DEX and block OData V4 binding). `ZEVO_C_PurOrdAcctAssgmt` exposes `RealEstateObject` as `cast(… as abap.char(8))` so OData V4 Web API binding does not inherit conversion exit `IMKEY`. Document-type fields that would collide with OData V4 entity type names (`PurchaseOrderType`, `PurchaseContractType`, `BusinessPartnerType`) are aliased to `*TypeCode`.
 
 ---
 

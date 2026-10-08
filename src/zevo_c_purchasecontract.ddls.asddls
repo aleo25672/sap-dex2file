@@ -13,7 +13,7 @@ define view ZEVO_C_PurchaseContract
     on $projection.Supplier = _BPSupplier.Supplier
 {
   key PurchaseContract,
-      PurchaseContractType,
+      PurchaseContractType as PurchaseContractTypeCode,
       PurchasingGroup,
       PurchasingOrganization,
       ValidityStartDate,

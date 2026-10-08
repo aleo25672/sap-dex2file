@@ -25,7 +25,7 @@ define view ZEVO_C_PurchContractHist
       CompanyCode,
       Plant,
       PurchasingOrganization,
-      PurchaseContractType,
+      PurchaseContractType as PurchaseContractTypeCode,
       PurchasingGroup,
       _PurchaseOrder,
       _PurchaseOrderItem

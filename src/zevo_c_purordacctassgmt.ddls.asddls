@@ -57,7 +57,7 @@ define view ZEVO_C_PurOrdAcctAssgmt
       ServiceDocumentType,
       ServiceDocument,
       ServiceDocumentItem,
-      PurchaseOrderType,
+      PurchaseOrderType as PurchaseOrderTypeCode,
       PurchasingOrganization,
       PurchasingGroup,
       CreationDate,

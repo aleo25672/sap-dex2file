@@ -49,7 +49,7 @@ define view ZEVO_C_BusinessPartner
       NameFormat,
       NameCountry,
       BusinessPartnerGrouping,
-      BusinessPartnerType,
+      BusinessPartnerType as BusinessPartnerTypeCode,
       MiddleName,
       AdditionalLastName,
       GroupBusinessPartnerName1,
