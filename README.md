@@ -1023,21 +1023,24 @@ All custom ABAP objects use the **`ZEVO`** prefix:
 
 ## Bounded (date/time) extraction
 
-Where a view is **delta-capable** (it has the `@Semantics.systemDateTime.lastChangedAt` field),
-**Mode = Bounded** extracts rows whose change-timestamp falls in an explicit **date/time window**
-instead of "since the last run":
+**Mode = Bounded** extracts rows whose window field falls in an explicit **date/time window**.
+The window field is chosen separately from the Delta change-timestamp:
 
-- `SELECT * … WHERE <ts field> >= <from> [AND <ts field> <= <to>]`.
-- Enter **From** / **To** as date + time on the selection screen, in **UTC** (to match the UTC
-  change-timestamp stored by CDS). A blank **To time** means end-of-day (inclusive); a blank
-  **To date** means open-ended (`>= from`); a blank **From** means open-ended (`<= to`). At least
-  one of From / To is required when **Action = Extract to file** (the window is ignored and
-  input-disabled for **Display list**).
-- Views **without** a change-timestamp field are **not skipped**: Bounded falls back to a **full** extract (result mode / file tag `full`; message notes the fallback). Delta mode still skips those views (`K`).
-- A bounded run is **ad-hoc**: it does **not** read or advance the `ZEVO_DELTA` high-water, so it
-  never disturbs the delta baseline. (Full and Delta still advance the marker.)
-- Same caveats as Delta: **no deletes** (timestamp filter sees inserts/updates only), and the
-  timestamp field's data type governs the `WHERE` literal format.
+1. **`POSTINGDATE`** (non-master) — preferred for journals / GL (`I_GLAccountLineItemRawData`)
+2. **`DOCUMENTDATE`** (non-master)
+3. **`CREATIONDATE` + `CREATIONTIME`**, or **`CREATIONDATE` alone** (non-master)
+4. Otherwise the same field as Delta (`LastChangeDateTime` / `CREATIONDATETIME` / …)
+
+So a Bounded run on GL filters **posting date**, not technical `LastChangeDateTime`
+(which is often the load/replication time and would look like the window “did nothing”).
+
+- Enter **From** / **To** as date + time on the selection screen, in **UTC**. A blank **To time**
+  means end-of-day (inclusive); a blank **To date** means open-ended (`>= from`); a blank
+  **From** means open-ended (`<= to`). At least one of From / To is required when
+  **Action = Extract to file** (the window is ignored and input-disabled for **Display list**).
+- Views with no usable window field fall back to a **full** extract (message notes the fallback).
+- A bounded run is **ad-hoc**: it does **not** read or advance the `ZEVO_DELTA` high-water.
+- Same caveats as Delta for timestamp-based windows: **no deletes**.
 
 ## Objects
 
