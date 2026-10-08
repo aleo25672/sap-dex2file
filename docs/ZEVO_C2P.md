@@ -62,7 +62,7 @@ One-way associations only (avoids CDS activation cycles). Aligned with pack corr
 
 1. **abapGit** — Pull `main`; activate all 13 `ZEVO_C_*` DDLS (including `ZEVO_C_GoodsMovementDoc`) and service definition `ZEVO_C2P`.
 2. Mass-activate the views together (they reference each other).
-3. If SRVD import still fails: create service definition **`ZEVO_C2P`** in ADT and paste the expose list from `src/zevo_c2p.srvd.assrvd`.
+3. If SRVD import still fails: create service definition **`ZEVO_C2P`** in ADT and paste the expose list from `src/zevo_c2p.srvd.srvdsrv`.
 4. **Service Binding (ADT only)** — New → Service Binding **`ZEVO_C2P`**:
    - Binding type: **OData V4 - Web API**
    - Service definition: `ZEVO_C2P`
