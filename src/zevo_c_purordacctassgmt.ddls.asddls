@@ -28,7 +28,6 @@ define view ZEVO_C_PurOrdAcctAssgmt
       UnloadingPointName,
       ControllingArea,
       CostObject,
-      ProfitabilitySegment,
       ProfitabilitySegment_2,
       ProfitCenter,
       WBSElementInternalID,

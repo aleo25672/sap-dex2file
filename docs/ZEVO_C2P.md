@@ -54,7 +54,7 @@ One-way associations only (avoids CDS activation cycles). Aligned with pack corr
 
 **Note:** History → goods movement / invoice joins are on document numbers. Filter `PurchasingHistoryDocumentType` (`1` = GR, `2` = IR) when expanding from history.
 
-**Activation tip:** mass-activate all `ZEVO_C_*` together after pull. Goods movement keys are `MaterialDocumentKey1`…`Key6` (contiguous at the start of the select list).
+**Activation tip:** mass-activate all `ZEVO_C_*` together after pull. Goods movement keys are `MaterialDocumentYear`, `MaterialDocument`, `MaterialDocumentItem` (not `MaterialDocumentKey*`, which are `@Consumption.hidden` on the SAP DEX and block OData V4 binding).
 
 ---
 
