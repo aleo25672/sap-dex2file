@@ -1055,7 +1055,7 @@ instead of "since the last run":
 | `ZEVO_CL_ODATA_API` | class | facade for `ExtractCds` / `GetCdsMetadata` |
 | `ZEVO_CL_ODATA_MPC` | class | SEGW helper: `DEFINE_MODEL` (no Gateway inheritance) |
 | `ZEVO_CL_ODATA_DPC` | class | SEGW helper: `EXECUTE_ACTION` (no Gateway inheritance) |
-| `ZEVO_C_*` (13) | CDS view entity | C2P projections over DEX/BP with associations |
+| `ZEVO_C_*` (13) | CDS view (`define view`) | C2P projections over DEX/BP with associations |
 | `ZEVO_C_*_D` | DDLX | delta-field semantics for V4 filters |
 | `ZEVO_C2P` | service definition | exposes the 13 C2P entity sets |
 | `ZEVO_C2P` | service binding | OData V4 Web API (publish in ADT) |

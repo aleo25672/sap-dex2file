@@ -6,7 +6,7 @@
     <DDLNAME>ZEVO_C_PurchContractItem</DDLNAME>
     <DDLANGUAGE>E</DDLANGUAGE>
     <DDTEXT>Purchase Contract Item (C2P)</DDTEXT>
-    <SOURCE_TYPE>W</SOURCE_TYPE>
+    <SOURCE_TYPE>V</SOURCE_TYPE>
    </DDLS>
   </asx:values>
  </asx:abap>

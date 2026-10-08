@@ -1,8 +1,11 @@
-@EndUserText.label: 'Supplier Invoice Item (C2P)'
+@AbapCatalog.sqlViewName: 'ZEVOCSUPPITEM'
+@AbapCatalog.compiler.compareFilter: true
+@AbapCatalog.preserveKey: true
 @AccessControl.authorizationCheck: #CHECK
+@EndUserText.label: 'Supplier Invoice Item (C2P)'
 @Metadata.ignorePropagatedAnnotations: false
-@ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #MIXED }
-define view entity ZEVO_C_SupplierInvItem
+@ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #TRANSACTIONAL }
+define view ZEVO_C_SupplierInvItem
   as select from C_SupplierInvoiceItemDEX
   association [1..1] to ZEVO_C_SupplierInvoice as _Header
     on $projection.SupplierInvoice = _Header.SupplierInvoice
