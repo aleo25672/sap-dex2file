@@ -1,11 +1,11 @@
-# ZEVO_C2P — OData V4 Contract-to-Payment service
+# ZEVO_C2P — Contract-to-Payment service
 
 Typed **OData V4** service (CDS service definition + Web API binding) for the P2P / contract-to-payment extract graph. This is **not** the generic V2 `ZEVO_CDS_EXTRACT_SRV` wrapper (`ExtractCds` / `CdsResult` payload).
 
 | Item | Value |
 |------|--------|
 | Service definition | `ZEVO_C2P` |
-| Service binding | `ZEVO_C2P_O4` (**OData V4 — Web API**) |
+| Service binding | `ZEVO_C2P` (**OData V4 — Web API**) |
 | Style | Read-only typed entity sets + navigation |
 | Min platform | S/4HANA **2022+** (CDS view entity `*` select list) |
 | Out of scope (v1) | GL master / journal (`I_GLAccount*`), cost/profit center masters, product masters, ref-doc type texts |
@@ -63,19 +63,19 @@ Aligned with `docs/samples/*/correlation.json` (GL edges omitted).
 1. **abapGit** — Pull this branch; activate all `ZEVO_C_*` DDLS / DDLX and `ZEVO_C2P` (SRVD).
 2. If `*` in a view entity fails to activate, the system is below S/4 2022 — expand the select list from the base CDS in ADT.
 3. If an association field name fails (e.g. `PrmthbReferenceDocumentFsclyr`), open the source CDS in ADT and correct the element name on `ZEVO_C_SupplierInvItem`.
-4. **Service Binding** — Create / open `ZEVO_C2P_O4`:
+4. **Service Binding** — Create / open `ZEVO_C2P`:
    - Binding type: **OData V4 - Web API**
    - Service definition: `ZEVO_C2P`
    - **Publish** the local service group
 5. URL shape (after publish; host/group may vary):
 
 ```text
-/sap/opu/odata4/sap/zevo_c2p_o4/srvd_a2x/sap/zevo_c2p/0001/
+/sap/opu/odata4/sap/zevo_c2p/srvd_a2x/sap/zevo_c2p/0001/
 ```
 
 6. Authorizations — same CDS access control as the underlying SAP views (`#CHECK` on the Z wrappers).
 
-> The checked-in `zevo_c2p_o4.srvb.xml` is a skeleton for the intended binding name. **Publish** must be done in ADT / Gateway on the system; abapGit does not publish the service group.
+> The checked-in `zevo_c2p.srvb.xml` is a skeleton for the intended binding. **Publish** must be done in ADT / Gateway on the system; abapGit does not publish the service group.
 
 ---
 
