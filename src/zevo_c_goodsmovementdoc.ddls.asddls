@@ -8,15 +8,9 @@ define view ZEVO_C_GoodsMovementDoc
   association [0..1] to ZEVO_C_BusinessPartner as _Supplier
     on $projection.Supplier = _Supplier.BusinessPartner
 {
-  key MaterialDocumentKey1,
-  key MaterialDocumentKey2,
-  key MaterialDocumentKey3,
-  key MaterialDocumentKey4,
-  key MaterialDocumentKey5,
-  key MaterialDocumentKey6,
-      MaterialDocumentYear,
-      MaterialDocument,
-      MaterialDocumentItem,
+  key MaterialDocumentYear,
+  key MaterialDocument,
+  key MaterialDocumentItem,
       StockIdentifyingMaterial,
       Plant,
       StockIdfgStorageLocation,
@@ -115,7 +109,6 @@ define view ZEVO_C_GoodsMovementDoc
       CostObject,
       GLAccount,
       FunctionalArea,
-      ProfitabilitySegment,
       ProfitabilitySegment_2,
       ProfitCenter,
       MasterFixedAsset,
