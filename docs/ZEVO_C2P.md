@@ -60,20 +60,16 @@ One-way associations only (avoids CDS activation cycles). Aligned with pack corr
 
 ## Activate & publish (ADT)
 
-1. **abapGit** — Pull `main`; activate all 13 `ZEVO_C_*` DDLS (including `ZEVO_C_GoodsMovementDoc`) and service definition `ZEVO_C2P`.
-2. Mass-activate the views together (they reference each other).
-3. If SRVD import still fails: create service definition **`ZEVO_C2P`** in ADT and paste the expose list from `src/zevo_c2p.srvd.srvdsrv`.
-4. **Service Binding (ADT only)** — New → Service Binding **`ZEVO_C2P`**:
-   - Binding type: **OData V4 - Web API**
-   - Service definition: `ZEVO_C2P`
-   - **Publish** the local service group
-5. URL shape (after publish; host/group may vary):
+End-to-end setup (Eclipse install, CAL/`10.0.0.19`, abapGit pull, binding activate → publish, sample URLs, pitfalls) lives in the root README:
 
-```text
-/sap/opu/odata4/sap/zevo_c2p/srvd_a2x/sap/zevo_c2p/0001/
-```
+**[OData V4 C2P service (`ZEVO_C2P`)](../README.md#odata-v4-c2p-service-zevo_c2p)**
 
-6. Authorizations — same CDS access control as the underlying SAP views (`#CHECK` on the Z wrappers).
+Short checklist:
+
+1. **abapGit** — Pull `main`; mass-activate all 13 `ZEVO_C_*` DDLS + service definition `ZEVO_C2P`.
+2. If SRVD import fails: create `ZEVO_C2P` in ADT and paste from `src/zevo_c2p.srvd.srvdsrv`.
+3. **ADT** — New Service Binding `ZEVO_C2P`, type **OData V4 - Web API**, definition `ZEVO_C2P` → **Activate** → **Publish**.
+4. URL shape: `/sap/opu/odata4/sap/zevo_c2p/srvd_a2x/sap/zevo_c2p/0001/`
 
 > DDLX (`*_D`) and `zevo_c2p.srvb.xml` are **not** in the repo — they broke abapGit import. Delta Semantics are inline on the views; create/publish the binding in ADT.
 

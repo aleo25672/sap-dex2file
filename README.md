@@ -6,8 +6,8 @@ ABAP tools for **S/4HANA** to extract CDS data in three ways:
 2. **OData V2 extract** — Gateway service with function imports `ExtractCds` / `GetCdsMetadata`: pass a CDS name + OData `$filter`, paginate with `Skip`/`Top`, optional caller-managed delta, return **JSON or XML**.
 3. **OData V4 C2P** — typed service + binding `ZEVO_C2P` exposing the contract-to-payment CDS graph as real entity sets with `$expand` and caller-managed delta filters.
 
-> **Where to read the OData docs:** start at [OData CDS extract service](#odata-cds-extract-service) in this same README (full guide below). A copy also lives in [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md).  
-> **OData V4 C2P:** [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md).  
+> **Where to read the OData docs:** start at [OData CDS extract service](#odata-cds-extract-service) (V2) and [OData V4 C2P service](#odata-v4-c2p-service-zevo_c2p) (Eclipse/ADT + publish) in this same README.  
+> V2 copy: [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md). V4 entity reference: [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md).  
 > **Note:** abapGit only syncs `src/` — `README.md` / `docs/` are **not** imported into SAP; read them on GitHub or in a git clone.
 
 Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the generic OData extract now lives **in this repo**.
@@ -17,7 +17,8 @@ Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the ge
 | Section | What |
 |---------|------|
 | **[OData CDS extract service](#odata-cds-extract-service)** | V2 `ExtractCds`, `GetCdsMetadata`, [URL cookbook](#url-cookbook-c_purchaseorderdex) |
-| **[OData V4 C2P (`ZEVO_C2P`)](docs/ZEVO_C2P.md)** | Typed V4 Web API — 13 entity sets, navigations, delta filters |
+| **[OData V4 C2P (`ZEVO_C2P`)](#odata-v4-c2p-service-zevo_c2p)** | Typed V4 Web API — Eclipse/ADT setup, binding, publish, sample URLs |
+| [C2P reference](docs/ZEVO_C2P.md) | Entity sets, navigations, delta fields |
 | [P2P call flow (Word)](docs/P2P_OData_Extract_Call_Flow.docx) | PO → Item → History → GR / IR extract sequence |
 | [Contract to Payment (Word)](docs/CONTRACT_TO_PAYMENT.docx) | Contract 4600000041 → PO 4500002146 → GR → invoice → payment 1500000000, with sample data |
 | [Order to Cash (Word)](docs/ORDER_TO_CASH.docx) | Sales order 6321 → delivery → goods issue → billing 0090005785 → receipt 1400000000, with sample data |
@@ -927,6 +928,121 @@ ls = zevo_cl_odata_api=>extract_cds(
 
 ---
 
+## OData V4 C2P service (`ZEVO_C2P`)
+
+Typed **OData V4 Web API** for the contract-to-payment / P2P graph (13 entity sets + `$expand`). This is **not** the V2 `ExtractCds` wrapper.
+
+| Item | Value |
+|------|--------|
+| CDS projections | 13 × `ZEVO_C_*` (classic `define view`, explicit fields, one-way associations) |
+| Service definition | `ZEVO_C2P` — in abapGit (`zevo_c2p.srvd.srvdsrv` + `.xml`) |
+| Service binding | **Create in ADT only** as `ZEVO_C2P` — **OData V4 - Web API** (not shipped via abapGit; hand-written SRVB XML fails import) |
+| Reference | Entity sets, navigations, delta — [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md) |
+
+### A. Eclipse + ADT on Mac (one-time)
+
+Service definition / binding / CDS activation for V4 is done in **ABAP Development Tools (ADT)**, not SEGW.
+
+1. Install a current **Eclipse IDE** for Enterprise Java / RCP (or the ADT “Eclipse with ADT” package from SAP).
+2. Install **ABAP Development Tools**:
+   - **Help → Install New Software…**
+   - Add the ADT update site for your Eclipse version (see [SAP ADT tools](https://tools.hana.ondemand.com/)).
+   - Select **ABAP Development Tools for SAP HANA** (and UI5 tools only if you want them) → install → restart Eclipse.
+3. Connect to the S/4 system over VPN (e.g. SAP CAL landscape). Example host used in this project: **`10.0.0.19`**.
+4. **New → ABAP Project** (or import a system connection):
+   - Connection type: application server / group as provided by your landscape.
+   - Host: `10.0.0.19` (or your CAL hostname).
+   - Instance / system ID / client / user as for SAP GUI.
+   - HTTPS port is typically **`44300`** on CAL appliances.
+5. Optional landscape XML: if ADT asks for a landscape / message-server file, point it at the same system you use in SAP GUI (same host/ports). Save credentials in the secure storage if prompted.
+6. Confirm the project opens under Project Explorer (e.g. `[S4H] …`) and you can browse `$TMP` / your Z package.
+
+### B. Pull CDS + service definition (abapGit)
+
+1. In SAP GUI (or ADT), open **abapGit** on the package that already holds ZEVO objects (e.g. `$ZEVO` / `$ZEVOLVER_DEX2F`).
+2. **Pull** branch **`main`** from `https://github.com/aleo25672/sap-dex2file.git`.
+3. Activate (mass-activate is fine; resolve cycles by activating the whole `ZEVO_C_*` set together):
+   1. All **`ZEVO_C_*`** DDLS (13 views).
+   2. Service definition **`ZEVO_C2P`**.
+4. If SRVD import fails: in ADT create service definition **`ZEVO_C2P`** and paste the expose list from [`src/zevo_c2p.srvd.srvdsrv`](src/zevo_c2p.srvd.srvdsrv).
+
+> **Not in the repo (on purpose):** DDLX metadata extensions and `zevo_c2p.srvb.xml` — they broke abapGit import. Delta Semantics are **inline** on the views. The **service binding** is created only in ADT (next step).
+
+### C. Create + publish the service binding (ADT)
+
+1. In the ABAP project: **New → Other… → ABAP Repository Object → Service Binding** (or search “Service Binding”).
+2. Fields:
+   - **Name:** `ZEVO_C2P`
+   - **Description:** e.g. `ZEVO C2P Web API`
+   - **Binding Type:** **OData V4 - Web API**
+   - **Service Definition:** `ZEVO_C2P`
+3. Finish → open the binding editor.
+4. **Activate** the binding (**Ctrl+F3** / **Cmd+F3**, or File → Activate).  
+   Publish stays disabled until activate succeeds. The yellow bar *“To enable publish… activate the Service Binding”* clears after a good activate.
+5. Click **Publish** on the local service endpoint. Status becomes **Published**.
+6. Note the **Service URL**, e.g.:
+
+```text
+/sap/opu/odata4/sap/zevo_c2p/srvd_a2x/sap/zevo_c2p/0001/
+```
+
+Full example (CAL HTTPS):
+
+```text
+https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_c2p/srvd_a2x/sap/zevo_c2p/0001/
+https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_c2p/srvd_a2x/sap/zevo_c2p/0001/$metadata
+```
+
+Browser will prompt for SAP user/password. Authorizations follow the underlying CDS DCL (`#CHECK` on the Z wrappers).
+
+### D. Design choices that keep V4 binding green
+
+These are already applied on `main`. If you recreate views by hand, keep them:
+
+| Topic | What we do | Why |
+|-------|------------|-----|
+| CDS form | Classic `define view` + **explicit field lists** (no `SELECT *`) | Activation / abapGit compatibility on this stack |
+| Associations | **One-way** only | Avoid CDS activation cycles |
+| Goods movement keys | `MaterialDocumentYear` / `MaterialDocument` / `MaterialDocumentItem` | DEX `MaterialDocumentKey*` are `@Consumption.hidden` and block OData V4 binding |
+| `RealEstateObject` | `cast(… as abap.char(8))` (or Z DTEL without `IMKEY` if you adopt that PR) | Binding rejects conversion exit **IMKEY** |
+| Document / BP “type” fields | Alias to `*TypeCode` (`PurchaseOrderTypeCode`, …) | OData V4 entity type is `{EntitySet}Type` — property name must not collide (`/IWBEP/CM_V4_MED/082`) |
+| Navigation in URLs | `$expand=_Item`, `_Supplier`, … | SADL keeps the CDS underscore; `$expand=Item` fails |
+
+### E. Sample queries
+
+POs created on/after 1 Oct 2026 with items:
+
+```http
+GET https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_c2p/srvd_a2x/sap/zevo_c2p/0001/PurchaseOrder
+  ?$filter=CreationDate ge 2026-10-01
+  &$expand=_Item
+  &$orderby=CreationDate desc
+```
+
+Header → items → history / account assignment + supplier:
+
+```http
+GET .../PurchaseOrder
+  ?$filter=CreationDate ge 2026-10-01
+  &$expand=_Item($expand=_History,_AccountAssignment),_Supplier
+  &$orderby=CreationDate desc
+```
+
+More examples (delta, contract, PR): [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md).
+
+### F. Troubleshooting (V4 binding / metadata)
+
+| Symptom | Fix |
+|---------|-----|
+| Binding: *Key field `MaterialDocumentKey*` must not be annotated as `CONSUMPTION.HIDDEN`* | Pull latest `main` — GM view uses Year/Document/Item keys |
+| Binding: *Do not use conversion exit IMKEY for property REALESTATEOBJECT* | Pull latest — field is cast (or Z DTEL without IMKEY) |
+| Activate binding first / Publish grayed out | **Activate** the Service Binding object, then **Publish** |
+| `$metadata`: *Property `PurchaseOrderType` has the same EDM name as entity type `PurchaseOrderType`* | Pull latest — properties aliased to `*TypeCode` |
+| `$expand`: *invalid property `Item`* | Use `_Item` (and `_History`, `_AccountAssignment`, `_Supplier`) |
+| SRVD / SRVB will not import via abapGit | SRVD source is `.srvdsrv`; create **binding only in ADT** — do not check in hand-written SRVB XML |
+
+After CDS changes: abapGit **Pull** → mass-activate `ZEVO_C_*` → re-activate the binding if needed → retry `$metadata`.
+
 ---
 
 ## Source types
@@ -1276,7 +1392,8 @@ Activate in this order (or select all and mass-activate so dependencies resolve)
 1. **`ZEVO_DELTA`** (table) - first, because the classes reference it.
 2. `ZEVO_CL_*` classes (including OData helpers; MPC/DPC need Gateway `/IWBEP/*`).
 3. `ZEVO_CDS_EXPLORER_2_FILE` (report).
-4. For the OData service: register/activate per **[OData CDS extract service](#odata-cds-extract-service)** above.
+4. For **OData V2** (`ExtractCds`): register/activate per **[OData CDS extract service](#odata-cds-extract-service)** above.
+5. For **OData V4 C2P**: activate all `ZEVO_C_*` DDLS + service definition `ZEVO_C2P`, then create/publish the binding in **Eclipse ADT** per **[OData V4 C2P service](#odata-v4-c2p-service-zevo_c2p)** above.
 
 After a rename from older `Z_CDS_*` / `ZCL_DXF_*` / `ZDXF_*` objects: delete the old objects (or let abapGit remove them), then pull/activate the `ZEVO*` ones.
 
