@@ -3,14 +3,12 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <SRVD>
-    <METADATA>
-     <NAME>ZEVO_C2P</NAME>
-     <TYPE>SRVD/SRV</TYPE>
-     <DESCRIPTION>ZEVO Contract-to-Payment OData V4</DESCRIPTION>
-     <LANGUAGE>EN</LANGUAGE>
-     <MASTER_LANGUAGE>EN</MASTER_LANGUAGE>
-     <SRVD_SOURCE_TYPE>S</SRVD_SOURCE_TYPE>
-    </METADATA>
+    <NAME>ZEVO_C2P</NAME>
+    <TYPE>SRVD/SRV</TYPE>
+    <DESCRIPTION>ZEVO Contract-to-Payment OData V4</DESCRIPTION>
+    <LANGUAGE>EN</LANGUAGE>
+    <MASTER_LANGUAGE>EN</MASTER_LANGUAGE>
+    <SRVD_SOURCE_TYPE>S</SRVD_SOURCE_TYPE>
    </SRVD>
   </asx:values>
  </asx:abap>
