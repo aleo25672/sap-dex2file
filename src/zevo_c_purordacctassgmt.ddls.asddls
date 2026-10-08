@@ -38,7 +38,6 @@ define view ZEVO_C_PurOrdAcctAssgmt
       FunctionalArea,
       GoodsRecipientName,
       IsFinallyInvoiced,
-      RealEstateObject,
       NetworkActivityInternalID,
       PartnerAccountNumber,
       JointVentureRecoveryCode,
