@@ -26,6 +26,7 @@ define view ZEVO_C_PurchaseOrderItem
       ValidityStartDate,
       ValidityEndDate,
       CreationDate,
+      @Semantics.systemDateTime.lastChangedAt: true
       LastChangeDateTime,
       PurgDocumentItemDeletionCode,
       MaterialGroup,

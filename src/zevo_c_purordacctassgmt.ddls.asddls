@@ -62,6 +62,7 @@ define view ZEVO_C_PurOrdAcctAssgmt
       PurchasingOrganization,
       PurchasingGroup,
       CreationDate,
+      @Semantics.systemDateTime.lastChangedAt: true
       LastChangeDateTime,
       Plant,
       AccountAssignmentCategory,

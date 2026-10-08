@@ -38,6 +38,7 @@ define view ZEVO_C_PurchContractItem
       InvoicingParty,
       SupplyingSupplier,
       CreationDate,
+      @Semantics.systemDateTime.lastChangedAt: true
       LastChangeDateTime,
       ExchangeRate,
       OrderPriceUnit,

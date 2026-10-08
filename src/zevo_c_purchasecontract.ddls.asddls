@@ -22,6 +22,7 @@ define view ZEVO_C_PurchaseContract
       InvoicingParty,
       SupplyingSupplier,
       CreationDate,
+      @Semantics.systemDateTime.lastChangedAt: true
       LastChangeDateTime,
       DocumentCurrency,
       ExchangeRate,

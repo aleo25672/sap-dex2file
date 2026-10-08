@@ -4,10 +4,10 @@ Typed **OData V4** service (CDS service definition + Web API binding) for the P2
 
 | Item | Value |
 |------|--------|
-| Service definition | `ZEVO_C2P` |
-| Service binding | `ZEVO_C2P` (**OData V4 — Web API**) |
+| Service definition | `ZEVO_C2P` (abapGit: `zevo_c2p.srvd.*`) |
+| Service binding | Create in **ADT** as `ZEVO_C2P` — **OData V4 — Web API** (not shipped via abapGit; hand-written SRVB XML fails import) |
 | Style | Read-only typed entity sets + navigation |
-| CDS form | Classic `define view` with **explicit field lists** (no `SELECT *` — rejected on this stack even for `define view`) |
+| CDS form | Classic `define view` with explicit field lists; delta field Semantics annotations are **inline** (no DDLX) |
 | Out of scope (v1) | GL master / journal (`I_GLAccount*`), cost/profit center masters, product masters, ref-doc type texts |
 
 ---

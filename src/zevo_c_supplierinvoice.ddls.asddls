@@ -14,6 +14,7 @@ define view ZEVO_C_SupplierInvoice
   key FiscalYear,
       CompanyCode,
       DocumentDate,
+      @Semantics.businessDate.at: true
       PostingDate,
       SupplierInvoiceIDByInvcgParty,
       InvoicingParty,

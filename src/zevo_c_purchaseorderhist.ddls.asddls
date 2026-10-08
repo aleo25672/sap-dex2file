@@ -19,6 +19,7 @@ define view ZEVO_C_PurchaseOrderHist
   key PurchasingHistoryDocumentItem,
       PurchasingHistoryCategory,
       GoodsMovementType,
+      @Semantics.businessDate.at: true
       PostingDate,
       Currency,
       DebitCreditCode,

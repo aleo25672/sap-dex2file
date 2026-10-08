@@ -64,6 +64,7 @@ define view ZEVO_C_PurchaseOrder
       ValidityEndDate,
       ExchangeRate,
       ExchangeRateIsFixed,
+      @Semantics.systemDateTime.lastChangedAt: true
       LastChangeDateTime,
       TaxReturnCountry,
       VATRegistrationCountry,
