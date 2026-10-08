@@ -54,13 +54,13 @@ One-way associations only (avoids CDS activation cycles). Aligned with pack corr
 
 **Note:** History → goods movement / invoice joins are on document numbers. Filter `PurchasingHistoryDocumentType` (`1` = GR, `2` = IR) when expanding from history.
 
-**Activation tip:** mass-activate all `ZEVO_C_*` together after pull. Goods movement keys are `MaterialDocumentYear`, `MaterialDocument`, `MaterialDocumentItem` (not `MaterialDocumentKey*`, which are `@Consumption.hidden` on the SAP DEX and block OData V4 binding). `ZEVO_C_PurOrdAcctAssgmt` exposes `RealEstateObject` as `cast(… as abap.char(8))` so OData V4 Web API binding does not inherit conversion exit `IMKEY`.
+**Activation tip:** mass-activate all `ZEVO_C_*` together after pull. Goods movement keys are `MaterialDocumentYear`, `MaterialDocument`, `MaterialDocumentItem` (not `MaterialDocumentKey*`, which are `@Consumption.hidden` on the SAP DEX and block OData V4 binding). `ZEVO_C_PurOrdAcctAssgmt` exposes `RealEstateObject` via `cast(… as ZEVO_REAL_ESTATE_OBJECT preserving type)` — domain `ZEVO_RE_OBJECT` is CHAR(8) **without** conversion exit `IMKEY` (a plain `abap.char(8)` cast is a no-op and still carries IMKEY into the V4 binder). Activate domain → data element → CDS before publishing the binding.
 
 ---
 
 ## Activate & publish (ADT)
 
-1. **abapGit** — Pull `main`; activate all 13 `ZEVO_C_*` DDLS (including `ZEVO_C_GoodsMovementDoc`) and service definition `ZEVO_C2P`.
+1. **abapGit** — Pull `main`; activate domain `ZEVO_RE_OBJECT` and data element `ZEVO_REAL_ESTATE_OBJECT`, then all 13 `ZEVO_C_*` DDLS (including `ZEVO_C_GoodsMovementDoc` / `ZEVO_C_PurOrdAcctAssgmt`) and service definition `ZEVO_C2P`.
 2. Mass-activate the views together (they reference each other).
 3. If SRVD import still fails: create service definition **`ZEVO_C2P`** in ADT and paste the expose list from `src/zevo_c2p.srvd.srvdsrv`.
 4. **Service Binding (ADT only)** — New → Service Binding **`ZEVO_C2P`**:
