@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_SRVD" serializer_version="v1.0.0">
+ <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+  <asx:values>
+   <SRVD>
+    <METADATA>
+     <NAME>ZEVO_C2P</NAME>
+     <TYPE>SRVD/SRV</TYPE>
+     <DESCRIPTION>ZEVO Contract-to-Payment OData V4</DESCRIPTION>
+     <LANGUAGE>EN</LANGUAGE>
+     <MASTER_LANGUAGE>EN</MASTER_LANGUAGE>
+     <SOURCE_URI>./zevo_c2p/source/main</SOURCE_URI>
+     <SOURCE_TYPE>ABAP_SOURCE</SOURCE_TYPE>
+     <SRVD_SOURCE_TYPE>S</SRVD_SOURCE_TYPE>
+     <SRVD_SOURCE_TYPE_DESC>Definition</SRVD_SOURCE_TYPE_DESC>
+    </METADATA>
+   </SRVD>
+  </asx:values>
+ </asx:abap>
+</abapGit>

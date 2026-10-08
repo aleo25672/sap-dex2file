@@ -1,0 +1,16 @@
+@EndUserText.label: 'ZEVO Contract-to-Payment OData V4'
+define service ZEVO_C2P {
+  expose ZEVO_C_PurchRequisitionItem as PurchaseRequisitionItem;
+  expose ZEVO_C_PurchaseContract as PurchaseContract;
+  expose ZEVO_C_PurchContractItem as PurchaseContractItem;
+  expose ZEVO_C_PurchContractHist as PurchaseContractHistory;
+  expose ZEVO_C_PurchaseOrder as PurchaseOrder;
+  expose ZEVO_C_PurchaseOrderItem as PurchaseOrderItem;
+  expose ZEVO_C_PurchaseOrderHist as PurchaseOrderHistory;
+  expose ZEVO_C_PurOrdAcctAssgmt as PurchaseOrderAccountAssignment;
+  expose ZEVO_C_SupplierInvoice as SupplierInvoice;
+  expose ZEVO_C_SupplierInvItem as SupplierInvoiceItem;
+  expose ZEVO_C_GoodsMovementDoc as GoodsMovementDocument;
+  expose ZEVO_C_BusinessPartner as BusinessPartner;
+  expose ZEVO_C_BPSupplier as BusinessPartnerSupplier;
+}

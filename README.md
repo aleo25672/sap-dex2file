@@ -1,11 +1,13 @@
 # sap-dex2file
 
-ABAP tools for **S/4HANA** to extract CDS data in two ways:
+ABAP tools for **S/4HANA** to extract CDS data in three ways:
 
 1. **File extract** — report `ZEVO_CDS_EXPLORER_2_FILE` discovers DEX / API CDS views and downloads **full**, **delta**, or **bounded (date/time window)** extracts to CSV/tab/AL11.
-2. **OData extract** — Gateway service with function imports `ExtractCds` / `GetCdsMetadata`: pass a CDS name + OData `$filter`, paginate with `Skip`/`Top`, optional caller-managed delta, return **JSON or XML**.
+2. **OData V2 extract** — Gateway service with function imports `ExtractCds` / `GetCdsMetadata`: pass a CDS name + OData `$filter`, paginate with `Skip`/`Top`, optional caller-managed delta, return **JSON or XML**.
+3. **OData V4 C2P** — typed service + binding `ZEVO_C2P` exposing the contract-to-payment CDS graph as real entity sets with `$expand` and caller-managed delta filters.
 
 > **Where to read the OData docs:** start at [OData CDS extract service](#odata-cds-extract-service) in this same README (full guide below). A copy also lives in [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md).  
+> **OData V4 C2P:** [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md).  
 > **Note:** abapGit only syncs `src/` — `README.md` / `docs/` are **not** imported into SAP; read them on GitHub or in a git clone.
 
 Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the generic OData extract now lives **in this repo**.
@@ -14,7 +16,8 @@ Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the ge
 
 | Section | What |
 |---------|------|
-| **[OData CDS extract service](#odata-cds-extract-service)** | `ExtractCds`, `GetCdsMetadata`, [URL cookbook](#url-cookbook-c_purchaseorderdex) (`C_PurchaseOrderDEX`), filter, paging, delta |
+| **[OData CDS extract service](#odata-cds-extract-service)** | V2 `ExtractCds`, `GetCdsMetadata`, [URL cookbook](#url-cookbook-c_purchaseorderdex) |
+| **[OData V4 C2P (`ZEVO_C2P`)](docs/ZEVO_C2P.md)** | Typed V4 Web API — 13 entity sets, navigations, delta filters |
 | [P2P call flow (Word)](docs/P2P_OData_Extract_Call_Flow.docx) | PO → Item → History → GR / IR extract sequence |
 | [Contract to Payment (Word)](docs/CONTRACT_TO_PAYMENT.docx) | Contract 4600000041 → PO 4500002146 → GR → invoice → payment 1500000000, with sample data |
 | [Order to Cash (Word)](docs/ORDER_TO_CASH.docx) | Sales order 6321 → delivery → goods issue → billing 0090005785 → receipt 1400000000, with sample data |
@@ -239,7 +242,11 @@ Until `$metadata` contains `ExtractCds`, extract URLs will keep returning 404/50
 
 #### Register & test
 
-1. **`/IWFND/MAINT_SERVICE`** — Add **`ZEVO_CDS_EXTRACT_SRV`** (system alias LOCAL / your GW alias), activate ICF node, assign role/auth as needed.
+1. **`/IWFND/MAINT_SERVICE`** — Add **`ZEVO_CDS_EXTRACT_SRV`** (system alias LOCAL / your GW alias).
+   - On the **Add Service** dialog, under **ICF Node**, select **SAP Gateway OData V2** (not **None**). That creates the SICF node so URLs under `/sap/opu/odata/sap/ZEVO_CDS_EXTRACT_SRV/` work.
+   - Package: use your local package (e.g. `$ZEVOLVER_DEX2F`) or **Local Object** as appropriate.
+   - Leave **Enable OAuth for Service** unchecked unless you intentionally use OAuth.
+   - After add: confirm the ICF node is active, assign role/auth as needed.
 2. Run the [URL cookbook](#url-cookbook-c_purchaseorderdex) below (all examples use **`C_PurchaseOrderDEX`**).
 
 #### Path B — optional note
@@ -895,7 +902,7 @@ ls = zevo_cl_odata_api=>extract_cds(
 | Symptom | Likely cause |
 |---------|----------------|
 | MPC/DPC activate errors on `/IWBEP/*` | Gateway not in system, or method names differ by SP — adjust MPC `DEFINE` |
-| `$metadata` 404 | Service not registered / ICF node inactive |
+| `$metadata` 404 | Service not registered / ICF node inactive / Add Service used **ICF Node = None** (use **SAP Gateway OData V2**) |
 | Entity not selectable | Wrong name, parameterized CDS, or no auth |
 | Empty `data` but `totalCount` > 0 | `Skip` beyond end |
 | Delta returns nothing | Wrong `DeltaSince` format, or no rows newer than watermark |
@@ -1048,8 +1055,13 @@ instead of "since the last run":
 | `ZEVO_CL_ODATA_API` | class | facade for `ExtractCds` / `GetCdsMetadata` |
 | `ZEVO_CL_ODATA_MPC` | class | SEGW helper: `DEFINE_MODEL` (no Gateway inheritance) |
 | `ZEVO_CL_ODATA_DPC` | class | SEGW helper: `EXECUTE_ACTION` (no Gateway inheritance) |
+| `ZEVO_C_*` (13) | CDS view entity | C2P projections over DEX/BP with associations |
+| `ZEVO_C_*_D` | DDLX | delta-field semantics for V4 filters |
+| `ZEVO_C2P` | service definition | exposes the 13 C2P entity sets |
+| `ZEVO_C2P` | service binding | OData V4 Web API (publish in ADT) |
 
-Full OData documentation: see **[OData CDS extract service](#odata-cds-extract-service)** above (also [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md)).
+Full OData documentation: see **[OData CDS extract service](#odata-cds-extract-service)** above (also [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md)).  
+OData V4 C2P: [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md).
 
 ## Using `ZEVO_CDS_EXPLORER_2_FILE`
 
