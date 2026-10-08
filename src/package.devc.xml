@@ -3,7 +3,7 @@
  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
   <asx:values>
    <DEVC>
-    <CTEXT>ZEVO CDS Explorer - file extract + OData extract</CTEXT>
+    <CTEXT>ZEVO CDS Explorer - file extract, OData V2 extract, OData V4 C2P</CTEXT>
    </DEVC>
   </asx:values>
  </asx:abap>

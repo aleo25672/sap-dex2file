@@ -1,0 +1,6 @@
+@Metadata.layer: #CUSTOMER
+annotate entity ZEVO_C_GoodsMovementDoc with
+{
+  @Semantics.businessDate.at: true
+  PostingDate;
+}

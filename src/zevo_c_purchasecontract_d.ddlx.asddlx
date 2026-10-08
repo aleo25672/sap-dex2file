@@ -1,0 +1,6 @@
+@Metadata.layer: #CUSTOMER
+annotate entity ZEVO_C_PurchaseContract with
+{
+  @Semantics.systemDateTime.lastChangedAt: true
+  LastChangeDateTime;
+}

@@ -1,0 +1,6 @@
+@Metadata.layer: #CUSTOMER
+annotate entity ZEVO_C_BusinessPartner with
+{
+  @Semantics.systemDate.lastChangedAt: true
+  LastChangeDate;
+}

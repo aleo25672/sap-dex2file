@@ -1,0 +1,6 @@
+@Metadata.layer: #CUSTOMER
+annotate entity ZEVO_C_PurOrdAcctAssgmt with
+{
+  @Semantics.systemDateTime.lastChangedAt: true
+  LastChangeDateTime;
+}
