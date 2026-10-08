@@ -38,7 +38,7 @@ define view ZEVO_C_PurOrdAcctAssgmt
       FunctionalArea,
       GoodsRecipientName,
       IsFinallyInvoiced,
-      cast( RealEstateObject as abap.char(8) ) as RealEstateObject,
+      cast( RealEstateObject as ZEVO_REAL_ESTATE_OBJECT preserving type ) as RealEstateObject,
       NetworkActivityInternalID,
       PartnerAccountNumber,
       JointVentureRecoveryCode,
