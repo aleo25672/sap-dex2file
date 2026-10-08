@@ -3,24 +3,95 @@
 @AbapCatalog.preserveKey: true
 @AccessControl.authorizationCheck: #CHECK
 @EndUserText.label: 'Purchase Order History (C2P)'
-@Metadata.ignorePropagatedAnnotations: false
 @ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #TRANSACTIONAL }
 define view ZEVO_C_PurchaseOrderHist
   as select from C_PurchaseOrderHistoryDEX
   association [1..1] to ZEVO_C_PurchaseOrderItem as _PurchaseOrderItem
-    on $projection.PurchaseOrder = _PurchaseOrderItem.PurchaseOrder
-       and $projection.PurchaseOrderItem = _PurchaseOrderItem.PurchaseOrderItem
+    on $projection.PurchaseOrder = _PurchaseOrderItem.PurchaseOrder and $projection.PurchaseOrderItem = _PurchaseOrderItem.PurchaseOrderItem
   association [0..*] to ZEVO_C_GoodsMovementDoc as _GoodsMovement
-    on $projection.PurchasingHistoryDocument = _GoodsMovement.MaterialDocument
-       and $projection.PurchasingHistoryDocumentYear = _GoodsMovement.MaterialDocumentYear
-       and $projection.PurchaseOrder = _GoodsMovement.PurchaseOrder
-       and $projection.PurchaseOrderItem = _GoodsMovement.PurchaseOrderItem
+    on $projection.PurchasingHistoryDocument = _GoodsMovement.MaterialDocument and $projection.PurchasingHistoryDocumentYear = _GoodsMovement.MaterialDocumentYear and $projection.PurchaseOrder = _GoodsMovement.PurchaseOrder and $projection.PurchaseOrderItem = _GoodsMovement.PurchaseOrderItem
   association [0..1] to ZEVO_C_SupplierInvoice as _SupplierInvoice
-    on $projection.PurchasingHistoryDocument = _SupplierInvoice.SupplierInvoice
-       and $projection.PurchasingHistoryDocumentYear = _SupplierInvoice.FiscalYear
+    on $projection.PurchasingHistoryDocument = _SupplierInvoice.SupplierInvoice and $projection.PurchasingHistoryDocumentYear = _SupplierInvoice.FiscalYear
 {
-  *,
-  _PurchaseOrderItem,
-  _GoodsMovement,
-  _SupplierInvoice
+  key PurchaseOrder,
+  key PurchaseOrderItem,
+  key AccountAssignmentNumber,
+  key PurchasingHistoryDocumentType,
+  key PurchasingHistoryDocumentYear,
+  key PurchasingHistoryDocument,
+  key PurchasingHistoryDocumentItem,
+      PurchasingHistoryCategory,
+      GoodsMovementType,
+      PostingDate,
+      Currency,
+      DebitCreditCode,
+      IsCompletelyDelivered,
+      ReferenceDocumentFiscalYear,
+      ReferenceDocument,
+      ReferenceDocumentItem,
+      Material,
+      Plant,
+      RvslofGoodsReceiptIsAllowed,
+      PricingDocument,
+      TaxCode,
+      DocumentDate,
+      InventoryValuationType,
+      DocumentReferenceID,
+      DeliveryQuantityUnit,
+      ManufacturerMaterial,
+      AccountingDocumentCreationDate,
+      Quantity,
+      PurOrdAmountInCompanyCodeCrcy,
+      PurchaseOrderAmount,
+      QtyInPurchaseOrderPriceUnit,
+      GRIRAcctClrgAmtInCoCodeCrcy,
+      GdsRcptBlkdStkQtyInOrdQtyUnit,
+      GdsRcptBlkdStkQtyInOrdPrcUnit,
+      InvoiceAmtInCoCodeCrcy,
+      ShipgInstrnSupplierCompliance,
+      InvoiceAmountInFrgnCurrency,
+      QuantityInDeliveryQtyUnit,
+      GRIRAcctClrgAmtInTransacCrcy,
+      QuantityInBaseUnit,
+      GRIRAcctClrgAmtInOrdTrnsacCrcy,
+      InvoiceAmtInPurOrdTransacCrcy,
+      VltdGdsRcptBlkdStkQtyInOrdUnit,
+      VltdGdsRcptBlkdQtyInOrdPrcUnit,
+      IsToBeAcceptedAtOrigin,
+      ExchangeRateDifferenceAmount,
+      ExchangeRate,
+      DeliveryDocument,
+      DeliveryDocumentItem,
+      OrderPriceUnit,
+      PurchaseOrderQuantityUnit,
+      BaseUnit,
+      DocumentCurrency,
+      CompanyCodeCurrency,
+      ProductTypeCode,
+      IsStatisticalItem,
+      IsReturnsItem,
+      GoodsReceiptIsExpected,
+      GoodsReceiptIsNonValuated,
+      IsFinallyInvoiced,
+      InvoiceIsExpected,
+      PurchaseContract,
+      PurchaseContractItem,
+      AccountAssignmentCategory,
+      PurchaseRequisition,
+      PurchaseRequisitionItem,
+      PurchaseOrderItemCategory,
+      ServicePerformer,
+      ProductGroup,
+      MultipleAcctAssgmtDistribution,
+      PurgDocumentItemDeletionCode,
+      Supplier,
+      PurchasingOrganization,
+      PurchasingGroup,
+      CompanyCode,
+      PurchasingDocumentDeletionCode,
+      ReleaseIsNotCompleted,
+      PurchasingCompletenessStatus,
+      _PurchaseOrderItem,
+      _GoodsMovement,
+      _SupplierInvoice
 }

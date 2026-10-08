@@ -3,13 +3,69 @@
 @AbapCatalog.preserveKey: true
 @AccessControl.authorizationCheck: #CHECK
 @EndUserText.label: 'Business Partner Supplier Role (C2P)'
-@Metadata.ignorePropagatedAnnotations: false
 @ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #MASTER }
 define view ZEVO_C_BPSupplier
   as select from I_BusinessPartnerSupplierDEX
   association [1..1] to ZEVO_C_BusinessPartner as _BusinessPartner
     on $projection.BusinessPartner = _BusinessPartner.BusinessPartner
 {
-  *,
-  _BusinessPartner
+  key BusinessPartner,
+  key Supplier,
+      BusinessPartnerUUID,
+      BusinessPartnerCategory,
+      SupplierAccountGroup,
+      TitleSupplier,
+      InternationalLocationNumber1,
+      InternationalLocationNumber2,
+      InternationalLocationNumber3,
+      ReferenceAccountGroup,
+      SupplierAlternativePayee,
+      Customer,
+      PostingIsBlocked,
+      PurchasingIsBlocked,
+      VATLiability,
+      PaymentIsBlockedForSupplier,
+      SuplrProofOfDelivRlvtCode,
+      BR_TaxIsSplit,
+      IsActiveEntity,
+      AuthorizationGroup,
+      IsToBeAcceptedAtOrigin,
+      SupplierCorporateGroup,
+      ResponsibleType,
+      FiscalAddress,
+      SupplierProcurementBlock,
+      DataExchangeInstructionKey,
+      BPIsEqualizationTaxSubject,
+      BRSpcfcTaxBasePercentageCode,
+      DataMediumExchangeIndicator,
+      TranspServiceAgentStstcGrp,
+      TaxNumberResponsible,
+      TaxNumberType,
+      SuplrQualityManagementSystem,
+      SuplrQltyInProcmtCertfnValidTo,
+      SupplierIsSubrangeRelevant,
+      TrainStationName,
+      AlternativePayeeIsAllowed,
+      PaytSlipWthRefSubscriber,
+      SupplierIsPlantRelevant,
+      FactoryCalendar,
+      SupplierPlant,
+      DeletionIndicator,
+      IsBusinessPurposeCompleted,
+      PaymentReason,
+      SupplierCentralDeletionIsBlock,
+      DataControllerSet,
+      DataController1,
+      DataController2,
+      DataController3,
+      DataController4,
+      DataController5,
+      DataController6,
+      DataController7,
+      DataController8,
+      DataController9,
+      DataController10,
+      IsOneTimeAccount,
+      BusinessPartnerPanNumber,
+      _BusinessPartner
 }

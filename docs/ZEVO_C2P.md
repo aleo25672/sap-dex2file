@@ -7,7 +7,7 @@ Typed **OData V4** service (CDS service definition + Web API binding) for the P2
 | Service definition | `ZEVO_C2P` |
 | Service binding | `ZEVO_C2P` (**OData V4 — Web API**) |
 | Style | Read-only typed entity sets + navigation |
-| CDS form | Classic `define view` (not view entity) so `SELECT *` from the SAP DEX/BP sources is valid |
+| CDS form | Classic `define view` with **explicit field lists** (no `SELECT *` — rejected on this stack even for `define view`) |
 | Out of scope (v1) | GL master / journal (`I_GLAccount*`), cost/profit center masters, product masters, ref-doc type texts |
 
 ---
