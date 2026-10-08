@@ -36,25 +36,25 @@ No purchase-requisition **header** CDS is used (none in the sample packs). PR is
 
 ## Navigations (`$expand`)
 
-Aligned with `docs/samples/*/correlation.json` (GL edges omitted).
+One-way associations only (avoids CDS activation cycles). Aligned with pack correlations; GL omitted.
 
 | From | Navigation | To |
 |------|------------|-----|
 | `PurchaseContract` | `_Item`, `_Supplier`, `_BPSupplier` | items / BP / BP-supplier |
-| `PurchaseContractItem` | `_Header`, `_History`, `_PurchaseOrderItem` | header / history / PO item |
-| `PurchaseContractHistory` | `_ContractItem`, `_PurchaseOrder`, `_PurchaseOrderItem` | item / release PO |
+| `PurchaseContractItem` | `_History`, `_PurchaseOrderItem` | history / PO item |
+| `PurchaseContractHistory` | `_PurchaseOrder`, `_PurchaseOrderItem` | release PO |
 | `PurchaseOrder` | `_Item`, `_Supplier`, `_BPSupplier` | items / BP / BP-supplier |
-| `PurchaseOrderItem` | `_Header`, `_History`, `_AccountAssignment`, `_PurchaseRequisitionItem`, `_PurchaseContractItem` | … |
-| `PurchaseOrderHistory` | `_PurchaseOrderItem`, `_GoodsMovement`, `_SupplierInvoice` | GR (hist type 1) / IR (hist type 2) |
-| `PurchaseOrderAccountAssignment` | `_PurchaseOrderItem` | PO item |
+| `PurchaseOrderItem` | `_History`, `_AccountAssignment` | history / acct assignment |
+| `PurchaseOrderHistory` | `_GoodsMovement`, `_SupplierInvoice` | GR (type 1) / IR (type 2) |
 | `PurchaseRequisitionItem` | `_PurchaseOrderItem`, `_PurchaseContractItem`, `_Supplier` | … |
 | `SupplierInvoice` | `_Item`, `_InvoicingParty` | items / BP |
-| `SupplierInvoiceItem` | `_Header`, `_PurchaseOrderItem`, `_GoodsMovement` | … |
-| `GoodsMovementDocument` | `_PurchaseOrderItem`, `_Supplier` | … |
+| `SupplierInvoiceItem` | `_GoodsMovement` | GR ref |
+| `GoodsMovementDocument` | `_Supplier` | BP |
 | `BusinessPartner` | `_BPSupplier` | supplier role |
-| `BusinessPartnerSupplier` | `_BusinessPartner` | BP |
 
-**Note:** History → goods movement / invoice associations are equality joins on document numbers. Clients should still filter `PurchasingHistoryDocumentType` (`1` = GR, `2` = IR) when expanding from history.
+**Note:** History → goods movement / invoice joins are on document numbers. Filter `PurchasingHistoryDocumentType` (`1` = GR, `2` = IR) when expanding from history.
+
+**Activation tip:** mass-activate all `ZEVO_C_*` together after pull. Goods movement keys are `MaterialDocumentKey1`…`Key6` (contiguous at the start of the select list).
 
 ---
 

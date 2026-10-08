@@ -1,25 +1,22 @@
 @AbapCatalog.sqlViewName: 'ZEVOCGOODSMVT'
 @AbapCatalog.compiler.compareFilter: true
-@AbapCatalog.preserveKey: true
 @AccessControl.authorizationCheck: #CHECK
 @EndUserText.label: 'Goods Movement Document (C2P)'
 @ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #TRANSACTIONAL }
 define view ZEVO_C_GoodsMovementDoc
   as select from I_GoodsMovementDocumentDEX
-  association [0..1] to ZEVO_C_PurchaseOrderItem as _PurchaseOrderItem
-    on $projection.PurchaseOrder = _PurchaseOrderItem.PurchaseOrder and $projection.PurchaseOrderItem = _PurchaseOrderItem.PurchaseOrderItem
   association [0..1] to ZEVO_C_BusinessPartner as _Supplier
     on $projection.Supplier = _Supplier.BusinessPartner
 {
-      MaterialDocumentKey1,
-      MaterialDocumentKey2,
-      MaterialDocumentKey3,
-      MaterialDocumentKey4,
-      MaterialDocumentKey5,
-      MaterialDocumentKey6,
-  key MaterialDocumentYear,
-  key MaterialDocument,
-  key MaterialDocumentItem,
+  key MaterialDocumentKey1,
+  key MaterialDocumentKey2,
+  key MaterialDocumentKey3,
+  key MaterialDocumentKey4,
+  key MaterialDocumentKey5,
+  key MaterialDocumentKey6,
+      MaterialDocumentYear,
+      MaterialDocument,
+      MaterialDocumentItem,
       StockIdentifyingMaterial,
       Plant,
       StockIdfgStorageLocation,
@@ -146,6 +143,5 @@ define view ZEVO_C_GoodsMovementDoc
       MaterialDocumentLine,
       MaterialDocumentParentLine,
       HierarchyNodeLevel,
-      _PurchaseOrderItem,
       _Supplier
 }
