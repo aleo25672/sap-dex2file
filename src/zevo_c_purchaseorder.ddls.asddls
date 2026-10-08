@@ -1,8 +1,11 @@
-@EndUserText.label: 'Purchase Order Header (C2P)'
+@AbapCatalog.sqlViewName: 'ZEVOCPURCHORD'
+@AbapCatalog.compiler.compareFilter: true
+@AbapCatalog.preserveKey: true
 @AccessControl.authorizationCheck: #CHECK
+@EndUserText.label: 'Purchase Order Header (C2P)'
 @Metadata.ignorePropagatedAnnotations: false
-@ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #MIXED }
-define view entity ZEVO_C_PurchaseOrder
+@ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #TRANSACTIONAL }
+define view ZEVO_C_PurchaseOrder
   as select from C_PurchaseOrderDEX
   association [0..*] to ZEVO_C_PurchaseOrderItem as _Item
     on $projection.PurchaseOrder = _Item.PurchaseOrder

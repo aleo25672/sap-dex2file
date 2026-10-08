@@ -1,5 +1,5 @@
 @Metadata.layer: #CUSTOMER
-annotate entity ZEVO_C_PurchRequisitionItem with
+annotate view ZEVO_C_PurchRequisitionItem with
 {
   @Semantics.systemDateTime.lastChangedAt: true
   LastChangeDateTime;

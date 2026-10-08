@@ -1,8 +1,11 @@
-@EndUserText.label: 'Purchase Contract History (C2P)'
+@AbapCatalog.sqlViewName: 'ZEVOCPURCHIST'
+@AbapCatalog.compiler.compareFilter: true
+@AbapCatalog.preserveKey: true
 @AccessControl.authorizationCheck: #CHECK
+@EndUserText.label: 'Purchase Contract History (C2P)'
 @Metadata.ignorePropagatedAnnotations: false
-@ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #MIXED }
-define view entity ZEVO_C_PurchContractHist
+@ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #TRANSACTIONAL }
+define view ZEVO_C_PurchContractHist
   as select from C_PurchaseContractHistoryDEX
   association [1..1] to ZEVO_C_PurchContractItem as _ContractItem
     on $projection.PurchaseContract = _ContractItem.PurchaseContract

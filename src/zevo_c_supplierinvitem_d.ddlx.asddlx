@@ -1,5 +1,5 @@
 @Metadata.layer: #CUSTOMER
-annotate entity ZEVO_C_SupplierInvItem with
+annotate view ZEVO_C_SupplierInvItem with
 {
   @Semantics.businessDate.at: true
   PostingDate;

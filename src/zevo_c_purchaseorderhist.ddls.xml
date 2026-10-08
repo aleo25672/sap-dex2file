@@ -6,7 +6,7 @@
     <DDLNAME>ZEVO_C_PurchaseOrderHist</DDLNAME>
     <DDLANGUAGE>E</DDLANGUAGE>
     <DDTEXT>Purchase Order History (C2P)</DDTEXT>
-    <SOURCE_TYPE>W</SOURCE_TYPE>
+    <SOURCE_TYPE>V</SOURCE_TYPE>
    </DDLS>
   </asx:values>
  </asx:abap>
