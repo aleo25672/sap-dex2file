@@ -1,6 +1,5 @@
 @AbapCatalog.sqlViewName: 'ZEVOCPURCHORD'
 @AbapCatalog.compiler.compareFilter: true
-@AbapCatalog.preserveKey: true
 @AccessControl.authorizationCheck: #CHECK
 @EndUserText.label: 'Purchase Order Header (C2P)'
 @ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #TRANSACTIONAL }

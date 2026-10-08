@@ -1,6 +1,5 @@
 @AbapCatalog.sqlViewName: 'ZEVOCBPARTNER'
 @AbapCatalog.compiler.compareFilter: true
-@AbapCatalog.preserveKey: true
 @AccessControl.authorizationCheck: #CHECK
 @EndUserText.label: 'Business Partner (C2P)'
 @ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #MASTER }

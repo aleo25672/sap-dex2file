@@ -1,6 +1,5 @@
 @AbapCatalog.sqlViewName: 'ZEVOCSUPPINV'
 @AbapCatalog.compiler.compareFilter: true
-@AbapCatalog.preserveKey: true
 @AccessControl.authorizationCheck: #CHECK
 @EndUserText.label: 'Supplier Invoice Header (C2P)'
 @ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #TRANSACTIONAL }
