@@ -110,17 +110,17 @@ GET {base}/PurchaseOrder
 ```http
 GET {base}/PurchaseOrder
   ?$filter=PurchaseOrder eq '4500002146'
-  &$expand=Item($expand=History,AccountAssignment),Supplier
+  &$expand=_Item($expand=_History,_AccountAssignment),_Supplier
 ```
 
-OData V4 navigation names in URLs are the **association aliases without underscore** or as defined in `$metadata` (SADL usually exposes `_Item` as `Item` or `_Item` — check `$metadata` after publish and use the NavigationProperty Name exactly).
+OData V4 navigation names match the CDS association aliases **with** the leading underscore (`_Item`, `_Supplier`, …). Confirm in `$metadata` (`NavigationProperty Name=`).
 
 ### Requisition → PO item
 
 ```http
 GET {base}/PurchaseRequisitionItem
   ?$filter=PurchaseRequisition eq '0010001624'
-  &$expand=PurchaseOrderItem
+  &$expand=_PurchaseOrderItem
 ```
 
 ### Contract → items → release history
@@ -128,7 +128,7 @@ GET {base}/PurchaseRequisitionItem
 ```http
 GET {base}/PurchaseContract
   ?$filter=PurchaseContract eq '4600000041'
-  &$expand=Item($expand=History,PurchaseOrderItem)
+  &$expand=_Item($expand=_History,_PurchaseOrderItem)
 ```
 
 ---
