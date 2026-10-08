@@ -1,6 +1,0 @@
-@Metadata.layer: #CUSTOMER
-annotate view ZEVO_C_BusinessPartner with
-{
-  @Semantics.systemDate.lastChangedAt: true
-  LastChangeDate;
-}

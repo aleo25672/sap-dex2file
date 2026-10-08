@@ -61,6 +61,7 @@ define view ZEVO_C_GoodsMovementDoc
       AccountingDocumentType,
       CreationDate,
       CreationTime,
+      @Semantics.businessDate.at: true
       PostingDate,
       FiscalYearVariant,
       FiscalYear,

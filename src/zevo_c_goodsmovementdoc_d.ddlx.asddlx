@@ -1,6 +1,0 @@
-@Metadata.layer: #CUSTOMER
-annotate view ZEVO_C_GoodsMovementDoc with
-{
-  @Semantics.businessDate.at: true
-  PostingDate;
-}

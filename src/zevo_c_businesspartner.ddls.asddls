@@ -20,6 +20,7 @@ define view ZEVO_C_BusinessPartner
       CreationDate,
       CreationTime,
       LastChangedByUser,
+      @Semantics.systemDate.lastChangedAt: true
       LastChangeDate,
       LastChangeTime,
       BusinessPartnerIsBlocked,

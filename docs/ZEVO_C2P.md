@@ -4,10 +4,10 @@ Typed **OData V4** service (CDS service definition + Web API binding) for the P2
 
 | Item | Value |
 |------|--------|
-| Service definition | `ZEVO_C2P` |
-| Service binding | `ZEVO_C2P` (**OData V4 — Web API**) |
+| Service definition | `ZEVO_C2P` (abapGit: `zevo_c2p.srvd.*`) |
+| Service binding | Create in **ADT** as `ZEVO_C2P` — **OData V4 — Web API** (not shipped via abapGit; hand-written SRVB XML fails import) |
 | Style | Read-only typed entity sets + navigation |
-| CDS form | Classic `define view` with **explicit field lists** (no `SELECT *` — rejected on this stack even for `define view`) |
+| CDS form | Classic `define view` with explicit field lists; delta field Semantics annotations are **inline** (no DDLX) |
 | Out of scope (v1) | GL master / journal (`I_GLAccount*`), cost/profit center masters, product masters, ref-doc type texts |
 
 ---
@@ -60,10 +60,10 @@ One-way associations only (avoids CDS activation cycles). Aligned with pack corr
 
 ## Activate & publish (ADT)
 
-1. **abapGit** — Pull this branch; activate all `ZEVO_C_*` DDLS / DDLX and `ZEVO_C2P` (SRVD).
-2. If `*` in a view entity fails to activate, the system is below S/4 2022 — expand the select list from the base CDS in ADT.
-3. If an association field name fails (e.g. `PrmthbReferenceDocumentFsclyr`), open the source CDS in ADT and correct the element name on `ZEVO_C_SupplierInvItem`.
-4. **Service Binding** — Create / open `ZEVO_C2P`:
+1. **abapGit** — Pull `main`; activate all 13 `ZEVO_C_*` DDLS (including `ZEVO_C_GoodsMovementDoc`) and service definition `ZEVO_C2P`.
+2. Mass-activate the views together (they reference each other).
+3. If SRVD import still fails: create service definition **`ZEVO_C2P`** in ADT and paste the expose list from `src/zevo_c2p.srvd.assrvd`.
+4. **Service Binding (ADT only)** — New → Service Binding **`ZEVO_C2P`**:
    - Binding type: **OData V4 - Web API**
    - Service definition: `ZEVO_C2P`
    - **Publish** the local service group
@@ -75,7 +75,7 @@ One-way associations only (avoids CDS activation cycles). Aligned with pack corr
 
 6. Authorizations — same CDS access control as the underlying SAP views (`#CHECK` on the Z wrappers).
 
-> The checked-in `zevo_c2p.srvb.xml` is a skeleton for the intended binding. **Publish** must be done in ADT / Gateway on the system; abapGit does not publish the service group.
+> DDLX (`*_D`) and `zevo_c2p.srvb.xml` are **not** in the repo — they broke abapGit import. Delta Semantics are inline on the views; create/publish the binding in ADT.
 
 ---
 
@@ -137,8 +137,8 @@ GET {base}/PurchaseContract
 
 True OData `$deltatoken` / CDC is **not** enabled on these consumption wrappers (no change-data-capture mapping to DB tables). v1 delta is **caller-managed**, same idea as V2 `DeltaSince`:
 
-| Entity set | Prefer filter field | DDLX annotation |
-|------------|--------------------|-----------------|
+| Entity set | Prefer filter field | Inline annotation on the view |
+|------------|--------------------|-------------------------------|
 | PO / contract / PR item / acct assignment | `LastChangeDateTime` | `@Semantics.systemDateTime.lastChangedAt` |
 | PO history / supplier invoice / goods movement | `PostingDate` | `@Semantics.businessDate.at` |
 | Business partner | `LastChangeDate` | `@Semantics.systemDate.lastChangedAt` |

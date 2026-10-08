@@ -36,6 +36,7 @@ define view ZEVO_C_SupplierInvItem
       UnplannedDeliveryCost,
       DocumentHeaderText,
       DocumentDate,
+      @Semantics.businessDate.at: true
       PostingDate,
       CompanyCode,
       SupplierInvoiceOrigin,

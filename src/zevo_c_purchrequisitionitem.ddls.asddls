@@ -88,6 +88,7 @@ define view ZEVO_C_PurchRequisitionItem
       TaxCode,
       PurchaseRequisitionIsFixed,
       AddressID,
+      @Semantics.systemDateTime.lastChangedAt: true
       LastChangeDateTime,
       ProcurementHubSourceSystem,
       ExtPurgOrgForPurg,
