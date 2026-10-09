@@ -22,7 +22,7 @@ Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the ge
 | [P2P call flow (Word)](docs/P2P_OData_Extract_Call_Flow.docx) | PO → Item → History → GR / IR extract sequence |
 | [Contract to Payment (Word)](docs/CONTRACT_TO_PAYMENT.docx) | Contract 4600000041 → PO 4500002146 → GR → invoice → payment 1500000000, with sample data |
 | [Contract to Payment ER (PowerPoint)](docs/CONTRACT_TO_PAYMENT_ER.pptx) | Entity diagram for that chain, including the journal payment |
-| [Requisition to Payment ER (PowerPoint)](docs/REQUISITION_TO_PAYMENT_ER.pptx) | Same diagram with the requisition in front, including the contract |
+| [Requisition to Payment ER (PowerPoint)](docs/REQUISITION_TO_PAYMENT_ER.pptx) | Requisition to payment, with and without a contract |
 | [Order to Cash (Word)](docs/ORDER_TO_CASH.docx) | Sales order 6321 → delivery → goods issue → billing 0090005785 → receipt 1400000000, with sample data |
 | [Requisition to Payment 1 (Word)](docs/REQUISITION_TO_PAYMENT_1.docx) | Requisition 10001624 → PO 4500002147 → invoice 5100001600 → payment 1500000001. No contract |
 | [Requisition to Payment 2 (Word)](docs/REQUISITION_TO_PAYMENT_2.docx) | Requisition 10001634 → contract 4600000042 → PO 4500002148 → invoice 5100001601 → payment 1500000002 |

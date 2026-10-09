@@ -45,7 +45,7 @@ def main() -> None:
         Inches(0.54),
         Inches(12.5),
         Inches(0.26),
-        "Entity diagram  ·  requisition 10001634  ·  contract 4600000042  ·  PO 4500002148  ·  payment 1500000002",
+        "From the requisition to the payment. Case 2 includes a contract: 10001634 → 4600000042 → 4500002148 → 1500000002",
         size=13,
         bold=False,
         color=MUTED,
@@ -104,21 +104,21 @@ def main() -> None:
     background.fill.solid()
     background.fill.fore_color.rgb = WHITE
     background.line.fill.background()
-    label(slide, Inches(0.4), Inches(0.2), Inches(12), Inches(0.34), "How the entities connect", size=26, color=NAVY)
+    label(slide, Inches(0.4), Inches(0.2), Inches(12), Inches(0.34), "Requisition to Payment — sample keys", size=26, color=NAVY)
     label(
         slide,
         Inches(0.4),
         Inches(0.54),
         Inches(12.4),
         Inches(0.26),
-        "With a contract: requisition 10001634, contract 4600000042, PO 4500002148. A direct requisition skips the contract.",
+        "Case 2 includes contract 4600000042. Case 1 has no contract: requisition 10001624 goes straight to PO 4500002147.",
         size=13,
         bold=False,
         color=MUTED,
     )
 
     rows = [
-        ["Requisition → contract", "Same text, supplier, plant, quantity. Status K", "0010001634 → 4600000042"],
+        ["Case 2. Requisition → contract", "Same text, supplier, plant, quantity. Status K", "0010001634 → 4600000042"],
         ["Contract item → history", "PurchaseContract + PurchaseContractItem", "ReleaseOrder 4500002148"],
         ["Contract item → PO item", "PurchaseContract + PurchaseContractItem", "4600000042 / 00010 and 00020"],
         ["History type 1 → goods receipt", "PurchasingHistoryDocument = MaterialDocument", "5000002952"],
@@ -126,8 +126,8 @@ def main() -> None:
         ["Material document → journal", "ReferenceDocumentType MKPF", "FI 5000000004"],
         ["Invoice → journal", "ReferenceDocumentType RMRP", "FI 5100000003"],
         ["Invoice journal → payment", "ClearingAccountingDocument", "KZ 1500000002, 221.00 USD"],
-        ["Direct requisition → PO", "PurchaseRequisition + Item on the PO item", "0010001624 → 4500002147"],
-        ["That invoice → payment", "ClearingAccountingDocument", "KZ 1500000001, 21,500.00 USD"],
+        ["Case 1. Requisition → PO", "PurchaseRequisition + Item on the PO item. No contract", "0010001624 → 4500002147"],
+        ["Case 1. Invoice → payment", "ClearingAccountingDocument", "KZ 1500000001, 21,500.00 USD"],
     ]
     table_shape = slide.shapes.add_table(1 + len(rows), 3, Inches(0.4), Inches(0.98), Inches(12.5), Inches(5.7))
     table = table_shape.table
