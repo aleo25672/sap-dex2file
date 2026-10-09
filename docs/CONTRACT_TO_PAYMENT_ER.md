@@ -1,5 +1,7 @@
 # Contract to Payment — entity diagram
 
+The same diagram as a PowerPoint: [`CONTRACT_TO_PAYMENT_ER.pptx`](CONTRACT_TO_PAYMENT_ER.pptx).
+
 Entity relationships for quantity contract **4600000041**, release purchase order **4500002146**, through goods receipt, supplier invoice, and payment **1500000000**. Field names are the CDS element names. Sample rows are in [`samples/c2p`](samples/c2p).
 
 `ZEVO_C2P` exposes the purchasing entities with `$expand` ([`ZEVO_C2P.md`](ZEVO_C2P.md)). The journal and the payment are in `I_GLAccountLineItemRawData`. That view is not an entity set on `ZEVO_C2P` v1. There is no separate payment CDS: a payment is a journal document of type `KZ`, linked by `ClearingAccountingDocument`.
