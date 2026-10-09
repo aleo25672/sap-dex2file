@@ -1,6 +1,6 @@
 # Contract to Payment — entity diagram
 
-The same diagram as a PowerPoint: [`CONTRACT_TO_PAYMENT_ER.pptx`](CONTRACT_TO_PAYMENT_ER.pptx).
+The same diagram as a PowerPoint: [`CONTRACT_TO_PAYMENT_ER.pptx`](CONTRACT_TO_PAYMENT_ER.pptx). The version that starts at the requisition, including the contract, is [`REQUISITION_TO_PAYMENT_ER.pptx`](REQUISITION_TO_PAYMENT_ER.pptx).
 
 Entity relationships for quantity contract **4600000041**, release purchase order **4500002146**, through goods receipt, supplier invoice, and payment **1500000000**. Field names are the CDS element names. Sample rows are in [`samples/c2p`](samples/c2p).
 
