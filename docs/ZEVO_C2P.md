@@ -34,6 +34,8 @@ No purchase-requisition **header** CDS is used (none in the sample packs). PR is
 
 ---
 
+Entity diagram for the sample chain, including the journal payment that is outside this service: [`CONTRACT_TO_PAYMENT_ER.md`](CONTRACT_TO_PAYMENT_ER.md).
+
 ## Navigations (`$expand`)
 
 One-way associations only (avoids CDS activation cycles). Aligned with pack correlations; GL omitted.
