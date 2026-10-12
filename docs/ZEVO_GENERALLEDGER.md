@@ -76,9 +76,11 @@ ReferenceDocumentType eq 'RMRP' and ReferenceDocument eq '{SupplierInvoice}'
 (+ CompanyCode, FiscalYear, SourceLedger)
 
 # Vendor line → payment / clearing
-ClearingAccountingDocument + ClearingDate (+ ClearingDocFiscalYear)
-→ re-query GLAccountLineItem by AccountingDocument = clearing doc
+ClearingJournalEntry + ClearingDate (+ ClearingJournalEntryFiscalYear)
+→ re-query GLAccountLineItem by AccountingDocument = clearing journal entry
 ```
+
+(Older names `ClearingAccountingDocument` / `ClearingDocFiscalYear` are deprecated on the SAP view.)
 
 `FinancialAccountType`: `K` = supplier, `D` = customer, `S` = G/L (and others per customizing).
 
@@ -117,6 +119,7 @@ Texts are customizing (`T003` / `T003T`). Entity set `AccountingDocType` exposes
 | `CreationDateTime` / `CreationDate` | Created watermark / filter |
 | `PostingDate` | Business period filter |
 | `ClearingDate` | When the open item was cleared |
+| `ClearingJournalEntry` | Payment / clearing journal entry number |
 | `FiscalYear`, `CompanyCode`, `SourceLedger` | Always filter these for volume (`SourceLedger` is the ledger key; expand `_Ledger` for master) |
 
 ```http
