@@ -7,8 +7,8 @@ ABAP tools for **S/4HANA** to extract CDS data in three ways:
 3. **OData V4 C2P** — typed service + binding `ZEVO_C2P` exposing the contract-to-payment CDS graph as real entity sets with `$expand` and caller-managed delta filters.
 4. **OData V4 General Ledger** — typed service + binding `ZEVO_GENERALLEDGER` for G/L line items and FI org masters (company, G/L account, cost/profit center, ledger, document type, house bank).
 
-> **Where to read the OData docs:** start at [OData CDS extract service](#odata-cds-extract-service) (V2), [OData V4 C2P service](#odata-v4-c2p-service-zevo_c2p), and [OData V4 General Ledger](docs/ZEVO_GENERALLEDGER.md).  
-> V2 copy: [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md). C2P reference: [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md).  
+> **Where to read the OData docs:** start at [OData CDS extract service](#odata-cds-extract-service) (V2), [OData V4 C2P service](#odata-v4-c2p-service-zevo_c2p), and [OData V4 General Ledger](#odata-v4-general-ledger-zevo_generalledger).  
+> V2 copy: [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md). C2P reference: [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md). GL reference: [`docs/ZEVO_GENERALLEDGER.md`](docs/ZEVO_GENERALLEDGER.md).  
 > **Note:** abapGit only syncs `src/` — `README.md` / `docs/` are **not** imported into SAP; read them on GitHub or in a git clone.
 
 Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the generic OData extract now lives **in this repo**.
@@ -20,7 +20,8 @@ Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the ge
 | **[OData CDS extract service](#odata-cds-extract-service)** | V2 `ExtractCds`, `GetCdsMetadata`, [URL cookbook](#url-cookbook-c_purchaseorderdex) |
 | **[OData V4 C2P (`ZEVO_C2P`)](#odata-v4-c2p-service-zevo_c2p)** | Typed V4 Web API — supported CDS, add-new steps, Eclipse/ADT publish |
 | [C2P reference](docs/ZEVO_C2P.md) | Navigations, delta fields, URL cookbook |
-| **[OData V4 General Ledger (`ZEVO_GENERALLEDGER`)](docs/ZEVO_GENERALLEDGER.md)** | G/L lines + FI masters; `RMRP` / `RE`/`KZ` meanings; delta filters |
+| **[OData V4 General Ledger (`ZEVO_GENERALLEDGER`)](#odata-v4-general-ledger-zevo_generalledger)** | G/L lines + FI masters, `$expand`, sample URLs, binding pitfalls |
+| [GL reference](docs/ZEVO_GENERALLEDGER.md) | `RMRP` / `RE`/`KZ` meanings, clearing joins, delta fields |
 | [P2P call flow (Word)](docs/P2P_OData_Extract_Call_Flow.docx) | PO → Item → History → GR / IR extract sequence |
 | [Contract to Payment (Word)](docs/CONTRACT_TO_PAYMENT.docx) | Contract 4600000041 → PO 4500002146 → GR → invoice → payment 1500000000, with sample data |
 | [Order to Cash (Word)](docs/ORDER_TO_CASH.docx) | Sales order 6321 → delivery → goods issue → billing 0090005785 → receipt 1400000000, with sample data |
@@ -1124,6 +1125,135 @@ After CDS changes: follow **[Add a new CDS](#add-a-new-cds-to-zevo_c2p)** (pull 
 
 ---
 
+## OData V4 General Ledger (`ZEVO_GENERALLEDGER`)
+
+Typed **OData V4 Web API** for G/L journal lines (`I_GLAccountLineItemRawData`) plus FI org masters. This is **not** `ZEVO_C2P` (P2P graph) and **not** the V2 `ExtractCds` wrapper. Supplier/customer **masters** stay in C2P / OTC; lines only carry `Supplier` / `Customer` IDs for an external tool to join.
+
+| Item | Value |
+|------|--------|
+| CDS projections | `ZEVO_FI_*` (classic `define view`, explicit fields, one-way associations) |
+| Service definition | `ZEVO_GENERALLEDGER` — in abapGit (`zevo_generalledger.srvd.*`) |
+| Service binding | **Create in ADT only** as `ZEVO_GENERALLEDGER` — **OData V4 - Web API** (not in abapGit) |
+| Reference | `RMRP`/`MKPF`, `RE`/`KZ`, clearing joins — [`docs/ZEVO_GENERALLEDGER.md`](docs/ZEVO_GENERALLEDGER.md) |
+
+Eclipse / abapGit / ADT habits match **[C2P](#odata-v4-c2p-service-zevo_c2p)** (sections A–C). Use binding name **`ZEVO_GENERALLEDGER`** and activate all **`ZEVO_FI_*`** + the SRVD.
+
+### Entity sets (8)
+
+| Entity set (OData) | Z CDS (`ZEVO_FI_*`) | Source CDS |
+|--------------------|---------------------|------------|
+| `GLAccountLineItem` | `ZEVO_FI_GLAcctLineItem` | `I_GLAccountLineItemRawData` |
+| `CompanyCode` | `ZEVO_FI_CompanyCode` | `I_CompanyCode` |
+| `GLAccount` | `ZEVO_FI_GLAccount` | `I_GLAccount` |
+| `CostCenter` | `ZEVO_FI_CostCenter` | `I_CostCenter` |
+| `ProfitCenter` | `ZEVO_FI_ProfitCenter` | `I_ProfitCenter` |
+| `Ledger` | `ZEVO_FI_Ledger` | `I_Ledger` |
+| `AccountingDocType` | `ZEVO_FI_AccountingDocType` | `I_AccountingDocumentType` |
+| `HouseBank` | `ZEVO_FI_HouseBank` | `I_HouseBank` |
+
+### Navigations from `GLAccountLineItem`
+
+| Nav | To | Join |
+|-----|----|------|
+| `_CompanyCode` | `CompanyCode` | `CompanyCode` |
+| `_GLAccount` | `GLAccount` | `CompanyCode` + `ChartOfAccounts` + `GLAccount` |
+| `_Ledger` | `Ledger` | `SourceLedger` = `Ledger` |
+| `_AccountingDocType` | `AccountingDocType` | `AccountingDocumentType` (BLART) |
+| `_HouseBank` | `HouseBank` | `CompanyCode` + `HouseBank` |
+
+`CostCenter` / `ProfitCenter` are **scalar fields only** on the line (no `$expand`) — masters are time-dependent, so a unique 0..1 FK is invalid for OData V4. Query their entity sets separately. No `_Supplier` / `_Customer` navs.
+
+### Service URL + metadata
+
+```text
+https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_generalledger/srvd_a2x/sap/zevo_generalledger/0001/
+https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_generalledger/srvd_a2x/sap/zevo_generalledger/0001/$metadata
+```
+
+- `GET {base}/` → service document (entity-set list JSON)
+- `GET {base}/$metadata` → full EDMX (XML). Use `Accept: application/xml` if a client defaults to JSON.
+
+### Sample queries
+
+Always filter `CompanyCode` + `FiscalYear` + `SourceLedger` for volume. `SourceLedger` is the ledger key on the line (e.g. `0L`); expand `_Ledger` for the master.
+
+**Lines by company / FY / ledger / posting-date range + masters:**
+
+```http
+GET https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_generalledger/srvd_a2x/sap/zevo_generalledger/0001/GLAccountLineItem
+  ?$filter=CompanyCode eq '1710' and FiscalYear eq '2026' and SourceLedger eq '0L'
+    and PostingDate ge 2026-10-01 and PostingDate le 2026-10-31
+  &$expand=_GLAccount,_CompanyCode,_Ledger,_AccountingDocType
+  &$top=100
+```
+
+One-line (browser / Postman):
+
+```text
+https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_generalledger/srvd_a2x/sap/zevo_generalledger/0001/GLAccountLineItem?$filter=CompanyCode%20eq%20'1710'%20and%20FiscalYear%20eq%20'2026'%20and%20SourceLedger%20eq%20'0L'%20and%20PostingDate%20ge%202026-10-01%20and%20PostingDate%20le%202026-10-31&$expand=_GLAccount,_CompanyCode,_Ledger,_AccountingDocType&$top=100
+```
+
+**Fiscal period** (e.g. October = `010`):
+
+```http
+GET {base}/GLAccountLineItem
+  ?$filter=CompanyCode eq '1710' and FiscalYear eq '2026' and SourceLedger eq '0L'
+    and FiscalPeriod eq '010'
+  &$top=100
+```
+
+**Ledger master / G/L account lookup / delta / invoice → FI:**
+
+```http
+GET {base}/Ledger
+GET {base}/Ledger('0L')
+
+GET {base}/GLAccount
+  ?$filter=CompanyCode eq '1710' and ChartOfAccounts eq 'YCOA' and GLAccount eq '0011002000'
+
+GET {base}/GLAccountLineItem
+  ?$filter=CompanyCode eq '1710' and FiscalYear eq '2026' and SourceLedger eq '0L'
+    and LastChangeDateTime gt 2026-10-12T00:00:00Z
+  &$orderby=LastChangeDateTime asc
+
+GET {base}/GLAccountLineItem
+  ?$filter=CompanyCode eq '1710' and FiscalYear eq '2026' and SourceLedger eq '0L'
+    and ReferenceDocumentType eq 'RMRP' and ReferenceDocument eq '5100001601'
+```
+
+SADL keeps the CDS underscore — `$expand=_GLAccount` works; `$expand=GLAccount` does not. Optional: add `_HouseBank` when the line has a house bank.
+
+### Design choices that keep V4 binding green
+
+Already on `main`:
+
+| Topic | What we do | Why |
+|-------|------------|-----|
+| CDS form | Classic `define view` + explicit fields (no `SELECT *`) | Activation / abapGit on this stack |
+| `GLAccount` / `OffsettingAccount` | `cast(… as abap.char(10))` | Avoid search-help **SAKO** without company context |
+| Ledger on the line | Key `SourceLedger` only; nav `_Ledger` | No direct `Ledger` column on `I_GLAccountLineItemRawData` here |
+| `GLAccount` keys | `CompanyCode` + `ChartOfAccounts` + `GLAccount` | `I_GLAccount` is company-code dependent; chart+account alone breaks `$expand` (0..1 multiplicity) |
+| `GLAccountType` | Alias `GLAccountTypeCode` | EDM clash with entity type `GLAccountType` (`/IWBEP/CM_V4_MED/082`) |
+| Clearing / WBS | `ClearingJournalEntry`, `ClearingJournalEntryFiscalYear`, `WBSElementInternalID` | Successors to deprecated `ClearingAccountingDocument` / `ClearingDocFiscalYear` / `WBSElement` |
+| Cost / profit center | Fields only — no `_CostCenter` / `_ProfitCenter` | Time-dependent masters → non-unique FK for OData V4 |
+| Navigation in URLs | `$expand=_GLAccount`, `_CompanyCode`, … | SADL keeps the CDS underscore |
+
+### Troubleshooting (GL binding / metadata / expand)
+
+| Symptom | Fix |
+|---------|-----|
+| `$metadata`: *Property `GLAccountType` has the same EDM name as entity type `GLAccountType`* | Pull latest — property is `GLAccountTypeCode` |
+| `$expand`: *More than one item returned for navigation property with 0-to-1 multiplicity* | Pull latest — `GLAccount` keys include `CompanyCode`; or omit `$expand=_GLAccount` until republished |
+| Binding: non-unique CostCenter / ProfitCenter FK | Pull latest — those navs were removed; use scalar fields + entity sets |
+| Activation: unknown `Ledger` column | Use `SourceLedger` + `_Ledger` |
+| Activation: deprecated clearing / WBS elements | Use `ClearingJournalEntry*` + `WBSElementInternalID` |
+| New fields missing after pull | Activate `ZEVO_FI_*` + SRVD + binding → **Unpublish → Publish** → reload `$metadata` |
+| abapGit wants to **Delete local** SRVB / G4BA `ZEVO_GENERALLEDGER` | **Uncheck** — binding stays local |
+
+After CDS changes: pull → activate → republish binding → `$metadata`. More domain detail (`RMRP`/`RE`/`KZ`, clearing → payment): [`docs/ZEVO_GENERALLEDGER.md`](docs/ZEVO_GENERALLEDGER.md).
+
+---
+
 ## Source types
 
 On the selection screen, **Source type** chooses what to discover:
@@ -1258,7 +1388,8 @@ instead of "since the last run":
 | `ZEVO_GENERALLEDGER` | service binding | create + publish in ADT (OData V4 Web API; not in abapGit) |
 
 Full OData documentation: see **[OData CDS extract service](#odata-cds-extract-service)** above (also [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md)).  
-OData V4 C2P: [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md).
+OData V4 C2P: **[section above](#odata-v4-c2p-service-zevo_c2p)** · [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md).  
+OData V4 General Ledger: **[section above](#odata-v4-general-ledger-zevo_generalledger)** · [`docs/ZEVO_GENERALLEDGER.md`](docs/ZEVO_GENERALLEDGER.md).
 
 ## Using `ZEVO_CDS_EXPLORER_2_FILE`
 
@@ -1476,7 +1607,7 @@ Activate in this order (or select all and mass-activate so dependencies resolve)
 3. `ZEVO_CDS_EXPLORER_2_FILE` (report).
 4. For **OData V2** (`ExtractCds`): register/activate per **[OData CDS extract service](#odata-cds-extract-service)** above.
 5. For **OData V4 C2P**: activate all `ZEVO_C_*` DDLS + service definition `ZEVO_C2P`, then create/publish the binding in **Eclipse ADT** per **[OData V4 C2P service](#odata-v4-c2p-service-zevo_c2p)** above.
-6. For **OData V4 General Ledger**: activate all `ZEVO_FI_*` DDLS + service definition `ZEVO_GENERALLEDGER`, then create/publish binding **`ZEVO_GENERALLEDGER`** (OData V4 Web API) per [`docs/ZEVO_GENERALLEDGER.md`](docs/ZEVO_GENERALLEDGER.md).
+6. For **OData V4 General Ledger**: activate all `ZEVO_FI_*` DDLS + service definition `ZEVO_GENERALLEDGER`, then create/publish binding **`ZEVO_GENERALLEDGER`** (OData V4 Web API) per **[OData V4 General Ledger](#odata-v4-general-ledger-zevo_generalledger)** above.
 
 After a rename from older `Z_CDS_*` / `ZCL_DXF_*` / `ZDXF_*` objects: delete the old objects (or let abapGit remove them), then pull/activate the `ZEVO*` ones.
 

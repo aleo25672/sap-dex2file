@@ -71,7 +71,7 @@ GET {base}/GLAccount
 
 ## Activate & publish (ADT)
 
-Same pattern as C2P — see root README [OData V4 C2P](../README.md#odata-v4-c2p-service-zevo_c2p) for Eclipse/abapGit habits.
+Same pattern as C2P — see root README **[OData V4 General Ledger](../README.md#odata-v4-general-ledger-zevo_generalledger)** for entity sets, sample URLs, design choices, and troubleshooting (Eclipse/abapGit habits match [C2P](../README.md#odata-v4-c2p-service-zevo_c2p)).
 
 1. abapGit pull `main` — activate all `ZEVO_FI_*` + SRVD `ZEVO_GENERALLEDGER`.
 2. **Do not** delete local SRVB/G4BA if you recreate the binding later.
