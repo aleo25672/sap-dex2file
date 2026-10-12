@@ -930,11 +930,11 @@ ls = zevo_cl_odata_api=>extract_cds(
 
 ## OData V4 C2P service (`ZEVO_C2P`)
 
-Typed **OData V4 Web API** for the contract-to-payment / P2P graph (13 entity sets + `$expand`). This is **not** the V2 `ExtractCds` wrapper.
+Typed **OData V4 Web API** for the contract-to-payment / P2P graph (14 entity sets + `$expand`). This is **not** the V2 `ExtractCds` wrapper.
 
 | Item | Value |
 |------|--------|
-| CDS projections | 13 × `ZEVO_C_*` (classic `define view`, explicit fields, one-way associations) |
+| CDS projections | 14 × `ZEVO_C_*` (classic `define view`, explicit fields, one-way associations) |
 | Service definition | `ZEVO_C2P` — in abapGit (`zevo_c2p.srvd.srvdsrv` + `.xml`) |
 | Service binding | **Create in ADT only** as `ZEVO_C2P` — **OData V4 - Web API** (not shipped via abapGit; hand-written SRVB XML fails import) |
 | Reference | Entity sets, navigations, delta — [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md) |
@@ -962,7 +962,7 @@ Service definition / binding / CDS activation for V4 is done in **ABAP Developme
 1. In SAP GUI (or ADT), open **abapGit** on the package that already holds ZEVO objects (e.g. `$ZEVO` / `$ZEVOLVER_DEX2F`).
 2. **Pull** branch **`main`** from `https://github.com/aleo25672/sap-dex2file.git`.
 3. Activate (mass-activate is fine; resolve cycles by activating the whole `ZEVO_C_*` set together):
-   1. All **`ZEVO_C_*`** DDLS (13 views).
+   1. All **`ZEVO_C_*`** DDLS (14 views).
    2. Service definition **`ZEVO_C2P`**.
 4. If SRVD import fails: in ADT create service definition **`ZEVO_C2P`** and paste the expose list from [`src/zevo_c2p.srvd.srvdsrv`](src/zevo_c2p.srvd.srvdsrv).
 
@@ -1026,6 +1026,13 @@ GET .../PurchaseOrder
   ?$filter=CreationDate ge 2026-10-01
   &$expand=_Item($expand=_History,_AccountAssignment),_Supplier
   &$orderby=CreationDate desc
+```
+
+Supplier bank details (track changes via `BPBankDetailsChangeDate`):
+
+```http
+GET .../BusinessPartner?$filter=BusinessPartner eq '0001000559'&$expand=_Bank
+GET .../BusinessPartnerBank?$filter=BPBankDetailsChangeDate ge 2026-10-01
 ```
 
 More examples (delta, contract, PR): [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md).
@@ -1171,8 +1178,8 @@ instead of "since the last run":
 | `ZEVO_CL_ODATA_API` | class | facade for `ExtractCds` / `GetCdsMetadata` |
 | `ZEVO_CL_ODATA_MPC` | class | SEGW helper: `DEFINE_MODEL` (no Gateway inheritance) |
 | `ZEVO_CL_ODATA_DPC` | class | SEGW helper: `EXECUTE_ACTION` (no Gateway inheritance) |
-| `ZEVO_C_*` (13) | CDS view (`define view`) | C2P projections over DEX/BP with associations |
-| `ZEVO_C2P` | service definition | exposes the 13 C2P entity sets |
+| `ZEVO_C_*` (14) | CDS view (`define view`) | C2P projections over DEX/BP (incl. bank) with associations |
+| `ZEVO_C2P` | service definition | exposes the 14 C2P entity sets |
 | `ZEVO_C2P` | service binding | create + publish in ADT (OData V4 Web API; not in abapGit) |
 
 Full OData documentation: see **[OData CDS extract service](#odata-cds-extract-service)** above (also [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md)).  

@@ -7,6 +7,8 @@ define view ZEVO_C_BusinessPartner
   as select from I_BusinessPartner
   association [0..*] to ZEVO_C_BPSupplier as _BPSupplier
     on $projection.BusinessPartner = _BPSupplier.BusinessPartner
+  association [0..*] to ZEVO_C_BPBank as _Bank
+    on $projection.BusinessPartner = _Bank.BusinessPartner
 {
   key BusinessPartner,
       BusinessPartnerCategory,
@@ -102,5 +104,6 @@ define view ZEVO_C_BusinessPartner
       BPDataControllerIsNotRequired,
       TrdCmplncLicenseIsMilitarySctr,
       TrdCmplncLicenseIsNuclearSctr,
-      _BPSupplier
+      _BPSupplier,
+      _Bank
 }

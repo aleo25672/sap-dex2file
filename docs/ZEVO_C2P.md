@@ -12,7 +12,7 @@ Typed **OData V4** service (CDS service definition + Web API binding) for the P2
 
 ---
 
-## Entity sets (13)
+## Entity sets (14)
 
 | Entity set (OData) | CDS view entity | Source CDS |
 |--------------------|-----------------|------------|
@@ -29,6 +29,7 @@ Typed **OData V4** service (CDS service definition + Web API binding) for the P2
 | `GoodsMovementDocument` | `ZEVO_C_GoodsMovementDoc` | `I_GoodsMovementDocumentDEX` |
 | `BusinessPartner` | `ZEVO_C_BusinessPartner` | `I_BusinessPartner` |
 | `BusinessPartnerSupplier` | `ZEVO_C_BPSupplier` | `I_BusinessPartnerSupplierDEX` |
+| `BusinessPartnerBank` | `ZEVO_C_BPBank` | `I_BusinessPartnerBank` |
 
 No purchase-requisition **header** CDS is used (none in the sample packs). PR is item-only.
 
@@ -50,7 +51,7 @@ One-way associations only (avoids CDS activation cycles). Aligned with pack corr
 | `SupplierInvoice` | `_Item`, `_InvoicingParty` | items / BP |
 | `SupplierInvoiceItem` | `_GoodsMovement` | GR ref |
 | `GoodsMovementDocument` | `_Supplier` | BP |
-| `BusinessPartner` | `_BPSupplier` | supplier role |
+| `BusinessPartner` | `_BPSupplier`, `_Bank` | supplier role / bank details |
 
 **Note:** History → goods movement / invoice joins are on document numbers. Filter `PurchasingHistoryDocumentType` (`1` = GR, `2` = IR) when expanding from history.
 
@@ -66,7 +67,7 @@ End-to-end setup (Eclipse install, CAL/`10.0.0.19`, abapGit pull, binding activa
 
 Short checklist:
 
-1. **abapGit** — Pull `main`; mass-activate all 13 `ZEVO_C_*` DDLS + service definition `ZEVO_C2P`.
+1. **abapGit** — Pull `main`; mass-activate all 14 `ZEVO_C_*` DDLS + service definition `ZEVO_C2P`.
 2. If SRVD import fails: create `ZEVO_C2P` in ADT and paste from `src/zevo_c2p.srvd.srvdsrv`.
 3. **ADT** — New Service Binding `ZEVO_C2P`, type **OData V4 - Web API**, definition `ZEVO_C2P` → **Activate** → **Publish**.
 4. URL shape: `/sap/opu/odata4/sap/zevo_c2p/srvd_a2x/sap/zevo_c2p/0001/`
@@ -127,6 +128,20 @@ GET {base}/PurchaseContract
   &$expand=_Item($expand=_History,_PurchaseOrderItem)
 ```
 
+### Supplier bank details (change over time)
+
+```http
+GET {base}/BusinessPartner
+  ?$filter=BusinessPartner eq '0001000559'
+  &$expand=_Bank,_BPSupplier
+
+GET {base}/BusinessPartnerBank
+  ?$filter=BPBankDetailsChangeDate ge 2026-10-01
+  &$orderby=BPBankDetailsChangeDate desc
+```
+
+`BPBankDetailsChangeDate` is the bank-details change date from `BUT0BK` (day granularity). Also use `ValidityStartDate` / `ValidityEndDate` for effective periods. There is no timestamp `LastChangeDateTime` on this CDS — for finer detection, snapshot-compare IBAN / account / bank key per `BusinessPartner` + `BankIdentification`.
+
 ---
 
 ## Delta protocol (v1)
@@ -138,6 +153,7 @@ True OData `$deltatoken` / CDC is **not** enabled on these consumption wrappers 
 | PO / contract / PR item / acct assignment | `LastChangeDateTime` | `@Semantics.systemDateTime.lastChangedAt` |
 | PO history / supplier invoice / goods movement | `PostingDate` | `@Semantics.businessDate.at` |
 | Business partner | `LastChangeDate` | `@Semantics.systemDate.lastChangedAt` |
+| Business partner bank | `BPBankDetailsChangeDate` | `@Semantics.businessDate.at` |
 | Contract history / BP supplier | _(none)_ | full or key-based sync |
 
 Example — PO changes since a watermark:
