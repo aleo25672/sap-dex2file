@@ -10,12 +10,6 @@ define view ZEVO_FI_GLAcctLineItem
   association [0..1] to ZEVO_FI_GLAccount as _GLAccount
     on $projection.ChartOfAccounts = _GLAccount.ChartOfAccounts
    and $projection.GLAccount = _GLAccount.GLAccount
-  association [0..*] to ZEVO_FI_CostCenter as _CostCenter
-    on $projection.ControllingArea = _CostCenter.ControllingArea
-   and $projection.CostCenter = _CostCenter.CostCenter
-  association [0..*] to ZEVO_FI_ProfitCenter as _ProfitCenter
-    on $projection.ControllingArea = _ProfitCenter.ControllingArea
-   and $projection.ProfitCenter = _ProfitCenter.ProfitCenter
   association [0..1] to ZEVO_FI_Ledger as _Ledger
     on $projection.SourceLedger = _Ledger.Ledger
   association [0..1] to ZEVO_FI_AccountingDocType as _AccountingDocType
@@ -75,8 +69,6 @@ define view ZEVO_FI_GLAcctLineItem
       WBSElement,
       _CompanyCode,
       _GLAccount,
-      _CostCenter,
-      _ProfitCenter,
       _Ledger,
       _AccountingDocType,
       _HouseBank

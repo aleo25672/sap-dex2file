@@ -32,11 +32,11 @@ This is **not** `ZEVO_C2P` (P2P graph) and **not** the V2 `ExtractCds` wrapper. 
 |-----|-----|
 | `_CompanyCode` | company master |
 | `_GLAccount` | G/L account (chart + account) |
-| `_CostCenter` | cost center (may be 0..* by validity) |
-| `_ProfitCenter` | profit center (may be 0..* by validity) |
-| `_Ledger` | ledger |
+| `_Ledger` | ledger (`SourceLedger`) |
 | `_AccountingDocType` | journal document type (BLART) |
 | `_HouseBank` | house bank (company + house bank) |
+
+`CostCenter` / `ProfitCenter` are **fields only** on the line (no `$expand`). Their entity sets stay in the service for separate lookup — time-dependent keys make a unique FK association invalid for OData V4 (`@ObjectModel.foreignKey.association`).
 
 No `_Supplier` / `_Customer` — use C2P/OTC with the ID fields on the line.
 
@@ -123,8 +123,11 @@ Texts are customizing (`T003` / `T003T`). Entity set `AccountingDocType` exposes
 GET {base}/GLAccountLineItem
   ?$filter=CompanyCode eq '1710' and FiscalYear eq '2026' and SourceLedger eq '0L'
     and PostingDate ge 2026-10-01 and PostingDate le 2026-10-31
-  &$expand=_GLAccount,_CompanyCode,_CostCenter,_ProfitCenter
+  &$expand=_GLAccount,_CompanyCode,_Ledger,_AccountingDocType
   &$top=100
+
+GET {base}/CostCenter
+  ?$filter=ControllingArea eq 'A000' and CostCenter eq '0017100100'
 
 GET {base}/GLAccountLineItem
   ?$filter=CompanyCode eq '1710' and FiscalYear eq '2026' and SourceLedger eq '0L'
