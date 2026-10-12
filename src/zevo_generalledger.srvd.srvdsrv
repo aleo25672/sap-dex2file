@@ -1,0 +1,11 @@
+@EndUserText.label: 'ZEVO General Ledger OData V4'
+define service ZEVO_GENERALLEDGER {
+  expose ZEVO_FI_GLAcctLineItem as GLAccountLineItem;
+  expose ZEVO_FI_CompanyCode as CompanyCode;
+  expose ZEVO_FI_GLAccount as GLAccount;
+  expose ZEVO_FI_CostCenter as CostCenter;
+  expose ZEVO_FI_ProfitCenter as ProfitCenter;
+  expose ZEVO_FI_Ledger as Ledger;
+  expose ZEVO_FI_AccountingDocType as AccountingDocType;
+  expose ZEVO_FI_HouseBank as HouseBank;
+}
