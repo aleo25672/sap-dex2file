@@ -5,9 +5,10 @@ ABAP tools for **S/4HANA** to extract CDS data in three ways:
 1. **File extract** — report `ZEVO_CDS_EXPLORER_2_FILE` discovers DEX / API CDS views and downloads **full**, **delta**, or **bounded (date/time window)** extracts to CSV/tab/AL11.
 2. **OData V2 extract** — Gateway service with function imports `ExtractCds` / `GetCdsMetadata`: pass a CDS name + OData `$filter`, paginate with `Skip`/`Top`, optional caller-managed delta, return **JSON or XML**.
 3. **OData V4 C2P** — typed service + binding `ZEVO_C2P` exposing the contract-to-payment CDS graph as real entity sets with `$expand` and caller-managed delta filters.
+4. **OData V4 General Ledger** — typed service + binding `ZEVO_GENERALLEDGER` for G/L line items and FI org masters (company, G/L account, cost/profit center, ledger, document type, house bank).
 
-> **Where to read the OData docs:** start at [OData CDS extract service](#odata-cds-extract-service) (V2) and [OData V4 C2P service](#odata-v4-c2p-service-zevo_c2p) (Eclipse/ADT + publish) in this same README.  
-> V2 copy: [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md). V4 entity reference: [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md).  
+> **Where to read the OData docs:** start at [OData CDS extract service](#odata-cds-extract-service) (V2), [OData V4 C2P service](#odata-v4-c2p-service-zevo_c2p), and [OData V4 General Ledger](docs/ZEVO_GENERALLEDGER.md).  
+> V2 copy: [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md). C2P reference: [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md).  
 > **Note:** abapGit only syncs `src/` — `README.md` / `docs/` are **not** imported into SAP; read them on GitHub or in a git clone.
 
 Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the generic OData extract now lives **in this repo**.
@@ -19,6 +20,7 @@ Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the ge
 | **[OData CDS extract service](#odata-cds-extract-service)** | V2 `ExtractCds`, `GetCdsMetadata`, [URL cookbook](#url-cookbook-c_purchaseorderdex) |
 | **[OData V4 C2P (`ZEVO_C2P`)](#odata-v4-c2p-service-zevo_c2p)** | Typed V4 Web API — supported CDS, add-new steps, Eclipse/ADT publish |
 | [C2P reference](docs/ZEVO_C2P.md) | Navigations, delta fields, URL cookbook |
+| **[OData V4 General Ledger (`ZEVO_GENERALLEDGER`)](docs/ZEVO_GENERALLEDGER.md)** | G/L lines + FI masters; `RMRP` / `RE`/`KZ` meanings; delta filters |
 | [P2P call flow (Word)](docs/P2P_OData_Extract_Call_Flow.docx) | PO → Item → History → GR / IR extract sequence |
 | [Contract to Payment (Word)](docs/CONTRACT_TO_PAYMENT.docx) | Contract 4600000041 → PO 4500002146 → GR → invoice → payment 1500000000, with sample data |
 | [Order to Cash (Word)](docs/ORDER_TO_CASH.docx) | Sales order 6321 → delivery → goods issue → billing 0090005785 → receipt 1400000000, with sample data |
@@ -1251,6 +1253,9 @@ instead of "since the last run":
 | `ZEVO_C_*` (14) | CDS view (`define view`) | C2P projections over DEX/BP (incl. bank) with associations |
 | `ZEVO_C2P` | service definition | exposes the 14 C2P entity sets |
 | `ZEVO_C2P` | service binding | create + publish in ADT (OData V4 Web API; not in abapGit) |
+| `ZEVO_FI_*` | CDS view (`define view`) | General Ledger line + FI org masters |
+| `ZEVO_GENERALLEDGER` | service definition | exposes GL line item + FI masters |
+| `ZEVO_GENERALLEDGER` | service binding | create + publish in ADT (OData V4 Web API; not in abapGit) |
 
 Full OData documentation: see **[OData CDS extract service](#odata-cds-extract-service)** above (also [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md)).  
 OData V4 C2P: [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md).
@@ -1471,6 +1476,7 @@ Activate in this order (or select all and mass-activate so dependencies resolve)
 3. `ZEVO_CDS_EXPLORER_2_FILE` (report).
 4. For **OData V2** (`ExtractCds`): register/activate per **[OData CDS extract service](#odata-cds-extract-service)** above.
 5. For **OData V4 C2P**: activate all `ZEVO_C_*` DDLS + service definition `ZEVO_C2P`, then create/publish the binding in **Eclipse ADT** per **[OData V4 C2P service](#odata-v4-c2p-service-zevo_c2p)** above.
+6. For **OData V4 General Ledger**: activate all `ZEVO_FI_*` DDLS + service definition `ZEVO_GENERALLEDGER`, then create/publish binding **`ZEVO_GENERALLEDGER`** (OData V4 Web API) per [`docs/ZEVO_GENERALLEDGER.md`](docs/ZEVO_GENERALLEDGER.md).
 
 After a rename from older `Z_CDS_*` / `ZCL_DXF_*` / `ZDXF_*` objects: delete the old objects (or let abapGit remove them), then pull/activate the `ZEVO*` ones.
 

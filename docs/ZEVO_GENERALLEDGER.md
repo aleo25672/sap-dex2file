@@ -1,0 +1,158 @@
+# ZEVO_GENERALLEDGER — General Ledger service
+
+Typed **OData V4** service for G/L line items (`I_GLAccountLineItemRawData`) plus **FI organizational masters** (company, G/L account, cost/profit center, ledger, document type, house bank).
+
+This is **not** `ZEVO_C2P` (P2P graph) and **not** the V2 `ExtractCds` wrapper. Supplier/customer **masters** stay in C2P / OTC; lines only carry `Supplier` / `Customer` IDs for the external tool to join.
+
+| Item | Value |
+|------|--------|
+| Service definition | `ZEVO_GENERALLEDGER` (`zevo_generalledger.srvd.*`) |
+| Service binding | Create in **ADT** as `ZEVO_GENERALLEDGER` — **OData V4 — Web API** (not in abapGit) |
+| CDS form | Classic `define view`, explicit fields, one-way associations |
+
+---
+
+## Entity sets (Phase 1)
+
+| Entity set | CDS view | Source CDS |
+|------------|----------|------------|
+| `GLAccountLineItem` | `ZEVO_FI_GLAcctLineItem` | `I_GLAccountLineItemRawData` |
+| `CompanyCode` | `ZEVO_FI_CompanyCode` | `I_CompanyCode` |
+| `GLAccount` | `ZEVO_FI_GLAccount` | `I_GLAccount` |
+| `CostCenter` | `ZEVO_FI_CostCenter` | `I_CostCenter` |
+| `ProfitCenter` | `ZEVO_FI_ProfitCenter` | `I_ProfitCenter` |
+| `Ledger` | `ZEVO_FI_Ledger` | `I_Ledger` |
+| `AccountingDocType` | `ZEVO_FI_AccountingDocType` | `I_AccountingDocumentType` |
+| `HouseBank` | `ZEVO_FI_HouseBank` | `I_HouseBank` |
+
+### Navigations from `GLAccountLineItem`
+
+| Nav | To |
+|-----|-----|
+| `_CompanyCode` | company master |
+| `_GLAccount` | G/L account (chart + account) |
+| `_CostCenter` | cost center (may be 0..* by validity) |
+| `_ProfitCenter` | profit center (may be 0..* by validity) |
+| `_Ledger` | ledger |
+| `_AccountingDocType` | journal document type (BLART) |
+| `_HouseBank` | house bank (company + house bank) |
+
+No `_Supplier` / `_Customer` — use C2P/OTC with the ID fields on the line.
+
+---
+
+## Activate & publish (ADT)
+
+Same pattern as C2P — see root README [OData V4 C2P](../README.md#odata-v4-c2p-service-zevo_c2p) for Eclipse/abapGit habits.
+
+1. abapGit pull `main` — activate all `ZEVO_FI_*` + SRVD `ZEVO_GENERALLEDGER`.
+2. **Do not** delete local SRVB/G4BA if you recreate the binding later.
+3. ADT: New Service Binding **`ZEVO_GENERALLEDGER`**, type **OData V4 - Web API**, definition `ZEVO_GENERALLEDGER` → Activate → Publish.
+4. URL shape:
+
+```text
+/sap/opu/odata4/sap/zevo_generalledger/srvd_a2x/sap/zevo_generalledger/0001/
+```
+
+---
+
+## Reference document type (`ReferenceDocumentType` / AWTYP)
+
+Origin of the journal entry (what created the posting):
+
+| Value | Meaning | Typical `ReferenceDocument` |
+|-------|---------|-------------------------------|
+| `RMRP` | Supplier invoice (MM invoice receipt) | Supplier invoice number |
+| `MKPF` | Material document (goods movement) | Material document |
+| `BKPF` / `BKPFF` | FI-native / direct FI posting | Accounting / FI reference |
+| `VBRK` | SD billing document | Billing document |
+
+### Join recipes (external tool + C2P)
+
+```text
+# Supplier invoice → FI lines
+ReferenceDocumentType eq 'RMRP' and ReferenceDocument eq '{SupplierInvoice}'
+(+ CompanyCode, FiscalYear, SourceLedger)
+
+# Vendor line → payment / clearing
+ClearingAccountingDocument + ClearingDate (+ ClearingDocFiscalYear)
+→ re-query GLAccountLineItem by AccountingDocument = clearing doc
+```
+
+`FinancialAccountType`: `K` = supplier, `D` = customer, `S` = G/L (and others per customizing).
+
+---
+
+## Accounting document type (`AccountingDocumentType` / BLART)
+
+Journal **document type** (number range / operation) — not the same as `ReferenceDocumentType`.
+
+| Code | Typical meaning |
+|------|-----------------|
+| `RE` | Invoice receipt (MM LIV → FI) |
+| `WE` | Goods receipt (PO-related) |
+| `WA` | Goods issue / other inventory postings |
+| `KR` | Vendor invoice (FI AP) |
+| `KZ` | Vendor payment |
+| `KG` | Vendor credit memo |
+| `DR` | Customer invoice |
+| `DZ` | Customer payment |
+| `SA` | G/L account document |
+| `AA` | Asset posting |
+| `AF` | Depreciation posting |
+| `AB` | Accounting document (often clearing / special) |
+
+Texts are customizing (`T003` / `T003T`). Entity set `AccountingDocType` exposes the code; expand `_AccountingDocType` from the line when needed.
+
+**Example:** invoice `5100001601` → FI `5100000003` with `ReferenceDocumentType = RMRP` and often `AccountingDocumentType = RE`; payment clearing doc often `KZ`.
+
+---
+
+## Delta and date filters
+
+| Field | Role |
+|-------|------|
+| `LastChangeDateTime` | Preferred caller-managed delta (`@Semantics.systemDateTime.lastChangedAt`) |
+| `CreationDateTime` / `CreationDate` | Created watermark / filter |
+| `PostingDate` | Business period filter |
+| `ClearingDate` | When the open item was cleared |
+| `FiscalYear`, `CompanyCode`, `SourceLedger` | Always filter these for volume |
+
+```http
+GET {base}/GLAccountLineItem
+  ?$filter=CompanyCode eq '1710' and FiscalYear eq '2026' and SourceLedger eq '0L'
+    and PostingDate ge 2026-10-01 and PostingDate le 2026-10-31
+  &$expand=_GLAccount,_CompanyCode,_CostCenter,_ProfitCenter
+  &$top=100
+
+GET {base}/GLAccountLineItem
+  ?$filter=CompanyCode eq '1710' and FiscalYear eq '2026' and SourceLedger eq '0L'
+    and LastChangeDateTime gt 2026-10-12T00:00:00Z
+  &$orderby=LastChangeDateTime asc
+
+GET {base}/GLAccountLineItem
+  ?$filter=CompanyCode eq '1710' and FiscalYear eq '2026' and SourceLedger eq '0L'
+    and ReferenceDocumentType eq 'RMRP' and ReferenceDocument eq '5100001601'
+```
+
+Navigation names keep the CDS underscore (`_GLAccount`, `_CompanyCode`, …).
+
+---
+
+## Out of scope (Phase 1)
+
+- Payment-run payee IBAN entities  
+- Tax master / tax line entities  
+- BP / supplier / customer expands  
+- Full unbound ACDOCA column list  
+
+---
+
+## Relation to `ZEVO_C2P`
+
+| | `ZEVO_C2P` | `ZEVO_GENERALLEDGER` |
+|--|------------|----------------------|
+| Focus | P2P documents + BP banks | Journal lines + FI org masters |
+| Invoice | `SupplierInvoice` | Lines with `RMRP` + invoice number |
+| Banks | `BusinessPartnerBank` (supplier) | `HouseBank` (company) + clearing fields |
+| Join | External tool | External tool |
