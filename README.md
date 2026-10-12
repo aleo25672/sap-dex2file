@@ -1179,7 +1179,7 @@ instead of "since the last run":
 | `ZEVO_CL_ODATA_MPC` | class | SEGW helper: `DEFINE_MODEL` (no Gateway inheritance) |
 | `ZEVO_CL_ODATA_DPC` | class | SEGW helper: `EXECUTE_ACTION` (no Gateway inheritance) |
 | `ZEVO_C_*` (14) | CDS view (`define view`) | C2P projections over DEX/BP (incl. bank) with associations |
-| `ZEVO_C2P` | service definition | exposes the 13 C2P entity sets |
+| `ZEVO_C2P` | service definition | exposes the 14 C2P entity sets |
 | `ZEVO_C2P` | service binding | create + publish in ADT (OData V4 Web API; not in abapGit) |
 
 Full OData documentation: see **[OData CDS extract service](#odata-cds-extract-service)** above (also [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md)).  
