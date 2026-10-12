@@ -8,5 +8,5 @@ define view ZEVO_FI_GLAccount
 {
   key ChartOfAccounts,
   key cast( GLAccount as abap.char(10) ) as GLAccount,
-      GLAccountType
+      GLAccountType as GLAccountTypeCode
 }
