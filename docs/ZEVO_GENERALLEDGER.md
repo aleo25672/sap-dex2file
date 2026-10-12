@@ -40,6 +40,33 @@ This is **not** `ZEVO_C2P` (P2P graph) and **not** the V2 `ExtractCds` wrapper. 
 
 No `_Supplier` / `_Customer` — use C2P/OTC with the ID fields on the line.
 
+### Navigation example (`$expand`)
+
+SADL keeps the CDS underscore — use `_GLAccount`, not `GLAccount`.
+
+```http
+GET https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_generalledger/srvd_a2x/sap/zevo_generalledger/0001/GLAccountLineItem
+  ?$filter=CompanyCode eq '1710' and FiscalYear eq '2026' and SourceLedger eq '0L'
+    and PostingDate ge 2026-10-01 and PostingDate le 2026-10-31
+  &$expand=_GLAccount,_CompanyCode,_Ledger,_AccountingDocType
+  &$top=100
+```
+
+One-line (browser / Postman):
+
+```text
+https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_generalledger/srvd_a2x/sap/zevo_generalledger/0001/GLAccountLineItem?$filter=CompanyCode%20eq%20'1710'%20and%20FiscalYear%20eq%20'2026'%20and%20SourceLedger%20eq%20'0L'%20and%20PostingDate%20ge%202026-10-01%20and%20PostingDate%20le%202026-10-31&$expand=_GLAccount,_CompanyCode,_Ledger,_AccountingDocType&$top=100
+```
+
+Each line returns nested `_GLAccount` (company + chart + account), `_CompanyCode`, `_Ledger` (from `SourceLedger`), and `_AccountingDocType`. Optional: add `_HouseBank` when the line has a house bank.
+
+Lookup without expand (same keys as the nav):
+
+```http
+GET {base}/GLAccount
+  ?$filter=CompanyCode eq '1710' and ChartOfAccounts eq 'YCOA' and GLAccount eq '0011002000'
+```
+
 ---
 
 ## Activate & publish (ADT)
@@ -126,11 +153,7 @@ Texts are customizing (`T003` / `T003T`). Entity set `AccountingDocType` exposes
 GET {base}/GLAccountLineItem
   ?$filter=CompanyCode eq '1710' and FiscalYear eq '2026' and SourceLedger eq '0L'
     and PostingDate ge 2026-10-01 and PostingDate le 2026-10-31
-  &$expand=_GLAccount,_CompanyCode,_Ledger,_AccountingDocType
   &$top=100
-
-GET {base}/GLAccount
-  ?$filter=CompanyCode eq '1710' and ChartOfAccounts eq 'YCOA' and GLAccount eq '0011002000'
 
 GET {base}/CostCenter
   ?$filter=ControllingArea eq 'A000' and CostCenter eq '0017100100'
@@ -145,7 +168,7 @@ GET {base}/GLAccountLineItem
     and ReferenceDocumentType eq 'RMRP' and ReferenceDocument eq '5100001601'
 ```
 
-Navigation names keep the CDS underscore (`_GLAccount`, `_CompanyCode`, …).
+For `$expand` examples, see [Navigation example](#navigation-example-expand) above.
 
 ---
 
