@@ -17,8 +17,8 @@ Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the ge
 | Section | What |
 |---------|------|
 | **[OData CDS extract service](#odata-cds-extract-service)** | V2 `ExtractCds`, `GetCdsMetadata`, [URL cookbook](#url-cookbook-c_purchaseorderdex) |
-| **[OData V4 C2P (`ZEVO_C2P`)](#odata-v4-c2p-service-zevo_c2p)** | Typed V4 Web API — Eclipse/ADT setup, binding, publish, sample URLs |
-| [C2P reference](docs/ZEVO_C2P.md) | Entity sets, navigations, delta fields |
+| **[OData V4 C2P (`ZEVO_C2P`)](#odata-v4-c2p-service-zevo_c2p)** | Typed V4 Web API — supported CDS, add-new steps, Eclipse/ADT publish |
+| [C2P reference](docs/ZEVO_C2P.md) | Navigations, delta fields, URL cookbook |
 | [P2P call flow (Word)](docs/P2P_OData_Extract_Call_Flow.docx) | PO → Item → History → GR / IR extract sequence |
 | [Contract to Payment (Word)](docs/CONTRACT_TO_PAYMENT.docx) | Contract 4600000041 → PO 4500002146 → GR → invoice → payment 1500000000, with sample data |
 | [Order to Cash (Word)](docs/ORDER_TO_CASH.docx) | Sales order 6321 → delivery → goods issue → billing 0090005785 → receipt 1400000000, with sample data |
@@ -937,7 +937,75 @@ Typed **OData V4 Web API** for the contract-to-payment / P2P graph (14 entity se
 | CDS projections | 14 × `ZEVO_C_*` (classic `define view`, explicit fields, one-way associations) |
 | Service definition | `ZEVO_C2P` — in abapGit (`zevo_c2p.srvd.srvdsrv` + `.xml`) |
 | Service binding | **Create in ADT only** as `ZEVO_C2P` — **OData V4 - Web API** (not shipped via abapGit; hand-written SRVB XML fails import) |
-| Reference | Entity sets, navigations, delta — [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md) |
+| Reference | Navigations, delta, more URLs — [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md) |
+
+### Supported CDS (14)
+
+Each OData entity set is a thin Z projection over an SAP CDS. Clients call the **entity set** name; abapGit ships the **`ZEVO_C_*`** DDLS.
+
+| Entity set (OData) | Z CDS (`ZEVO_C_*`) | Source CDS |
+|--------------------|--------------------|------------|
+| `PurchaseRequisitionItem` | `ZEVO_C_PurchRequisitionItem` | `C_PurchaseRequisitionItemDEX` |
+| `PurchaseContract` | `ZEVO_C_PurchaseContract` | `C_PurchaseContractDEX` |
+| `PurchaseContractItem` | `ZEVO_C_PurchContractItem` | `C_PurchaseContractItemDEX` |
+| `PurchaseContractHistory` | `ZEVO_C_PurchContractHist` | `C_PurchaseContractHistoryDEX` |
+| `PurchaseOrder` | `ZEVO_C_PurchaseOrder` | `C_PurchaseOrderDEX` |
+| `PurchaseOrderItem` | `ZEVO_C_PurchaseOrderItem` | `C_PurchaseOrderItemDEX` |
+| `PurchaseOrderHistory` | `ZEVO_C_PurchaseOrderHist` | `C_PurchaseOrderHistoryDEX` |
+| `PurchaseOrderAccountAssignment` | `ZEVO_C_PurOrdAcctAssgmt` | `C_PurOrdAccountAssignmentDEX` |
+| `SupplierInvoice` | `ZEVO_C_SupplierInvoice` | `C_SupplierInvoiceDEX` |
+| `SupplierInvoiceItem` | `ZEVO_C_SupplierInvItem` | `C_SupplierInvoiceItemDEX` |
+| `GoodsMovementDocument` | `ZEVO_C_GoodsMovementDoc` | `I_GoodsMovementDocumentDEX` |
+| `BusinessPartner` | `ZEVO_C_BusinessPartner` | `I_BusinessPartner` |
+| `BusinessPartnerSupplier` | `ZEVO_C_BPSupplier` | `I_BusinessPartnerSupplierDEX` |
+| `BusinessPartnerBank` | `ZEVO_C_BPBank` | `I_BusinessPartnerBank` |
+
+Out of scope for this service (use V2 `ExtractCds` or another binding): PR **header**, GL/journal, cost/profit center, product masters, ref-doc texts.
+
+### Add a new CDS to `ZEVO_C2P`
+
+Use this when extending the typed V4 graph (same pattern as `BusinessPartnerBank`).
+
+#### 1. In the Git repo
+
+1. Add a classic CDS projection, e.g. `src/zevo_c_<short>.ddls.asddls` + matching `.ddls.xml`:
+   - `define view ZEVO_C_<Name> as select from <SourceCds>`
+   - **Explicit field list** (no `SELECT *`)
+   - Contiguous **keys** that are not `@Consumption.hidden` on the source
+   - Optional **one-way** `association` from an existing `ZEVO_C_*` (avoid cycles)
+   - Inline `@Semantics…` on the delta/date field if useful
+   - Alias any property that would equal `{EntitySet}Type` → e.g. `FooType as FooTypeCode`
+   - Strip disallowed conversion exits (`cast(… as abap.char(n))` or a Z DTEL without the exit)
+2. Expose it in [`src/zevo_c2p.srvd.srvdsrv`](src/zevo_c2p.srvd.srvdsrv):
+
+```cds
+expose ZEVO_C_<Name> as <EntitySetName>;
+```
+
+3. If another view should navigate to it, add the association + expose the association element on that view (e.g. `_Bank` on `ZEVO_C_BusinessPartner`).
+4. Update this table, [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md) (entity set + nav + delta field), and a sample URL if helpful.
+5. Merge to **`main`**.
+
+#### 2. On the SAP system (abapGit + ADT)
+
+1. **abapGit → Pull** `main`.
+2. On the pull dialog:
+   - **Keep** checked: new DDLS (**Add local object**), changed DDLS (**Delete and recreate** / overwrite), **SRVD** `ZEVO_C2P` (**Overwrite**).
+   - **Uncheck** anything that would **Delete local** the **SRVB** / **G4BA** `ZEVO_C2P` (binding is ADT-only, not in Git).
+   - **Uncheck** deletes for local SEGW/Gateway objects (`ZEVO_CDS_EXTRACT_*`, SICF, …).
+3. **Mass-activate** the new/changed `ZEVO_C_*` views and service definition `ZEVO_C2P`.
+4. Open service binding **`ZEVO_C2P`** in ADT → **Activate** (**Cmd+F3** / **Ctrl+F3**).
+5. **Unpublish** then **Publish** (or Publish again) so the local endpoint picks up the new entity set.
+6. Confirm in the binding tree and in `$metadata` that the new entity set (and nav, if any) appear.
+
+#### 3. Quick test
+
+```http
+GET {base}/$metadata
+GET {base}/<EntitySetName>?$top=5
+# if you added a nav from BusinessPartner named _Bank:
+GET {base}/BusinessPartner?$filter=BusinessPartner eq '0001000559'&$expand=_Bank
+```
 
 ### A. Eclipse + ADT on Mac (one-time)
 
@@ -1047,8 +1115,10 @@ More examples (delta, contract, PR): [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md).
 | `$metadata`: *Property `PurchaseOrderType` has the same EDM name as entity type `PurchaseOrderType`* | Pull latest — properties aliased to `*TypeCode` |
 | `$expand`: *invalid property `Item`* | Use `_Item` (and `_History`, `_AccountAssignment`, `_Supplier`) |
 | SRVD / SRVB will not import via abapGit | SRVD source is `.srvdsrv`; create **binding only in ADT** — do not check in hand-written SRVB XML |
+| abapGit wants to **Delete local** SRVB / G4BA `ZEVO_C2P` | **Uncheck** — binding/service group stay local; only pull SRVD + DDLS |
+| New entity missing after pull | Activate SRVD + binding, then **Unpublish → Publish**; confirm name in `$metadata` |
 
-After CDS changes: abapGit **Pull** → mass-activate `ZEVO_C_*` → re-activate the binding if needed → retry `$metadata`.
+After CDS changes: follow **[Add a new CDS](#add-a-new-cds-to-zevo_c2p)** (pull → activate → republish binding → `$metadata`).
 
 ---
 
