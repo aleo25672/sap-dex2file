@@ -32,7 +32,6 @@ define view ZEVO_FI_GLAcctLineItem
       Ledger,
       ChartOfAccounts,
       ControllingArea,
-      // Strip SAKO search help (needs CompanyCode on chart-level account)
       cast( GLAccount as abap.char(10) ) as GLAccount,
       CostCenter,
       ProfitCenter,
