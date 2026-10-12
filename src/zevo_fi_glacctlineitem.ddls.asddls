@@ -8,7 +8,8 @@ define view ZEVO_FI_GLAcctLineItem
   association [0..1] to ZEVO_FI_CompanyCode as _CompanyCode
     on $projection.CompanyCode = _CompanyCode.CompanyCode
   association [0..1] to ZEVO_FI_GLAccount as _GLAccount
-    on $projection.ChartOfAccounts = _GLAccount.ChartOfAccounts
+    on $projection.CompanyCode = _GLAccount.CompanyCode
+   and $projection.ChartOfAccounts = _GLAccount.ChartOfAccounts
    and $projection.GLAccount = _GLAccount.GLAccount
   association [0..1] to ZEVO_FI_Ledger as _Ledger
     on $projection.SourceLedger = _Ledger.Ledger

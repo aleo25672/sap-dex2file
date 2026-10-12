@@ -9,7 +9,7 @@ This is **not** `ZEVO_C2P` (P2P graph) and **not** the V2 `ExtractCds` wrapper. 
 | Service definition | `ZEVO_GENERALLEDGER` (`zevo_generalledger.srvd.*`) |
 | Service binding | Create in **ADT** as `ZEVO_GENERALLEDGER` — **OData V4 — Web API** (not in abapGit) |
 | CDS form | Classic `define view`, explicit fields, one-way associations |
-| Activation notes | `GLAccount` cast to `abap.char(10)` (SAKO search-help). `GLAccountType` aliased to `GLAccountTypeCode` (OData V4 EDM clash with entity type `GLAccountType`). No direct `Ledger` column on this stack — use key `SourceLedger` and nav `_Ledger`. `I_HouseBank` / `I_ProfitCenter` omit fields not on the local CDS. |
+| Activation notes | `GLAccount` cast to `abap.char(10)` (SAKO search-help). `GLAccountType` aliased to `GLAccountTypeCode` (OData V4 EDM clash with entity type `GLAccountType`). `I_GLAccount` is company-code dependent — keys include `CompanyCode` so `_GLAccount` expand stays 0..1. No direct `Ledger` column on this stack — use key `SourceLedger` and nav `_Ledger`. `I_HouseBank` / `I_ProfitCenter` omit fields not on the local CDS. |
 
 ---
 
@@ -31,7 +31,7 @@ This is **not** `ZEVO_C2P` (P2P graph) and **not** the V2 `ExtractCds` wrapper. 
 | Nav | To |
 |-----|-----|
 | `_CompanyCode` | company master |
-| `_GLAccount` | G/L account (chart + account) |
+| `_GLAccount` | G/L account (company + chart + account) |
 | `_Ledger` | ledger (`SourceLedger`) |
 | `_AccountingDocType` | journal document type (BLART) |
 | `_HouseBank` | house bank (company + house bank) |
@@ -128,6 +128,9 @@ GET {base}/GLAccountLineItem
     and PostingDate ge 2026-10-01 and PostingDate le 2026-10-31
   &$expand=_GLAccount,_CompanyCode,_Ledger,_AccountingDocType
   &$top=100
+
+GET {base}/GLAccount
+  ?$filter=CompanyCode eq '1710' and ChartOfAccounts eq 'YCOA' and GLAccount eq '0011002000'
 
 GET {base}/CostCenter
   ?$filter=ControllingArea eq 'A000' and CostCenter eq '0017100100'
