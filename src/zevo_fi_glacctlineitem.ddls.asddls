@@ -17,7 +17,7 @@ define view ZEVO_FI_GLAcctLineItem
     on $projection.ControllingArea = _ProfitCenter.ControllingArea
    and $projection.ProfitCenter = _ProfitCenter.ProfitCenter
   association [0..1] to ZEVO_FI_Ledger as _Ledger
-    on $projection.Ledger = _Ledger.Ledger
+    on $projection.SourceLedger = _Ledger.Ledger
   association [0..1] to ZEVO_FI_AccountingDocType as _AccountingDocType
     on $projection.AccountingDocumentType = _AccountingDocType.AccountingDocumentType
   association [0..1] to ZEVO_FI_HouseBank as _HouseBank
@@ -29,7 +29,6 @@ define view ZEVO_FI_GLAcctLineItem
   key FiscalYear,
   key AccountingDocument,
   key LedgerGLLineItem,
-      Ledger,
       ChartOfAccounts,
       ControllingArea,
       cast( GLAccount as abap.char(10) ) as GLAccount,
