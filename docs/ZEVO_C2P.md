@@ -14,6 +14,9 @@ Typed **OData V4** service (CDS service definition + Web API binding) for the P2
 
 ## Entity sets (14)
 
+Canonical list (and **how to add a new CDS**): root README  
+**[Supported CDS](../README.md#supported-cds-14)** · **[Add a new CDS to `ZEVO_C2P`](../README.md#add-a-new-cds-to-zevo_c2p)**.
+
 | Entity set (OData) | CDS view entity | Source CDS |
 |--------------------|-----------------|------------|
 | `PurchaseRequisitionItem` | `ZEVO_C_PurchRequisitionItem` | `C_PurchaseRequisitionItemDEX` |
