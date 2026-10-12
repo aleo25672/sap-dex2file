@@ -10,6 +10,5 @@ define view ZEVO_FI_ProfitCenter
   key ProfitCenter,
   key ValidityEndDate,
       ValidityStartDate,
-      ProfitCenterName,
       Segment
 }

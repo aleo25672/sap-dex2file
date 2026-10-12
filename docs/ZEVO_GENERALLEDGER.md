@@ -9,6 +9,7 @@ This is **not** `ZEVO_C2P` (P2P graph) and **not** the V2 `ExtractCds` wrapper. 
 | Service definition | `ZEVO_GENERALLEDGER` (`zevo_generalledger.srvd.*`) |
 | Service binding | Create in **ADT** as `ZEVO_GENERALLEDGER` — **OData V4 — Web API** (not in abapGit) |
 | CDS form | Classic `define view`, explicit fields, one-way associations |
+| Activation notes | `GLAccount` cast to `abap.char(10)` to avoid SAKO search-help (needs company code on chart account). `I_HouseBank` / `I_ProfitCenter` expose only fields present on this stack (no `BankCountryKey` / `ProfitCenterName`). |
 
 ---
 

@@ -32,7 +32,8 @@ define view ZEVO_FI_GLAcctLineItem
       Ledger,
       ChartOfAccounts,
       ControllingArea,
-      GLAccount,
+      // Strip SAKO search help (needs CompanyCode on chart-level account)
+      cast( GLAccount as abap.char(10) ) as GLAccount,
       CostCenter,
       ProfitCenter,
       FunctionalArea,
@@ -70,7 +71,7 @@ define view ZEVO_FI_GLAcctLineItem
       ClearingDate,
       ClearingAccountingDocument,
       ClearingDocFiscalYear,
-      OffsettingAccount,
+      cast( OffsettingAccount as abap.char(10) ) as OffsettingAccount,
       OffsettingAccountType,
       OrderID,
       WBSElement,
