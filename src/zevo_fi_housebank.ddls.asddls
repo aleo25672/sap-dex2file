@@ -7,7 +7,5 @@ define view ZEVO_FI_HouseBank
   as select from I_HouseBank
 {
   key CompanyCode,
-  key HouseBank,
-      BankCountryKey,
-      BankNumber
+  key HouseBank
 }
