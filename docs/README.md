@@ -207,11 +207,25 @@ The goods receipt of an asset can post before the asset year is open. The invoic
 | Asset ledger **0L** | **Highest F.Year 2019**. Areas **01** (book depreciation) and **15** (local tax) closed through **12/31/2017**. Fiscal year variant **K4**. | The 2018 close test was clean with no depreciation error. Close each year with **RAJABS00**, then **FAGLGVTR** into the next year. Finished state: **Highest F.Year 2026**, areas **01** and **15** closed through **12/31/2025**. |
 | Asset ledger **2L** | Present in the **OAAQ** tree. | Confirm **Highest F.Year 2026** before a posting updates that ledger. |
 
-## Intercompany sale from company code 1710 to company code 1010
+## Intercompany resale: buy in 1710, sell to 1010 with a markup
 
-Company code **1710**, plant **1710**, sells stock it already holds. Company code **1010**, plant **1010**, receives that stock. Company **1710** posts in **USD**. Company **1010** posts in **EUR**. The purchase order is in **EUR**. The customer invoice in **1710** is in **USD**.
+Company code **1710** buys trading good **TG11** from US vendor **1000559** (EVOLVER DOMESTIC SUPPLIER 1, stored as **0001000559**) into plant **1710**, then sells that piece to company code **1010**, plant **1010**. The transfer price is the purchase price plus **10%**.
 
-The master data below was checked in transaction **BP**. The purchase order, delivery, and invoices in this section have not been posted yet.
+| | Purchase | Resale |
+|--|----------|--------|
+| Buyer | Company **1710** | Company **1010** |
+| Seller | Vendor **1000559** | Company **1710**, through vendor **BP1710** |
+| Material | **TG11**, Trad.Good 11, PD, Reg.Trading | Same piece |
+| Quantity | **1 PC** | **1 PC** |
+| Plant / storage location | **1710 / 171A** | Supply **1710 / 171A**, receive **1010** |
+| Price | **13.50 USD**, the price on PO **4500002146** item 00010 | **14.85 USD** (13.50 × 1.10) |
+| Markup in 1710 | | **1.35 USD** |
+
+**TG20** from the same vendor is a serial-number material. **TG11** is the material for this run. Create a new purchase order. Leave PO **4500002146** unchanged so the contract-to-payment sample stays intact.
+
+Company **1710** posts in **USD**. Company **1010** posts in **EUR**. The resale purchase order is entered in **USD** when the header allows it, so **14.85** is the same number on the purchase order and on the customer invoice. When the currency stays **EUR**, convert **14.85 USD** at the exchange rate shown on the purchase-order header.
+
+The master data below was checked in transaction **BP**. These documents have not been posted yet.
 
 ### Who is the vendor and who is the customer
 
@@ -243,55 +257,55 @@ On **Customer: Account Management** the reconciliation account first shown was *
 
 Journal lines in company **1710** already carry customer **0010411010** with plant **1710**. That is this same business partner.
 
-### Still required before the purchase order
+### Still required before the resale
 
 1. On **10411010**, role **Customer**, **Sales Areas**: sales organization **1710**, distribution channel **10**, division **00**, payment terms **0001**, and no billing block.
 2. **SPRO** → Materials Management → Purchasing → Purchase Order → Set up Stock Transport Order → Define Shipping Data for Plants. Plant **1010**: customer **10411010**. Plant **1710**: sales organization **1710**, distribution channel **10**, division **00**.
-3. **MMBE**: a material with unrestricted stock in plant **1710** that also exists in plant **1010**. Use quantity **1** and note both storage locations.
-4. **MMRV** for both company codes. The posting date **13.10.2026** has to fall in the current or previous materials period. Company **1010** started at **11/2025**; roll it with **MMPV** through period **10/2026** as described above. Company **1710** has not been checked.
+3. **MM03** for **TG11**, plant **1010**. When the plant is missing, extend the material with **MM01**: copy plant **1710** to plant **1010**, views Purchasing, General Plant Data / Storage, and Accounting. Use a storage location that exists in plant **1010**.
+4. **MM03**, plant **1710**, Accounting 1. Read the material price. The transfer price is that price plus 10%. The last invoice price is **13.50 USD**, so the transfer price is **14.85 USD** when the material price is still 13.50.
+5. **MMRV** for both company codes. The posting date **13.10.2026** has to fall in the current or previous materials period. Company **1010** started at **11/2025**; roll it with **MMPV** through period **10/2026** as described above. Company **1710** has not been checked. The purchase goods receipt posts in **1710**, so check **1710** first.
 
-### Create the documents
+### 1. Buy TG11 in company 1710
 
-**1. Purchase order — ME21N**
+**ME21N**
+
+- Vendor **1000559**, document type **NB**, purchasing organization **1710**, purchasing group **001**, company code **1710**.
+- Material **TG11**, quantity **1**, net price **13.50 USD**, delivery date **13.10.2026**.
+- Plant **1710**, storage location **171A**. Leave account assignment and item category empty. This is a stock purchase, not a stock transport.
+- Save and keep the purchase-order number.
+
+**MIGO.** Goods receipt for that purchase order. Movement **101**, plant **1710**, storage location **171A**. Post.
+
+**MIRO.** Invoice date and posting date **13.10.2026**, company code **1710**, the purchase-order number, amount **13.50 USD**. Post. Reference the invoice so it stays distinct from **5100001599**.
+
+**F-53**, company code **1710**, bank G/L **11002000**, vendor **1000559**, amount **13.50**. Process open items, select this invoice, and post. Document type **KZ**.
+
+### 2. Resell the same piece to company 1010
+
+**ME21N**
 
 - Vendor **BP1710**, document type **NB**, purchasing organization **1010**, purchasing group **001**, company code **1010**.
-- Material from **MMBE**, quantity **1**, delivery date **13.10.2026**, plant **1010**, the **1010** storage location.
-- Enter a net price in **EUR** when the system does not propose one.
+- Set the header currency to **USD** and the net price to **14.85**. When the currency remains **EUR**, read the exchange rate on the header and enter the euro amount of **14.85 USD**.
+- Material **TG11**, quantity **1**, delivery date **13.10.2026**, plant **1010**, the **1010** storage location.
 - Item category **U**. Supplying plant **1710**.
-- On the item **Shipping** tab, customer **10411010** must be filled in. Save and keep the purchase-order number.
+- On the item **Shipping** tab, customer **10411010** must be filled in. Save and keep this second purchase-order number.
 
 A blank customer on that tab means the shipping data for the plants is still missing.
 
-**2. Delivery — VL10B**
+**VL10B.** Shipping point **1710**. Delivery creation date **13.10.2026** or later. Execute, select this purchase-order line, and choose **Create Delivery in Background**. The delivery type is **NLCC**.
 
-- Shipping point **1710**. Delivery creation date **13.10.2026** or later.
-- Execute, select the purchase-order line, and choose **Create Delivery in Background**.
-- The delivery type is **NLCC**.
+**VL02N.** Open the delivery. Picking quantity **1**, storage location **171A**. **Post Goods Issue**. Movement **643** issues the piece from plant **1710** at the material price (**13.50** when that is still the valuation price).
 
-**3. Goods issue — VL02N**
+**MIGO.** Goods receipt for the resale purchase order. Movement **101**, plant **1010**. Post. Plant **1010** takes the piece into stock at the transfer price.
 
-- Open the delivery. Picking quantity equals the delivery quantity, from the **1710** storage location.
-- **Post Goods Issue**. Movement **643** issues the stock from plant **1710**.
+**VF01.** Enter the delivery number. Billing type **IV**. Save. The receivable posts to customer **10411010** in company code **1710**. The billed amount is the transfer price, **14.85 USD**. Company **1710** revenue is **14.85** and the stock relief is **13.50**, so the markup is **1.35**.
 
-**4. Goods receipt — MIGO**
+**MIRO** in company **1010**, only when **ME23N** item history has no invoice receipt. Invoice date and posting date **13.10.2026**, the resale purchase-order number, amount equal to **14.85 USD** or its euro equivalent. Post. This credits vendor **BP1710**.
 
-- Goods receipt for the purchase order. Movement **101**, plant **1010**, the **1010** storage location.
-- Post. The stock is then in plant **1010**.
+### 3. Clear the intercompany pair
 
-**5. Customer invoice in 1710 — VF01**
-
-- Enter the delivery number. Billing type **IV**.
-- Save. The receivable posts to customer **10411010** in company code **1710**, in **USD**.
-
-**6. Vendor invoice in 1010**
-
-- In **ME23N**, open the purchase-order history. When an invoice receipt is already there, the billing document created it.
-- When the history has no invoice, run **MIRO**. Invoice date and posting date **13.10.2026**, company code **1010**, the purchase-order number, amount in **EUR** equal to the purchase-order price. Post.
-
-**7. Payments**
-
-- Company **1010**, transaction **F-53**: pay vendor **BP1710**.
-- Company **1710**, transaction **F-28**: post the incoming payment from customer **10411010**.
+- Company **1010**, transaction **F-53**: pay vendor **BP1710** for the transfer-price invoice.
+- Company **1710**, transaction **F-28**: post the incoming payment from customer **10411010** for **14.85 USD**. Bank G/L **11002000**.
 
 ## Requisition to Payment 1
 
