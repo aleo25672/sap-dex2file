@@ -149,6 +149,64 @@ Transaction **F-53**, Post Outgoing Payment.
 
 The payment document type is **KZ**. It debits the vendor and clears the invoice.
 
+## Open periods for company codes 1710 and 1010
+
+A posting date in October 2026 needs three calendars open in the company code that posts. They are independent. Finance can be open through 2030 while materials management is still in 2025 and Asset Accounting is still in 2019.
+
+These programs are not in this system: **AJRW**, **FAA_FISCAL_YEAR_CHANGE**, **RAJAWE00**. Year-end closing is **RAJABS00**. The step that raises **Highest F.Year** is **FAGLGVTR**.
+
+### 1. Finance posting periods — OB52
+
+1. In **SE16**, table **T001**, read **OPVAR** for the company code. That is its posting period variant.
+2. Run **OB52** and find that variant.
+3. For account types **+**, **A**, **D**, **K**, **M**, **S**, and **V**, the first interval must include the posting period. For a calendar year, period **1** through **12** of the fiscal year. The second interval is special periods **13** through **16**.
+
+Company code **1010** uses variant **1010**. On the screen we checked, every account type was already open from period **1 / 2000** through period **12 / 2030**, and special periods **13 / 2000** through **16 / 2030**. **2026** is inside that range, so **OB52** was left unchanged. Check company code **1710** the same way before relying on it. The asset invoice in **1710** was blocked by the asset year, not by **OB52**.
+
+### 2. Materials management period — MMRV, then MMPV
+
+1. Run **MMRV** for the company code. **Current period** is the open materials period. **Previous period** is also open when **Allow posting to previous per.** is selected.
+2. A goods movement whose posting date is outside those two periods is rejected. Roll the period forward with **MMPV**.
+3. In **MMPV**, enter the company code in **From** and **To**. Enter the period you want to become the new current period, and its fiscal year. Leave **Date** empty. Select **Close period**. Execute.
+4. **MMPV** moves one month at a time. Repeat until **MMRV** shows the month you need.
+5. The message **The specified year is not the current calendar year** is a warning. Execute anyway when you are rolling an old period forward.
+
+Company code **1010** started at current period **11 / 2025**, previous period **10 / 2025**, last period of the previous year **12 / 2024**. To post a goods movement in October 2026, the last **MMPV** entry is period **10**, fiscal year **2026**. The sequence is **12 / 2025**, then **01 / 2026** through **10 / 2026**. Period **9 / 2026** only opens September.
+
+Check **MMRV** for company code **1710** the same way before a goods receipt dated in 2026.
+
+### 3. Asset fiscal year — OAAQ, AFAB, RAJABS00, FAGLGVTR
+
+1. Run **OAAQ**. Open the company code and ledger **0L**. Read **Highest F.Year** and **Cl.FY** on each depreciation area. An asset posting in 2026 fails while **Highest F.Year** is below **2026**. The message is **You cannot post to asset in company code … fiscal year 2026**.
+2. The next year to close is the year after **Cl.FY** on area **01**.
+3. Run **AFAB** for that company code and fiscal year, through period **12**. A test run can be online. The update run must be **Program → Execute in Background**. Online update returns **This processing can only be carried out as background processing**. Follow the job in **SM37** until it is **Finished**.
+4. Run **RAJABS00** for that year with **Test Run** selected.
+   - **Contains assets with depreciation not posted completely** means **AFAB** is still required. Do not remove the test flag.
+   - **Other error** = **No** and an empty detail list means the test is clean. **Close carried out** stays **No** on a test. Run **RAJABS00** again with **Test Run** cleared.
+5. If one depreciation area is still behind the others, tick **Select** on that row in **OAAQ** and choose **Close** (the button above the table, next to **Reopen**).
+6. Run **FAGLGVTR** and carry balances into the next year. This raises **Highest F.Year** by one. Warnings that did not block **1710**: predictive ledgers **0C** and **0E** are skipped; postings during the run may lead to incorrect results; `ACDOCA-GLACCOUNT_TYPE` differs from G/L master data.
+7. Refresh **OAAQ**. Repeat the close and the carryforward, one year at a time, until **Highest F.Year** is **2026**. The last close is fiscal year **2025**. The last carryforward is **into 2026**.
+8. Repeat for ledger **2L** when that ledger is posted.
+
+#### Company code 1710
+
+| Check | Starting point | What we did |
+|-------|----------------|-------------|
+| Asset ledger **0L** | **Highest F.Year 2024**. Area **01** closed through **2022**. Areas **90**–**93** closed through **2024**. | **AFAB** for the open year (40 assets, no errors), then **RAJABS00**. Area **01** closed through **2023**, then **Close** on area **01** through **2024**. **FAGLGVTR** raised **Highest F.Year** from **2024** to **2025**. Carry forward once more **into 2026** and confirm both ledgers before an asset invoice dated in 2026. |
+| Finance **OB52** | Not the error on the asset invoice. | Confirm the variant in **T001-OPVAR** and that 2026 is inside the open interval. |
+| Materials **MMRV** | Not checked in this session. | Run **MMRV** before a 2026 goods receipt and roll forward with **MMPV** if the current period is earlier. |
+
+The goods receipt of an asset can post before the asset year is open. The invoice posts the asset value, and that is where fiscal year **2026** was rejected.
+
+#### Company code 1010
+
+| Check | Starting point | Result |
+|-------|----------------|--------|
+| Finance variant **1010** | **OB52** intervals **1 / 2000–12 / 2030** and special periods **13–16** for account types **+**, **A**, **D**, **K**, **M**, **S**, **V**. | Already covered 2026. No change. |
+| Materials | **MMRV** current period **11 / 2025**, previous **10 / 2025**, previous-year last period **12 / 2024**. Posting to the previous period is allowed. | Roll **MMPV** one month at a time. Last entry for an October 2026 goods movement is period **10 / 2026**. |
+| Asset ledger **0L** | **Highest F.Year 2019**. Areas **01** (book depreciation) and **15** (local tax) closed through **12/31/2017**. Fiscal year variant **K4**. | The 2018 close test was clean with no depreciation error. Close each year with **RAJABS00**, then **FAGLGVTR** into the next year. Finished state: **Highest F.Year 2026**, areas **01** and **15** closed through **12/31/2025**. |
+| Asset ledger **2L** | Present in the **OAAQ** tree. | Confirm **Highest F.Year 2026** before a posting updates that ledger. |
+
 ## Requisition to Payment 1
 
 No contract. Extract run `20261007_121746`, journal `20261007_143416`. Purchase requisition **0010001624** (LAPTOP MACBOOK PRO 20 × 2,000.00 and KEYBOARD 20 × 150.00, account assignment A) is purchase order **4500002147**, total **43,000.00** USD, supplier **0001000579**. Both items are assigned to asset **000000600004** and G/L **0016014000**. Goods receipts and invoice **5100001600** (21,500.00, reference SUPP.INV.0003, journal **5100000002**) cover 10 of 20 on each item. Payment **1500000001** (KZ, 20261013) clears that vendor line. Ten of each item remain open.
