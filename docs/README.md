@@ -1,8 +1,8 @@
 # Session readme
 
-Record of the work done in this session: four sample-data use cases, and the SAP GUI path used to take one live purchase requisition through approval, purchase order, goods receipt, supplier invoice, and payment.
+Record of the work done in this session: four sample-data use cases, the SAP GUI path used to take one live purchase requisition through approval, purchase order, goods receipt, supplier invoice, and payment, and the master data checked so company code **1710** can sell stock to company code **1010**.
 
-Company code throughout the live process is **1710**.
+Company code throughout the live requisition process is **1710**. The intercompany scenario uses both **1710** and **1010**.
 
 ## Repository use cases
 
@@ -206,6 +206,92 @@ The goods receipt of an asset can post before the asset year is open. The invoic
 | Materials | **MMRV** current period **11 / 2025**, previous **10 / 2025**, previous-year last period **12 / 2024**. Posting to the previous period is allowed. | Roll **MMPV** one month at a time. Last entry for an October 2026 goods movement is period **10 / 2026**. |
 | Asset ledger **0L** | **Highest F.Year 2019**. Areas **01** (book depreciation) and **15** (local tax) closed through **12/31/2017**. Fiscal year variant **K4**. | The 2018 close test was clean with no depreciation error. Close each year with **RAJABS00**, then **FAGLGVTR** into the next year. Finished state: **Highest F.Year 2026**, areas **01** and **15** closed through **12/31/2025**. |
 | Asset ledger **2L** | Present in the **OAAQ** tree. | Confirm **Highest F.Year 2026** before a posting updates that ledger. |
+
+## Intercompany sale from company code 1710 to company code 1010
+
+Company code **1710**, plant **1710**, sells stock it already holds. Company code **1010**, plant **1010**, receives that stock. Company **1710** posts in **USD**. Company **1010** posts in **EUR**. The purchase order is in **EUR**. The customer invoice in **1710** is in **USD**.
+
+The master data below was checked in transaction **BP**. The purchase order, delivery, and invoices in this section have not been posted yet.
+
+### Who is the vendor and who is the customer
+
+| Role | Business partner | What it represents | Who uses it |
+|------|------------------|--------------------|-------------|
+| Vendor | **BP1710**, Plant 1, Palo Alto CA 94304 | Supplying plant **1710** | Company code **1010** on the purchase order |
+| Customer | **10411010**, Werk 1010 als Geschäftspartner, 69190 Walldorf | Receiving plant **1010** | Company code **1710** on the delivery and the intercompany invoice |
+
+Supplier **BP1010** (name WERK 1, supplier plant 1010 in the business-partner extract) is a separate partner. The customer assigned to plant 1010 in the system is **10411010**.
+
+### Vendor BP1710
+
+| Where | What is on the screen |
+|-------|------------------------|
+| Role **Supplier**, **Supplier: General Data**, Additional General Data | **Plant 1710**, Plant 1 US. Account group **SUPL**. |
+| Role **Supplier (Fin. Accounting)** | Company code **1010** is open. Customer and supplier on that view are both **BP1710**. |
+| Role **Supplier**, purchasing organization **1010** | Order currency **EUR**. Payment terms **0001** (pay immediately without deduction). Incoterms **EXW**, location **Vendor**. Minimum order value **0.00**. |
+
+Company code **1010** can order from this vendor and post the vendor invoice. The same supplier row in the extract has `SUPPLIERPLANT` **1710**.
+
+### Customer 10411010
+
+| Where | What is on the screen |
+|-------|------------------------|
+| Role **Customer**, **Customer: General Data** | **Plant 1010**. Delivery date rule **On Requested Date or Later**. |
+| Role **FI Customer** (`FLCU00`, Customer Fin. Accounting) | This role was missing. It was added for company code **1710**. Customer and supplier on that view are both **10411010**. |
+
+On **Customer: Account Management** the reconciliation account first shown was **12100100**, Receivables Domestic - One Time Accounts. Save **12120000** instead. That is the receivable cleared by customer receipt **1400000000** in company code **1710**. On **Customer: Payment Transactions**, enter payment terms **0001**, then save.
+
+Journal lines in company **1710** already carry customer **0010411010** with plant **1710**. That is this same business partner.
+
+### Still required before the purchase order
+
+1. On **10411010**, role **Customer**, **Sales Areas**: sales organization **1710**, distribution channel **10**, division **00**, payment terms **0001**, and no billing block.
+2. **SPRO** → Materials Management → Purchasing → Purchase Order → Set up Stock Transport Order → Define Shipping Data for Plants. Plant **1010**: customer **10411010**. Plant **1710**: sales organization **1710**, distribution channel **10**, division **00**.
+3. **MMBE**: a material with unrestricted stock in plant **1710** that also exists in plant **1010**. Use quantity **1** and note both storage locations.
+4. **MMRV** for both company codes. The posting date **13.10.2026** has to fall in the current or previous materials period. Company **1010** started at **11/2025**; roll it with **MMPV** through period **10/2026** as described above. Company **1710** has not been checked.
+
+### Create the documents
+
+**1. Purchase order — ME21N**
+
+- Vendor **BP1710**, document type **NB**, purchasing organization **1010**, purchasing group **001**, company code **1010**.
+- Material from **MMBE**, quantity **1**, delivery date **13.10.2026**, plant **1010**, the **1010** storage location.
+- Enter a net price in **EUR** when the system does not propose one.
+- Item category **U**. Supplying plant **1710**.
+- On the item **Shipping** tab, customer **10411010** must be filled in. Save and keep the purchase-order number.
+
+A blank customer on that tab means the shipping data for the plants is still missing.
+
+**2. Delivery — VL10B**
+
+- Shipping point **1710**. Delivery creation date **13.10.2026** or later.
+- Execute, select the purchase-order line, and choose **Create Delivery in Background**.
+- The delivery type is **NLCC**.
+
+**3. Goods issue — VL02N**
+
+- Open the delivery. Picking quantity equals the delivery quantity, from the **1710** storage location.
+- **Post Goods Issue**. Movement **643** issues the stock from plant **1710**.
+
+**4. Goods receipt — MIGO**
+
+- Goods receipt for the purchase order. Movement **101**, plant **1010**, the **1010** storage location.
+- Post. The stock is then in plant **1010**.
+
+**5. Customer invoice in 1710 — VF01**
+
+- Enter the delivery number. Billing type **IV**.
+- Save. The receivable posts to customer **10411010** in company code **1710**, in **USD**.
+
+**6. Vendor invoice in 1010**
+
+- In **ME23N**, open the purchase-order history. When an invoice receipt is already there, the billing document created it.
+- When the history has no invoice, run **MIRO**. Invoice date and posting date **13.10.2026**, company code **1010**, the purchase-order number, amount in **EUR** equal to the purchase-order price. Post.
+
+**7. Payments**
+
+- Company **1010**, transaction **F-53**: pay vendor **BP1710**.
+- Company **1710**, transaction **F-28**: post the incoming payment from customer **10411010**.
 
 ## Requisition to Payment 1
 
