@@ -132,6 +132,62 @@ def add_footer(section):
 
 
 def partners(doc) -> None:
+    doc.add_heading("How a business partner maps to a plant or a company", level=1)
+    add_para(
+        doc,
+        "The business partner number does not say whether the partner is a plant "
+        "or a company. The grouping only decides which number range is used. "
+        "The map is stored in master-data fields and in two customizing tables.",
+    )
+    add_table(
+        doc,
+        ["Relationship", "Where it is stored", "Where you read it"],
+        [
+            [
+                "This supplier represents a plant",
+                "Supplier general data, field Plant (LFA1-WERKS). In the extract, SupplierPlant.",
+                "BP, role Supplier, Supplier: General Data, Plant",
+            ],
+            [
+                "This customer represents a plant",
+                "Customer general data, field Plant (KNA1-WERKS).",
+                "BP, role Customer, Customer: General Data, Plant",
+            ],
+            [
+                "This partner represents a company",
+                "Trading partner on the supplier or the customer (LFA1-VBUND, KNA1-VBUND).",
+                "BP, Control, Trading Partner",
+            ],
+            [
+                "The company code of a plant",
+                "The plant's valuation area (T001W-BWKEY) and that area's company code (T001K-BUKRS).",
+                "Plant customizing, assign plant to company code",
+            ],
+            [
+                "Companies that can post to this partner",
+                "Supplier company code (LFB1) and customer company code (KNB1).",
+                "BP, Supplier (Fin. Accounting) or FI Customer, Company Code",
+            ],
+            [
+                "Customer used when another plant ships to this plant",
+                "Customer number of the plant (T001W-KUNNR). The plant's sales area is T001W-VKORG, VTWEG, and SPART.",
+                "SPRO, Set up Stock Transport Order, Define Shipping Data for Plants",
+            ],
+            [
+                "Customer invoiced when another company ships for this sales organization",
+                "Internal customer of the sales organization (TVKO-KUNNR).",
+                "SPRO, Billing, Intercompany Billing, Define Internal Customer Number by Sales Organization",
+            ],
+        ],
+    )
+    add_para(
+        doc,
+        "A company code on the financial view means that company can post to the "
+        "partner. It does not mean the partner represents that company. The "
+        "company the partner represents is the trading partner. The plant the "
+        "partner represents is the Plant field. From the plant, the company code "
+        "follows the valuation area.",
+    )
     doc.add_heading("How the intercompany partners were identified", level=1)
     add_para(
         doc,

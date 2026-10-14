@@ -186,6 +186,20 @@ Company **1710** sells trading good **TG11** to company **1010**. The Word docum
 
 Case 1 leaves the differences in place: purchase order **4500002162** at **27.00 USD**, customer invoice **90005786** at **203.76 EUR**, and tax only on vendor invoice **5100001607**. Case 2 buys 5 pieces from supplier **1000559** at **13.50 USD**, then sells them at **25.00 EUR**. Sales order **6323** and purchase order **4500002165** both carry **125.00 EUR**. Customer invoice **90005787** is **125.00 EUR**. Vendor invoice **5100001610** is **148.75 EUR** because of **23.75 EUR** input tax.
 
+A business partner number does not say whether the partner is a plant or a company. The grouping only decides the number range. The map is stored in master data and in two customizing tables.
+
+| Relationship | Where it is stored | Where you read it |
+|--------------|--------------------|-------------------|
+| This supplier represents a plant | Supplier general data, field **Plant** (`LFA1-WERKS`). Extract field `SupplierPlant`. | **BP**, role **Supplier**, **Supplier: General Data** |
+| This customer represents a plant | Customer general data, field **Plant** (`KNA1-WERKS`). | **BP**, role **Customer**, **Customer: General Data** |
+| This partner represents a company | **Trading partner** (`LFA1-VBUND`, `KNA1-VBUND`). | **BP**, **Control** |
+| Company code of a plant | Valuation area of the plant (`T001W-BWKEY`) and its company code (`T001K-BUKRS`). | Assign plant to company code |
+| Companies that can post to this partner | Supplier company code (`LFB1`) and customer company code (`KNB1`). | **BP**, **Supplier (Fin. Accounting)** or **FI Customer**, **Company Code** |
+| Customer used when another plant ships to this plant | Customer of the plant (`T001W-KUNNR`). Sales area: `T001W-VKORG`, `VTWEG`, `SPART`. | **SPRO** → Set up Stock Transport Order → Define Shipping Data for Plants |
+| Customer invoiced when another company ships for this sales organization | Internal customer of the sales organization (`TVKO-KUNNR`). | **SPRO** → Billing → Intercompany Billing → Define Internal Customer Number by Sales Organization |
+
+A company code on the financial view means that company can post to the partner. The company the partner represents is the trading partner. The plant the partner represents is the **Plant** field.
+
 The plant and the company code are different business partners.
 
 | Number | Name | Represents | How it was identified |
