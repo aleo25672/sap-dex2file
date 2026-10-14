@@ -180,11 +180,7 @@ python3 docs/samples/rtp/build_seed.py
 python3 docs/samples/rtp/build_use_case_docx.py
 ```
 
-## Intercompany resale
-
-Company **1710** sells trading good **TG11** to company **1010**. The Word document has two posted scenarios and the same 13 chapters as the extract use cases. There is no CSV pack.
-
-Case 1 leaves the differences in place: purchase order **4500002162** at **27.00 USD**, customer invoice **90005786** at **203.76 EUR**, and tax only on vendor invoice **5100001607**. Case 2 buys 5 pieces from supplier **1000559** at **13.50 USD**, then sells them at **25.00 EUR**. Sales order **6323** and purchase order **4500002165** both carry **125.00 EUR**. Customer invoice **90005787** is **125.00 EUR**. Vendor invoice **5100001610** is **148.75 EUR** because of **23.75 EUR** input tax.
+## Business partner mapping
 
 A business partner number does not say whether the partner is a plant or a company. The grouping only decides the number range. The map is stored in master data and in two customizing tables.
 
@@ -200,7 +196,13 @@ A business partner number does not say whether the partner is a plant or a compa
 
 A company code on the financial view means that company can post to the partner. The company the partner represents is the trading partner. The plant the partner represents is the **Plant** field.
 
-The plant and the company code are different business partners.
+## Intercompany resale
+
+Company **1710** sells trading good **TG11** to company **1010**. The Word document has two posted scenarios and the same 13 chapters as the extract use cases. There is no CSV pack. The generic partner map is in the section above.
+
+Case 1 leaves the differences in place: purchase order **4500002162** at **27.00 USD**, customer invoice **90005786** at **203.76 EUR**, and tax only on vendor invoice **5100001607**. Case 2 buys 5 pieces from supplier **1000559** at **13.50 USD**, then sells them at **25.00 EUR**. Sales order **6323** and purchase order **4500002165** both carry **125.00 EUR**. Customer invoice **90005787** is **125.00 EUR**. Vendor invoice **5100001610** is **148.75 EUR** because of **23.75 EUR** input tax.
+
+The partners used in these two cases:
 
 | Number | Name | Represents | How it was identified |
 |--------|------|------------|------------------------|
