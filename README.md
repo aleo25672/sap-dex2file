@@ -27,6 +27,7 @@ Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the ge
 | [Order to Cash (Word)](docs/ORDER_TO_CASH.docx) | Sales order 6321 → delivery → goods issue → billing 0090005785 → receipt 1400000000, with sample data |
 | [Requisition to Payment 1 (Word)](docs/REQUISITION_TO_PAYMENT_1.docx) | Requisition 10001624 → PO 4500002147 → invoice 5100001600 → payment 1500000001. No contract |
 | [Requisition to Payment 2 (Word)](docs/REQUISITION_TO_PAYMENT_2.docx) | Requisition 10001634 → contract 4600000042 → PO 4500002148 → invoice 5100001601 → payment 1500000002 |
+| [Intercompany resale (Word)](docs/INTERCOMPANY_RESALE.docx) | Company 1710 sells TG11 to company 1010. Case 1 keeps the differences. Case 2 buys, then resells at 25.00 EUR |
 | [Session readme](docs/README.md) | Use cases plus the live path from requisition 10001624 through invoice and payment |
 | [Source types](#source-types) | DEX / API CDS / Both (file report) |
 | [How delta works](#how-delta-works) | Timestamp delta for the **file** report (`ZEVO_DELTA`) |
@@ -378,7 +379,8 @@ See [Caller-managed delta](#caller-managed-delta) for how `DeltaSince` relates t
 
 > **P2P (PO → Item → History → GR / IR):** full call sequence as a Word doc — [`docs/P2P_OData_Extract_Call_Flow.docx`](docs/P2P_OData_Extract_Call_Flow.docx).  
 > **Contract to Payment:** quantity contract `4600000041` and release PO `4500002146`, with the sample rows in the document — [`docs/CONTRACT_TO_PAYMENT.docx`](docs/CONTRACT_TO_PAYMENT.docx).  
-> **Order to Cash:** sales order `6321` through delivery, billing `0090005785`, and customer receipt `1400000000` — [`docs/ORDER_TO_CASH.docx`](docs/ORDER_TO_CASH.docx).
+> **Order to Cash:** sales order `6321` through delivery, billing `0090005785`, and customer receipt `1400000000` — [`docs/ORDER_TO_CASH.docx`](docs/ORDER_TO_CASH.docx).  
+> **Intercompany resale:** company 1710 sells TG11 to company 1010 in two posted scenarios — [`docs/INTERCOMPANY_RESALE.docx`](docs/INTERCOMPANY_RESALE.docx).
 
 #### 7. Multiple CDS (header → items → history)
 
