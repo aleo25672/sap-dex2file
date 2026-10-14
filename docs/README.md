@@ -14,8 +14,9 @@ ZEVO writes one CDS view per file. The use cases show how to correlate those fil
 | Order to Cash | [ORDER_TO_CASH.docx](ORDER_TO_CASH.docx) | Sales order **6321** (`0000006321`) | [samples/o2c](samples/o2c) |
 | Requisition to Payment 1 | [REQUISITION_TO_PAYMENT_1.docx](REQUISITION_TO_PAYMENT_1.docx) | Requisition **10001624**, PO **4500002147**. No contract | [samples/r2o](samples/r2o) |
 | Requisition to Payment 2 | [REQUISITION_TO_PAYMENT_2.docx](REQUISITION_TO_PAYMENT_2.docx) | Requisition **10001634**, contract **4600000042**, PO **4500002148** | [samples/rtp](samples/rtp) |
+| Intercompany resale | [INTERCOMPANY_RESALE.docx](INTERCOMPANY_RESALE.docx) | Case 1 billing **90005786**. Case 2 sales order **6323**, billing **90005787** | Posted in SAP. No extract pack |
 
-The four Word documents use the same 13 chapters: Purpose, Document flow, Business partner, Source document, Follow-on document, Goods movement, Invoice, Accounting, Quantity and amount reconciliation, Clearing, How the documents are correlated, Extract calls for this reference, and Sample-data files.
+The Word documents use the same 13 chapters: Purpose, Document flow, Business partner, Source document, Follow-on document, Goods movement, Invoice, Accounting, Quantity and amount reconciliation, Clearing, How the documents are correlated, Extract calls for this reference, and Sample-data files.
 
 Download a document from GitHub while signed in to an account that can read this private repository. On the file page, use **Download**.
 
@@ -23,6 +24,7 @@ Download a document from GitHub while signed in to an account that can read this
 - https://github.com/aleo25672/sap-dex2file/blob/main/docs/ORDER_TO_CASH.docx
 - https://github.com/aleo25672/sap-dex2file/blob/main/docs/REQUISITION_TO_PAYMENT_1.docx
 - https://github.com/aleo25672/sap-dex2file/blob/main/docs/REQUISITION_TO_PAYMENT_2.docx
+- https://github.com/aleo25672/sap-dex2file/blob/main/docs/INTERCOMPANY_RESALE.docx
 
 ### Contract to Payment
 
@@ -178,6 +180,16 @@ python3 docs/samples/rtp/build_seed.py
 python3 docs/samples/rtp/build_use_case_docx.py
 ```
 
+## Intercompany resale
+
+Company **1710** sells trading good **TG11** to company **1010**. The Word document has two posted scenarios and the same 13 chapters as the extract use cases. There is no CSV pack.
+
+Case 1 leaves the differences in place: purchase order **4500002162** at **27.00 USD**, customer invoice **90005786** at **203.76 EUR**, and tax only on vendor invoice **5100001607**. Case 2 buys 5 pieces from supplier **1000559** at **13.50 USD**, then sells them at **25.00 EUR**. Sales order **6323** and purchase order **4500002165** both carry **125.00 EUR**. Customer invoice **90005787** is **125.00 EUR**. Vendor invoice **5100001610** is **148.75 EUR** because of **23.75 EUR** input tax.
+
+```bash
+python3 docs/samples/ic/build_use_case_docx.py
+```
+
 ## File map
 
 ```text
@@ -186,9 +198,11 @@ docs/CONTRACT_TO_PAYMENT.md            Same walkthrough in markdown
 docs/ORDER_TO_CASH.docx                Order-to-Cash use case
 docs/REQUISITION_TO_PAYMENT_1.docx     Requisition to Payment 1, no contract
 docs/REQUISITION_TO_PAYMENT_2.docx     Requisition to Payment 2, via contract 4600000042
+docs/INTERCOMPANY_RESALE.docx          Company 1710 sells TG11 to company 1010, two scenarios
 docs/samples/c2p/                      Contract 4600000041 / PO 4500002146
 docs/samples/o2c/                      Sales order 6321
 docs/samples/r2o/                      Requisition 10001624 / PO 4500002147
 docs/samples/rtp/                      Requisition 10001634 / contract 4600000042 / PO 4500002148
+docs/samples/ic/                       Builder for the intercompany resale Word document
 docs/README.md                         This file
 ```
