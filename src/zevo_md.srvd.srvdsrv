@@ -1,0 +1,8 @@
+@EndUserText.label: 'ZEVO Master Data OData V4'
+define service ZEVO_MD {
+  expose ZEVO_M_BusinessPartner as BusinessPartner;
+  expose ZEVO_M_BPSupplier as BusinessPartnerSupplier;
+  expose ZEVO_M_BPCustomer as BusinessPartnerCustomer;
+  expose ZEVO_M_BPBank as BusinessPartnerBank;
+  expose ZEVO_M_Product as Product;
+}
