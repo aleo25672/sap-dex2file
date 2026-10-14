@@ -132,7 +132,7 @@ def add_footer(section):
 
 
 def partners(doc) -> None:
-    doc.add_heading("How a business partner maps to a plant or a company", level=1)
+    doc.add_heading("Business partner mapping", level=1)
     add_para(
         doc,
         "The business partner number does not say whether the partner is a plant "
