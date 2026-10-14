@@ -413,7 +413,8 @@ def case_two(doc) -> None:
         "Purchase order 4500002165 uses purchasing organization 1010, purchasing "
         "group 001, company code 1010, currency EUR, and plant 1010. The header "
         "exchange rate is 1.00000 because the document currency and the company "
-        "currency are both EUR. The order reference is sales order 6323. "
+        "currency are both EUR. The sales order stores purchase order 4500002165 "
+        "as its customer reference. The purchase order does not store sales order 6323. "
         "The sales order was released in credit control area 1000 before the delivery.",
     )
 
@@ -511,7 +512,7 @@ def case_two(doc) -> None:
             ["Purchase order 4500002164", "Goods receipt 5000003010 and invoice 5100001609", "Purchase order number"],
             ["Invoice 5100001609", "Payment 1500000004", "Vendor open item 5100000005, amount 67.50 USD"],
             ["Sales order 6323", "Delivery 80006442 and billing 90005787", "Sales order, then the delivery number on the billing document"],
-            ["Sales order 6323", "Purchase order 4500002165", "Reference 6323 on the purchase order"],
+            ["Sales order 6323", "Purchase order 4500002165", "Customer reference on the sales order is purchase order 4500002165"],
             ["Purchase order 4500002165", "Goods receipt 5000003011 and invoice 5100001610", "Purchase order number"],
             ["Billing 90005787", "Vendor invoice 5100001610", "Reference INV.90005787"],
             ["Billing 90005787", "Receipt 1400000002", "Customer 10401010 and amount 125.00 EUR"],
