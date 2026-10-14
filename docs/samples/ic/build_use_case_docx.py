@@ -131,6 +131,52 @@ def add_footer(section):
     page_run._r.append(fld_end)
 
 
+def partners(doc) -> None:
+    doc.add_heading("How the intercompany partners were identified", level=1)
+    add_para(
+        doc,
+        "Four business partners appear in these cases. Two of them represent a "
+        "plant. Two of them represent a company code. The number used on a "
+        "purchase order is not always the number on the posted invoice.",
+    )
+    add_table(
+        doc,
+        ["Number", "Name", "What it represents", "How it was identified"],
+        [
+            [
+                "BP1710",
+                "Plant 1, Palo Alto",
+                "Plant 1710, as a vendor",
+                "Supplier field Plant is 1710. The extract field SUPPLIERPLANT is 1710. Company code 1010 and purchasing organization 1010 are maintained, so company 1010 can order from this plant.",
+            ],
+            [
+                "0017401710",
+                "SAP SE",
+                "Company code 1710, as a vendor",
+                "Search term COMP1710. Address 3475 Deer Creek, Palo Alto. Vendor invoice 5100001607 posted to this number, although the purchase order was entered with BP1710.",
+            ],
+            [
+                "10401010",
+                "Buchungskreis 1010 als Geschäftspartner",
+                "Company code 1010, as a customer",
+                "The name means company code 1010 as business partner. Country DE, Walldorf, trading partner 1010. Billing document 90005786 uses this payer.",
+            ],
+            [
+                "10411010",
+                "Werk 1010 als Geschäftspartner",
+                "Plant 1010, as a customer",
+                "Customer general data, Plant 1010. This account had no open item for billing document 90005786.",
+            ],
+        ],
+    )
+    add_para(
+        doc,
+        "BP1710 is the vendor that represents plant 1710. It does not represent "
+        "company code 1710. Company code 1710 is vendor 0017401710. Customer "
+        "10401010 represents company code 1010. Customer 10411010 represents plant 1010.",
+    )
+
+
 def case_one(doc) -> None:
     doc.add_heading("Case 1. Resale with differences", level=1)
     add_para(
@@ -604,6 +650,7 @@ def main() -> None:
         ],
     )
 
+    partners(doc)
     case_one(doc)
     case_two(doc)
     doc.save(OUT)
