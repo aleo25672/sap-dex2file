@@ -131,6 +131,108 @@ def add_footer(section):
     page_run._r.append(fld_end)
 
 
+def partners(doc) -> None:
+    doc.add_heading("How a business partner maps to a plant or a company", level=1)
+    add_para(
+        doc,
+        "The business partner number does not say whether the partner is a plant "
+        "or a company. The grouping only decides which number range is used. "
+        "The map is stored in master-data fields and in two customizing tables.",
+    )
+    add_table(
+        doc,
+        ["Relationship", "Where it is stored", "Where you read it"],
+        [
+            [
+                "This supplier represents a plant",
+                "Supplier general data, field Plant (LFA1-WERKS). In the extract, SupplierPlant.",
+                "BP, role Supplier, Supplier: General Data, Plant",
+            ],
+            [
+                "This customer represents a plant",
+                "Customer general data, field Plant (KNA1-WERKS).",
+                "BP, role Customer, Customer: General Data, Plant",
+            ],
+            [
+                "This partner represents a company",
+                "Trading partner on the supplier or the customer (LFA1-VBUND, KNA1-VBUND).",
+                "BP, Control, Trading Partner",
+            ],
+            [
+                "The company code of a plant",
+                "The plant's valuation area (T001W-BWKEY) and that area's company code (T001K-BUKRS).",
+                "Plant customizing, assign plant to company code",
+            ],
+            [
+                "Companies that can post to this partner",
+                "Supplier company code (LFB1) and customer company code (KNB1).",
+                "BP, Supplier (Fin. Accounting) or FI Customer, Company Code",
+            ],
+            [
+                "Customer used when another plant ships to this plant",
+                "Customer number of the plant (T001W-KUNNR). The plant's sales area is T001W-VKORG, VTWEG, and SPART.",
+                "SPRO, Set up Stock Transport Order, Define Shipping Data for Plants",
+            ],
+            [
+                "Customer invoiced when another company ships for this sales organization",
+                "Internal customer of the sales organization (TVKO-KUNNR).",
+                "SPRO, Billing, Intercompany Billing, Define Internal Customer Number by Sales Organization",
+            ],
+        ],
+    )
+    add_para(
+        doc,
+        "A company code on the financial view means that company can post to the "
+        "partner. It does not mean the partner represents that company. The "
+        "company the partner represents is the trading partner. The plant the "
+        "partner represents is the Plant field. From the plant, the company code "
+        "follows the valuation area.",
+    )
+    doc.add_heading("How the intercompany partners were identified", level=1)
+    add_para(
+        doc,
+        "Four business partners appear in these cases. Two of them represent a "
+        "plant. Two of them represent a company code. The number used on a "
+        "purchase order is not always the number on the posted invoice.",
+    )
+    add_table(
+        doc,
+        ["Number", "Name", "What it represents", "How it was identified"],
+        [
+            [
+                "BP1710",
+                "Plant 1, Palo Alto",
+                "Plant 1710, as a vendor",
+                "Supplier field Plant is 1710. The extract field SUPPLIERPLANT is 1710. Company code 1010 and purchasing organization 1010 are maintained, so company 1010 can order from this plant.",
+            ],
+            [
+                "0017401710",
+                "SAP SE",
+                "Company code 1710, as a vendor",
+                "Search term COMP1710. Address 3475 Deer Creek, Palo Alto. Vendor invoice 5100001607 posted to this number, although the purchase order was entered with BP1710.",
+            ],
+            [
+                "10401010",
+                "Buchungskreis 1010 als Geschäftspartner",
+                "Company code 1010, as a customer",
+                "The name means company code 1010 as business partner. Country DE, Walldorf, trading partner 1010. Billing document 90005786 uses this payer.",
+            ],
+            [
+                "10411010",
+                "Werk 1010 als Geschäftspartner",
+                "Plant 1010, as a customer",
+                "Customer general data, Plant 1010. This account had no open item for billing document 90005786.",
+            ],
+        ],
+    )
+    add_para(
+        doc,
+        "BP1710 is the vendor that represents plant 1710. It does not represent "
+        "company code 1710. Company code 1710 is vendor 0017401710. Customer "
+        "10401010 represents company code 1010. Customer 10411010 represents plant 1010.",
+    )
+
+
 def case_one(doc) -> None:
     doc.add_heading("Case 1. Resale with differences", level=1)
     add_para(
@@ -604,6 +706,7 @@ def main() -> None:
         ],
     )
 
+    partners(doc)
     case_one(doc)
     case_two(doc)
     doc.save(OUT)
