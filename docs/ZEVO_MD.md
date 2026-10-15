@@ -33,6 +33,18 @@ This is **not** `ZEVO_C2P` / `ZEVO_C2C` (documents) and **not** `ZEVO_GENERALLED
 
 `ProductType` is aliased to `ProductTypeCode` (OData V4 EDM clash with entity type `ProductType`). Same pattern as C2P `*TypeCode`.
 
+### Intercompany / plant–company link fields (Phase 1)
+
+| Relationship | Field(s) | Entity set | Source |
+|--------------|----------|------------|--------|
+| Supplier represents a plant | `SupplierPlant`, `SupplierIsPlantRelevant` | `BusinessPartnerSupplier` | `I_BusinessPartnerSupplierDEX` |
+| Partner represents a company | `TradingPartner` | `BusinessPartnerSupplier` | via join `I_Supplier` |
+| Partner represents a company | `TradingPartner` | `BusinessPartnerCustomer` | via join `I_Customer` |
+| Customer represents a plant | *(not on `I_Customer` in this landscape)* | — | add when CDS exposes KNA1-WERKS |
+| Company code of a plant | — | Phase 2 `Plant` | `I_Plant` + assign plant→CC |
+| Companies that can post to partner | — | Phase 2 company-code views | LFB1 / KNB1 |
+| Plant shipping customer / IC sales-org customer | — | Phase 2 on `Plant` / sales org | T001W / TVKO |
+
 ---
 
 ## Relation to other services
@@ -91,7 +103,9 @@ https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_md/srvd_a2x/sap/zevo_md/0001/Bus
 
 ## Activation notes
 
-- `BusinessPartnerCustomer` source is `I_BusinessPartnerCustomerDEX` (mirror of supplier DEX). If the local stack uses a different name, paste the activation error and adjust.
+- `BusinessPartnerCustomer` is `I_BusinessPartnerCustomerDEX` left-joined to `I_Customer` for `TradingPartner`.
+- `BusinessPartnerSupplier` is `I_BusinessPartnerSupplierDEX` left-joined to `I_Supplier` for `TradingPartner` (DEX itself has `SupplierPlant` but not trading partner on this stack).
+- If `I_Supplier` / join fields fail, paste the activation log.
 - `I_Product` field list is a Phase 1 subset; trim unknown elements if activation complains.
 - C2P still exposes its own BP/supplier/bank until a later lean migration.
 

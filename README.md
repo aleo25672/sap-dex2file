@@ -1309,7 +1309,8 @@ GET {base}/Product?$filter=Product eq 'MZ-TG-Y240'
 |-------|--------|
 | vs C2P BP | MD = extensive / canonical; C2P may keep fat BP until a later lean migration |
 | vs C2C (planned) | C2C lean BP general data only; roles/banks/product from MD |
-| Customer role source | `I_BusinessPartnerCustomerDEX` — adjust if local name differs |
+| Customer role source | `I_BusinessPartnerCustomerDEX` + join `I_Customer` for `TradingPartner` |
+| Supplier IC fields | `SupplierPlant` on DEX; `TradingPartner` via join `I_Supplier` |
 | Product | Phase 1 field subset on `I_Product`; trim if activation fails |
 
 ---
@@ -1672,6 +1673,7 @@ Activate in this order (or select all and mass-activate so dependencies resolve)
 4. For **OData V2** (`ExtractCds`): register/activate per **[OData CDS extract service](#odata-cds-extract-service)** above.
 5. For **OData V4 C2P**: activate all `ZEVO_C_*` DDLS + service definition `ZEVO_C2P`, then create/publish the binding in **Eclipse ADT** per **[OData V4 C2P service](#odata-v4-c2p-service-zevo_c2p)** above.
 6. For **OData V4 General Ledger**: activate all `ZEVO_FI_*` DDLS + service definition `ZEVO_GENERALLEDGER`, then create/publish binding **`ZEVO_GENERALLEDGER`** (OData V4 Web API) per **[OData V4 General Ledger](#odata-v4-general-ledger-zevo_generalledger)** above.
+7. For **OData V4 Master Data**: activate all `ZEVO_M_*` DDLS + service definition `ZEVO_MD`, then create/publish binding **`ZEVO_MD`** (OData V4 Web API) per **[OData V4 Master Data](#odata-v4-master-data-zevo_md)** above.
 
 After a rename from older `Z_CDS_*` / `ZCL_DXF_*` / `ZDXF_*` objects: delete the old objects (or let abapGit remove them), then pull/activate the `ZEVO*` ones.
 
