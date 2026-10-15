@@ -1261,7 +1261,7 @@ After CDS changes: pull → activate → republish binding → `$metadata`. More
 
 ## OData V4 Master Data (`ZEVO_MD`)
 
-Typed **OData V4 Web API** for **cross-scenario masters**: full business partner, supplier/customer roles, bank, and product. Scenario services (`ZEVO_C2P`, planned `ZEVO_C2C`) keep **lean BP** for document `$expand`; **canonical** partner/bank/product reads use this service. FI org masters stay on [`ZEVO_GENERALLEDGER`](#odata-v4-general-ledger-zevo_generalledger).
+Typed **OData V4 Web API** for **cross-scenario masters**: full business partner, DEX supplier/customer roles, rich `I_Customer` / `I_Supplier`, bank, and product. Scenario services (`ZEVO_C2P`, planned `ZEVO_C2C`) keep **lean BP** for document `$expand`; **canonical** partner/bank/product reads use this service. FI org masters stay on [`ZEVO_GENERALLEDGER`](#odata-v4-general-ledger-zevo_generalledger).
 
 | Item | Value |
 |------|--------|
@@ -1272,7 +1272,7 @@ Typed **OData V4 Web API** for **cross-scenario masters**: full business partner
 
 Eclipse / abapGit / ADT habits match **[C2P](#odata-v4-c2p-service-zevo_c2p)**. Use binding name **`ZEVO_MD`** and activate all **`ZEVO_M_*`** + the SRVD.
 
-### Entity sets (5)
+### Entity sets (7)
 
 | Entity set (OData) | Z CDS | Source CDS |
 |--------------------|-------|------------|
@@ -1280,9 +1280,11 @@ Eclipse / abapGit / ADT habits match **[C2P](#odata-v4-c2p-service-zevo_c2p)**. 
 | `BusinessPartnerSupplier` | `ZEVO_M_BPSupplier` | `I_BusinessPartnerSupplierDEX` |
 | `BusinessPartnerCustomer` | `ZEVO_M_BPCustomer` | `I_BusinessPartnerCustomerDEX` |
 | `BusinessPartnerBank` | `ZEVO_M_BPBank` | `I_BusinessPartnerBank` |
+| `Supplier` | `ZEVO_M_Supplier` | `I_Supplier` |
+| `Customer` | `ZEVO_M_Customer` | `I_Customer` |
 | `Product` | `ZEVO_M_Product` | `I_Product` |
 
-Navigations from `BusinessPartner`: `_BPSupplier`, `_BPCustomer`, `_Bank`.  
+Navigations: BP → `_BPSupplier` / `_BPCustomer` / `_Bank`; role → `_Supplier` / `_Customer`.  
 `ProductType` → `ProductTypeCode` (EDM name clash).
 
 ### Service URL + samples
@@ -1295,7 +1297,7 @@ https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_md/srvd_a2x/sap/zevo_md/0001/$me
 ```http
 GET {base}/BusinessPartner
   ?$filter=BusinessPartner eq '0001000559'
-  &$expand=_BPSupplier,_BPCustomer,_Bank
+  &$expand=_BPSupplier($expand=_Supplier),_BPCustomer($expand=_Customer),_Bank
 
 GET {base}/BusinessPartnerBank
   ?$filter=BPBankDetailsChangeDate ge 2026-10-01
@@ -1309,8 +1311,9 @@ GET {base}/Product?$filter=Product eq 'MZ-TG-Y240'
 |-------|--------|
 | vs C2P BP | MD = extensive / canonical; C2P may keep fat BP until a later lean migration |
 | vs C2C (planned) | C2C lean BP general data only; roles/banks/product from MD |
-| Customer role (DEX) | `Plant`; `CustomerTradingPartnerId` as `TradingPartner` |
-| Supplier role (DEX) | `SupplierPlant` / `SupplierIsPlantRelevant` (no trading-partner field on this DEX) |
+| DEX vs `I_*` | DEX = BP key + plant identity; `Customer`/`Supplier` = rich classic masters |
+| Customer DEX | `Plant`; `CustomerTradingPartnerId` as `TradingPartner` |
+| Supplier DEX | `SupplierPlant`; company `TradingPartner` on `I_Supplier` via `_Supplier` |
 | Product | Phase 1 field subset on `I_Product`; trim if activation fails |
 
 ---
@@ -1447,7 +1450,7 @@ instead of "since the last run":
 | `ZEVO_FI_*` | CDS view (`define view`) | General Ledger line + FI org masters |
 | `ZEVO_GENERALLEDGER` | service definition | exposes GL line item + FI masters |
 | `ZEVO_GENERALLEDGER` | service binding | create + publish in ADT (OData V4 Web API; not in abapGit) |
-| `ZEVO_M_*` | CDS view (`define view`) | Cross-scenario masters (BP, roles, bank, product) |
+| `ZEVO_M_*` | CDS view (`define view`) | Cross-scenario masters (BP, DEX roles, Customer/Supplier, bank, product) |
 | `ZEVO_MD` | service definition | exposes master-data entity sets |
 | `ZEVO_MD` | service binding | create + publish in ADT (OData V4 Web API; not in abapGit) |
 

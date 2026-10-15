@@ -5,6 +5,8 @@
 @ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #MASTER }
 define view ZEVO_M_BPCustomer
   as select from I_BusinessPartnerCustomerDEX
+  association [0..1] to ZEVO_M_Customer as _Customer
+    on $projection.Customer = _Customer.Customer
 {
   key BusinessPartner,
   key Customer,
@@ -79,5 +81,6 @@ define view ZEVO_M_BPCustomer
       DataController7,
       DataController8,
       DataController9,
-      DataController10
+      DataController10,
+      _Customer
 }

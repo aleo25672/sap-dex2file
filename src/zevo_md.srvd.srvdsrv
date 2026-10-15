@@ -4,5 +4,7 @@ define service ZEVO_MD {
   expose ZEVO_M_BPSupplier as BusinessPartnerSupplier;
   expose ZEVO_M_BPCustomer as BusinessPartnerCustomer;
   expose ZEVO_M_BPBank as BusinessPartnerBank;
+  expose ZEVO_M_Customer as Customer;
+  expose ZEVO_M_Supplier as Supplier;
   expose ZEVO_M_Product as Product;
 }
