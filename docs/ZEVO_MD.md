@@ -38,9 +38,9 @@ This is **not** `ZEVO_C2P` / `ZEVO_C2C` (documents) and **not** `ZEVO_GENERALLED
 | Relationship | Field(s) | Entity set | Source |
 |--------------|----------|------------|--------|
 | Supplier represents a plant | `SupplierPlant`, `SupplierIsPlantRelevant` | `BusinessPartnerSupplier` | `I_BusinessPartnerSupplierDEX` |
-| Partner represents a company | `TradingPartner` | `BusinessPartnerSupplier` | `I_BusinessPartnerSupplierDEX` |
-| Partner represents a company | `TradingPartner` | `BusinessPartnerCustomer` | `I_BusinessPartnerCustomerDEX` |
-| Customer represents a plant | *(when DEX exposes plant / KNA1-WERKS)* | `BusinessPartnerCustomer` | add when present on DEX |
+| Customer represents a plant | `Plant` | `BusinessPartnerCustomer` | `I_BusinessPartnerCustomerDEX` |
+| Customer represents a company | `TradingPartner` ← `CustomerTradingPartnerId` | `BusinessPartnerCustomer` | `I_BusinessPartnerCustomerDEX` |
+| Supplier represents a company | *(not on supplier DEX in full extract)* | — | use customer DEX / Phase 2 if needed |
 | Company code of a plant | — | Phase 2 `Plant` | `I_Plant` + assign plant→CC |
 | Companies that can post to partner | — | Phase 2 company-code views | LFB1 / KNB1 |
 | Plant shipping customer / IC sales-org customer | — | Phase 2 on `Plant` / sales org | T001W / TVKO |
@@ -103,8 +103,9 @@ https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_md/srvd_a2x/sap/zevo_md/0001/Bus
 
 ## Activation notes
 
-- Role views use **`…DEX` only** — `TradingPartner` and `SupplierPlant` come from the DEX CDS (no join to `I_Supplier` / `I_Customer`).
-- If `TradingPartner` is unknown on a local DEX, paste the activation log.
+- Role views use **`…DEX` only** (field lists match full DEX extracts).
+- Customer: `Plant`; `CustomerTradingPartnerId` exposed as `TradingPartner`.
+- Supplier: `SupplierPlant` / `SupplierIsPlantRelevant` — no trading-partner element on this DEX.
 - `I_Product` field list is a Phase 1 subset; trim unknown elements if activation complains.
 - C2P still exposes its own BP/supplier/bank until a later lean migration.
 

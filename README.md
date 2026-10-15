@@ -1309,8 +1309,8 @@ GET {base}/Product?$filter=Product eq 'MZ-TG-Y240'
 |-------|--------|
 | vs C2P BP | MD = extensive / canonical; C2P may keep fat BP until a later lean migration |
 | vs C2C (planned) | C2C lean BP general data only; roles/banks/product from MD |
-| Customer / supplier roles | `I_BusinessPartnerCustomerDEX` / `I_BusinessPartnerSupplierDEX` including `TradingPartner` |
-| Supplier plant link | `SupplierPlant` on supplier DEX |
+| Customer role (DEX) | `Plant`; `CustomerTradingPartnerId` as `TradingPartner` |
+| Supplier role (DEX) | `SupplierPlant` / `SupplierIsPlantRelevant` (no trading-partner field on this DEX) |
 | Product | Phase 1 field subset on `I_Product`; trim if activation fails |
 
 ---

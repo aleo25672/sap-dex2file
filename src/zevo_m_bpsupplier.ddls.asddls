@@ -47,7 +47,6 @@ define view ZEVO_M_BPSupplier
       SupplierIsPlantRelevant,
       FactoryCalendar,
       SupplierPlant,
-      TradingPartner,
       DeletionIndicator,
       IsBusinessPurposeCompleted,
       PaymentReason,
