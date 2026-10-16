@@ -120,7 +120,7 @@ https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_md/srvd_a2x/sap/zevo_md/0001/Bus
 - Customer DEX: `Plant`; `CustomerTradingPartnerId` as `TradingPartner`.
 - Supplier DEX: `SupplierPlant`; supplier **company** trading partner on `I_Supplier.TradingPartner` via `$expand=_Supplier`.
 - Trim unknown `I_Supplier` / `I_Customer` / `I_Product` elements if activation complains (`ProductVolume` / `VolumeUnit` and supplier `Language` omitted on this stack).
-- C2P still exposes its own BP/supplier/bank until a later lean migration.
+- C2P exposes **lean** `BusinessPartner` only (document `$expand`); roles/banks/rich masters are here on `ZEVO_MD`.
 
 ---
 
@@ -128,5 +128,4 @@ https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_md/srvd_a2x/sap/zevo_md/0001/Bus
 
 - Plant / sales-area product views  
 - BP address / identification / contact person entities  
-- Slimming C2P BP (separate change after consumers move)  
 - FI org masters (stay on `ZEVO_GENERALLEDGER`)  

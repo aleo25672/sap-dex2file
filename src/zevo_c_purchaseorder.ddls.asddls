@@ -9,8 +9,6 @@ define view ZEVO_C_PurchaseOrder
     on $projection.PurchaseOrder = _Item.PurchaseOrder
   association [0..1] to ZEVO_C_BusinessPartner as _Supplier
     on $projection.Supplier = _Supplier.BusinessPartner
-  association [0..*] to ZEVO_C_BPSupplier as _BPSupplier
-    on $projection.Supplier = _BPSupplier.Supplier
 {
   key PurchaseOrder,
       PurchaseOrderType as PurchaseOrderTypeCode,
@@ -71,6 +69,5 @@ define view ZEVO_C_PurchaseOrder
       PurgReasonForDocCancellation,
       PurgReleaseTimeTotalAmount,
       _Item,
-      _Supplier,
-      _BPSupplier
+      _Supplier
 }

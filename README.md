@@ -938,16 +938,16 @@ ls = zevo_cl_odata_api=>extract_cds(
 
 ## OData V4 C2P service (`ZEVO_C2P`)
 
-Typed **OData V4 Web API** for the contract-to-payment / P2P graph (14 entity sets + `$expand`). This is **not** the V2 `ExtractCds` wrapper.
+Typed **OData V4 Web API** for the contract-to-payment / P2P graph (12 entity sets + `$expand`). This is **not** the V2 `ExtractCds` wrapper. Canonical partner / bank / product masters live on [`ZEVO_MD`](#odata-v4-master-data-zevo_md); C2P keeps a **lean** `BusinessPartner` for document `$expand` only.
 
 | Item | Value |
 |------|--------|
-| CDS projections | 14 × `ZEVO_C_*` (classic `define view`, explicit fields, one-way associations) |
+| CDS projections | 12 × `ZEVO_C_*` (classic `define view`, explicit fields, one-way associations) |
 | Service definition | `ZEVO_C2P` — in abapGit (`zevo_c2p.srvd.srvdsrv` + `.xml`) |
 | Service binding | **Create in ADT only** as `ZEVO_C2P` — **OData V4 - Web API** (not shipped via abapGit; hand-written SRVB XML fails import) |
 | Reference | Navigations, delta, more URLs — [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md) |
 
-### Supported CDS (14)
+### Supported CDS (12)
 
 Each OData entity set is a thin Z projection over an SAP CDS. Clients call the **entity set** name; abapGit ships the **`ZEVO_C_*`** DDLS.
 
@@ -964,15 +964,13 @@ Each OData entity set is a thin Z projection over an SAP CDS. Clients call the *
 | `SupplierInvoice` | `ZEVO_C_SupplierInvoice` | `C_SupplierInvoiceDEX` |
 | `SupplierInvoiceItem` | `ZEVO_C_SupplierInvItem` | `C_SupplierInvoiceItemDEX` |
 | `GoodsMovementDocument` | `ZEVO_C_GoodsMovementDoc` | `I_GoodsMovementDocumentDEX` |
-| `BusinessPartner` | `ZEVO_C_BusinessPartner` | `I_BusinessPartner` |
-| `BusinessPartnerSupplier` | `ZEVO_C_BPSupplier` | `I_BusinessPartnerSupplierDEX` |
-| `BusinessPartnerBank` | `ZEVO_C_BPBank` | `I_BusinessPartnerBank` |
+| `BusinessPartner` | `ZEVO_C_BusinessPartner` | `I_BusinessPartner` (lean: id/name/block/delta) |
 
-Out of scope for this service (use V2 `ExtractCds` or another binding): PR **header**, GL/journal, cost/profit center, product masters, ref-doc texts.
+Out of scope for this service: PR **header**, GL/journal, cost/profit center, product masters, ref-doc texts, and **full BP / supplier role / bank** (use [`ZEVO_MD`](#odata-v4-master-data-zevo_md)).
 
 ### Add a new CDS to `ZEVO_C2P`
 
-Use this when extending the typed V4 graph (same pattern as `BusinessPartnerBank`).
+Use this when extending the typed V4 graph (same pattern as other `ZEVO_C_*` document views).
 
 #### 1. In the Git repo
 
@@ -990,7 +988,7 @@ Use this when extending the typed V4 graph (same pattern as `BusinessPartnerBank
 expose ZEVO_C_<Name> as <EntitySetName>;
 ```
 
-3. If another view should navigate to it, add the association + expose the association element on that view (e.g. `_Bank` on `ZEVO_C_BusinessPartner`).
+3. If another view should navigate to it, add the association + expose the association element on that view (e.g. `_Supplier` → lean `BusinessPartner`).
 4. Update this table, [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md) (entity set + nav + delta field), and a sample URL if helpful.
 5. Merge to **`main`**.
 
@@ -999,6 +997,7 @@ expose ZEVO_C_<Name> as <EntitySetName>;
 1. **abapGit → Pull** `main`.
 2. On the pull dialog:
    - **Keep** checked: new DDLS (**Add local object**), changed DDLS (**Delete and recreate** / overwrite), **SRVD** `ZEVO_C2P` (**Overwrite**).
+   - When lean-BP landed: **allow Delete** for obsolete DDLS `ZEVO_C_BPSupplier` / `ZEVO_C_BPBank` (masters moved to `ZEVO_MD`).
    - **Uncheck** anything that would **Delete local** the **SRVB** / **G4BA** `ZEVO_C2P` (binding is ADT-only, not in Git).
    - **Uncheck** deletes for local SEGW/Gateway objects (`ZEVO_CDS_EXTRACT_*`, SICF, …).
 3. **Mass-activate** the new/changed `ZEVO_C_*` views and service definition `ZEVO_C2P`.
@@ -1011,8 +1010,7 @@ expose ZEVO_C_<Name> as <EntitySetName>;
 ```http
 GET {base}/$metadata
 GET {base}/<EntitySetName>?$top=5
-# if you added a nav from BusinessPartner named _Bank:
-GET {base}/BusinessPartner?$filter=BusinessPartner eq '0001000559'&$expand=_Bank
+GET {base}/PurchaseOrder?$filter=PurchaseOrder eq '4500002146'&$expand=_Supplier
 ```
 
 ### A. Eclipse + ADT on Mac (one-time)
@@ -1038,7 +1036,7 @@ Service definition / binding / CDS activation for V4 is done in **ABAP Developme
 1. In SAP GUI (or ADT), open **abapGit** on the package that already holds ZEVO objects (e.g. `$ZEVO` / `$ZEVOLVER_DEX2F`).
 2. **Pull** branch **`main`** from `https://github.com/aleo25672/sap-dex2file.git`.
 3. Activate (mass-activate is fine; resolve cycles by activating the whole `ZEVO_C_*` set together):
-   1. All **`ZEVO_C_*`** DDLS (14 views).
+   1. All **`ZEVO_C_*`** DDLS (12 views).
    2. Service definition **`ZEVO_C2P`**.
 4. If SRVD import fails: in ADT create service definition **`ZEVO_C2P`** and paste the expose list from [`src/zevo_c2p.srvd.srvdsrv`](src/zevo_c2p.srvd.srvdsrv).
 
@@ -1104,11 +1102,11 @@ GET .../PurchaseOrder
   &$orderby=CreationDate desc
 ```
 
-Supplier bank details (track changes via `BPBankDetailsChangeDate`):
+Lean supplier on a PO (full bank / role → [`ZEVO_MD`](#odata-v4-master-data-zevo_md)):
 
 ```http
-GET .../BusinessPartner?$filter=BusinessPartner eq '0001000559'&$expand=_Bank
-GET .../BusinessPartnerBank?$filter=BPBankDetailsChangeDate ge 2026-10-01
+GET .../PurchaseOrder?$filter=PurchaseOrder eq '4500002146'&$expand=_Supplier
+GET .../BusinessPartner?$filter=BusinessPartner eq '1000559'
 ```
 
 More examples (delta, contract, PR): [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md).
@@ -1309,7 +1307,7 @@ GET {base}/Product?$filter=Product eq 'MZ-TG-Y240'
 
 | Topic | Choice |
 |-------|--------|
-| vs C2P BP | MD = extensive / canonical; C2P may keep fat BP until a later lean migration |
+| vs C2P BP | MD = extensive / canonical; C2P = lean BP for document `$expand` only |
 | vs C2C (planned) | C2C lean BP general data only; roles/banks/product from MD |
 | DEX vs `I_*` | DEX = BP key + plant identity; `Customer`/`Supplier` = rich classic masters |
 | Customer DEX | `Plant`; `CustomerTradingPartnerId` as `TradingPartner` |
@@ -1444,8 +1442,8 @@ instead of "since the last run":
 | `ZEVO_CL_ODATA_API` | class | facade for `ExtractCds` / `GetCdsMetadata` |
 | `ZEVO_CL_ODATA_MPC` | class | SEGW helper: `DEFINE_MODEL` (no Gateway inheritance) |
 | `ZEVO_CL_ODATA_DPC` | class | SEGW helper: `EXECUTE_ACTION` (no Gateway inheritance) |
-| `ZEVO_C_*` (14) | CDS view (`define view`) | C2P projections over DEX/BP (incl. bank) with associations |
-| `ZEVO_C2P` | service definition | exposes the 14 C2P entity sets |
+| `ZEVO_C_*` (12) | CDS view (`define view`) | C2P document projections + lean BP with associations |
+| `ZEVO_C2P` | service definition | exposes the 12 C2P entity sets |
 | `ZEVO_C2P` | service binding | create + publish in ADT (OData V4 Web API; not in abapGit) |
 | `ZEVO_FI_*` | CDS view (`define view`) | General Ledger line + FI org masters |
 | `ZEVO_GENERALLEDGER` | service definition | exposes GL line item + FI masters |
