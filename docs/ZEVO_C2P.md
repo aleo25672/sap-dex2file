@@ -29,10 +29,36 @@ Canonical list (and **how to add a new CDS**): root README
 | `PurchaseOrderAccountAssignment` | `ZEVO_C_PurOrdAcctAssgmt` | `C_PurOrdAccountAssignmentDEX` |
 | `SupplierInvoice` | `ZEVO_C_SupplierInvoice` | `C_SupplierInvoiceDEX` |
 | `SupplierInvoiceItem` | `ZEVO_C_SupplierInvItem` | `C_SupplierInvoiceItemDEX` |
-| `GoodsMovementDocument` | `ZEVO_C_GoodsMovementDoc` | `I_GoodsMovementDocumentDEX` |
+| `GoodsMovementDocument` | `ZEVO_C_GoodsMovementDoc` | `I_GoodsMovementDocumentDEX` (full DEX — see filters below) |
 | `BusinessPartner` | `ZEVO_C_BusinessPartner` | `I_BusinessPartner` (lean) |
 
 No purchase-requisition **header** CDS is used (none in the sample packs). PR is item-only.
+
+### Goods movements — full DEX, filter for PO
+
+`GoodsMovementDocument` projects **`I_GoodsMovementDocumentDEX`** as a standalone entity set. It is **not** limited to rows reachable from `PurchaseOrderHistory`; the history `_GoodsMovement` navigation is only one join path for GRs.
+
+Clients **can** query any movement the DEX returns. For the **C2P / P2P** flow, restrict to PO-related movements with `$filter` (or expand from history type `1`):
+
+```http
+# PO-related only (recommended for C2P extracts)
+GET {base}/GoodsMovementDocument
+  ?$filter=PurchaseOrder ne ''
+  &$top=1000&$count=true
+
+# One PO
+GET {base}/GoodsMovementDocument
+  ?$filter=PurchaseOrder eq '4500002146'
+
+# Via PO history (GR = type 1)
+GET {base}/PurchaseOrderHistory
+  ?$filter=PurchaseOrder eq '4500002146' and PurchasingHistoryDocumentType eq '1'
+  &$expand=_GoodsMovement
+```
+
+Without those filters you also get non-PO movements in the same DEX (e.g. `501`, `412`, `631`, `601`). Source is the DEX view, not raw `MSEG`.
+
+Planned **`ZEVO_C2C`** will use the same pattern (own `ZEVO_O_*` over the same DEX) and document **sales/delivery** filters (`SalesOrder`, `DeliveryDocument`, movement type `601`, …) instead of PO.
 
 **Masters on [`ZEVO_MD`](ZEVO_MD.md):** `BusinessPartnerSupplier`, `BusinessPartnerBank`, rich `Supplier` / `Customer`, full BP field list. C2P `BusinessPartner` is general data only for document `$expand` (`_Supplier` / `_InvoicingParty`).
 
@@ -71,7 +97,7 @@ One-way associations only (avoids CDS activation cycles). Aligned with pack corr
 | `SupplierInvoiceItem` | `_GoodsMovement` | GR ref |
 | `GoodsMovementDocument` | `_Supplier` | lean BP |
 
-**Note:** History → goods movement / invoice joins are on document numbers. Filter `PurchasingHistoryDocumentType` (`1` = GR, `2` = IR) when expanding from history.
+**Note:** History → goods movement / invoice joins are on document numbers. Filter `PurchasingHistoryDocumentType` (`1` = GR, `2` = IR) when expanding from history. Direct `GoodsMovementDocument` queries need an explicit PO `$filter` for C2P scope (see above).
 
 **Activation tip:** mass-activate all `ZEVO_C_*` together after pull. Goods movement keys are `MaterialDocumentYear`, `MaterialDocument`, `MaterialDocumentItem` (not `MaterialDocumentKey*`, which are `@Consumption.hidden` on the SAP DEX and block OData V4 binding). `ZEVO_C_PurOrdAcctAssgmt` exposes `RealEstateObject` as `cast(… as abap.char(8))` so OData V4 Web API binding does not inherit conversion exit `IMKEY`. Document-type fields that would collide with OData V4 entity type names (`PurchaseOrderType`, `PurchaseContractType`, `BusinessPartnerType`) are aliased to `*TypeCode`.
 

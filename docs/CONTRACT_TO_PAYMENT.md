@@ -276,7 +276,7 @@ These are in `source/` and left out of `seed/` because they do not complete this
 
 - Contracts `4600000031` and `4600000040` are in the bounded header and item files and have no rows in the full contract-history file.
 - Purchase orders `4500002142`, `4500002143`, `4500002144`, and `4500002145` are releases of contract `4600000038`. That contract is not in the bounded header or item files. Only `4500002143` has a goods receipt (material document `5000002930`, accounting document `5000000000`, supplier `0017300001` “Domestic US Supplier 1”, TG11 quantity 1, amount 15.00). None of those POs has a supplier invoice here.
-- `I_GoodsMovementDocumentDEX` also contains movements that have no purchase order (movement types `501`, `412`, `631`, `601`). They are out of this flow.
+- `I_GoodsMovementDocumentDEX` also contains movements that have no purchase order (movement types `501`, `412`, `631`, `601`). They are out of this flow. On typed **`ZEVO_C2P`**, `GoodsMovementDocument` exposes that full DEX — use `$filter=PurchaseOrder ne ''` (or a specific PO) / history type `1` expand so C2P clients only pull PO-related movements. See [`ZEVO_C2P.md`](ZEVO_C2P.md#goods-movements--full-dex-filter-for-po).
 - `I_GLAccountLineItemRawData` also contains company `1010` G/L journals and company `1710` sales documents (`RV` / `VBRK`). They do not reference PO `4500002146`.
 
 ## Rebuild the seed
