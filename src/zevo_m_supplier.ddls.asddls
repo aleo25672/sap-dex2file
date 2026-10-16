@@ -77,7 +77,6 @@ define view ZEVO_M_Supplier
       BusinessType,
       IndustryType,
       TaxInvoiceRepresentativeName,
-      Language,
       DataControllerSet,
       DataController1,
       DataController2,

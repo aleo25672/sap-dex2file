@@ -119,7 +119,7 @@ https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_md/srvd_a2x/sap/zevo_md/0001/Bus
 - DEX roles = BP key + plant identity; `Customer` / `Supplier` = extensive classic masters.
 - Customer DEX: `Plant`; `CustomerTradingPartnerId` as `TradingPartner`.
 - Supplier DEX: `SupplierPlant`; supplier **company** trading partner on `I_Supplier.TradingPartner` via `$expand=_Supplier`.
-- Trim unknown `I_Supplier` / `I_Customer` / `I_Product` elements if activation complains.
+- Trim unknown `I_Supplier` / `I_Customer` / `I_Product` elements if activation complains (`ProductVolume` / `VolumeUnit` and supplier `Language` omitted on this stack).
 - C2P still exposes its own BP/supplier/bank until a later lean migration.
 
 ---
