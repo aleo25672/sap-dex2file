@@ -2,7 +2,7 @@
 
 Typed **OData V4** service for **cross-scenario masters**: business partner (full) + supplier/customer **DEX roles** + rich `I_Customer` / `I_Supplier` + bank + product.
 
-This is **not** `ZEVO_C2P` / `ZEVO_C2C` (documents) and **not** `ZEVO_GENERALLEDGER` (journal + FI org). Scenario services may keep a **lean** BP for `$expand`; **canonical** partner/bank/product reads use this service.
+This is **not** `ZEVO_C2P` / `ZEVO_C2C` (documents) and **not** `ZEVO_GENERALLEDGER` (journal + FI org). Scenario services keep a **lean** BP for `$expand` only; **canonical** partner / role / bank / product reads use this service.
 
 | Item | Value |
 |------|--------|

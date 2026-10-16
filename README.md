@@ -4,7 +4,7 @@ ABAP tools for **S/4HANA** to extract CDS data in three ways:
 
 1. **File extract** — report `ZEVO_CDS_EXPLORER_2_FILE` discovers DEX / API CDS views and downloads **full**, **delta**, or **bounded (date/time window)** extracts to CSV/tab/AL11.
 2. **OData V2 extract** — Gateway service with function imports `ExtractCds` / `GetCdsMetadata`: pass a CDS name + OData `$filter`, paginate with `Skip`/`Top`, optional caller-managed delta, return **JSON or XML**.
-3. **OData V4 C2P** — typed service + binding `ZEVO_C2P` exposing the contract-to-payment CDS graph as real entity sets with `$expand` and caller-managed delta filters.
+3. **OData V4 C2P** — typed service + binding `ZEVO_C2P` for the P2P document graph + **lean** `BusinessPartner` for `$expand` (full BP/bank/roles on `ZEVO_MD`).
 4. **OData V4 General Ledger** — typed service + binding `ZEVO_GENERALLEDGER` for G/L line items and FI org masters (company, G/L account, cost/profit center, ledger, document type, house bank).
 5. **OData V4 Master Data** — typed service + binding `ZEVO_MD` for cross-scenario masters (BP + supplier/customer roles + bank, product).
 
@@ -997,7 +997,7 @@ expose ZEVO_C_<Name> as <EntitySetName>;
 1. **abapGit → Pull** `main`.
 2. On the pull dialog:
    - **Keep** checked: new DDLS (**Add local object**), changed DDLS (**Delete and recreate** / overwrite), **SRVD** `ZEVO_C2P` (**Overwrite**).
-   - When lean-BP landed: **allow Delete** for obsolete DDLS `ZEVO_C_BPSupplier` / `ZEVO_C_BPBank` (masters moved to `ZEVO_MD`).
+   - If abapGit offers **Delete local** for obsolete DDLS no longer in Git, allow those deletes (do **not** keep old C2P bank/role views).
    - **Uncheck** anything that would **Delete local** the **SRVB** / **G4BA** `ZEVO_C2P` (binding is ADT-only, not in Git).
    - **Uncheck** deletes for local SEGW/Gateway objects (`ZEVO_CDS_EXTRACT_*`, SICF, …).
 3. **Mass-activate** the new/changed `ZEVO_C_*` views and service definition `ZEVO_C2P`.
@@ -1005,13 +1005,17 @@ expose ZEVO_C_<Name> as <EntitySetName>;
 5. **Unpublish** then **Publish** (or Publish again) so the local endpoint picks up the new entity set.
 6. Confirm in the binding tree and in `$metadata` that the new entity set (and nav, if any) appear.
 
-#### 3. Quick test
+#### 3. Quick test / smoke
 
 ```http
 GET {base}/$metadata
-GET {base}/<EntitySetName>?$top=5
 GET {base}/PurchaseOrder?$filter=PurchaseOrder eq '4500002146'&$expand=_Supplier
+GET {base}/BusinessPartner?$filter=BusinessPartner eq '1000559'
+# expect 404 — masters live on ZEVO_MD:
+GET {base}/BusinessPartnerBank
 ```
+
+Full checklist: [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md#smoke-tests-lean-bp).
 
 ### A. Eclipse + ADT on Mac (one-time)
 
@@ -1109,6 +1113,7 @@ GET .../PurchaseOrder?$filter=PurchaseOrder eq '4500002146'&$expand=_Supplier
 GET .../BusinessPartner?$filter=BusinessPartner eq '1000559'
 ```
 
+Smoke tests (lean BP / removed masters): [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md#smoke-tests-lean-bp).  
 More examples (delta, contract, PR): [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md).
 
 ### F. Troubleshooting (V4 binding / metadata)
@@ -1120,6 +1125,7 @@ More examples (delta, contract, PR): [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md).
 | Activate binding first / Publish grayed out | **Activate** the Service Binding object, then **Publish** |
 | `$metadata`: *Property `PurchaseOrderType` has the same EDM name as entity type `PurchaseOrderType`* | Pull latest — properties aliased to `*TypeCode` |
 | `$expand`: *invalid property `Item`* | Use `_Item` (and `_History`, `_AccountAssignment`, `_Supplier`) |
+| `$expand=_Bank` / `BusinessPartnerBank` on C2P | **Expected gone** — use [`ZEVO_MD`](#odata-v4-master-data-zevo_md) |
 | SRVD / SRVB will not import via abapGit | SRVD source is `.srvdsrv`; create **binding only in ADT** — do not check in hand-written SRVB XML |
 | abapGit wants to **Delete local** SRVB / G4BA `ZEVO_C2P` | **Uncheck** — binding/service group stay local; only pull SRVD + DDLS |
 | New entity missing after pull | Activate SRVD + binding, then **Unpublish → Publish**; confirm name in `$metadata` |
@@ -1130,7 +1136,7 @@ After CDS changes: follow **[Add a new CDS](#add-a-new-cds-to-zevo_c2p)** (pull 
 
 ## OData V4 General Ledger (`ZEVO_GENERALLEDGER`)
 
-Typed **OData V4 Web API** for G/L journal lines (`I_GLAccountLineItemRawData`) plus FI org masters. This is **not** `ZEVO_C2P` (P2P graph) and **not** the V2 `ExtractCds` wrapper. Supplier/customer **masters** stay in C2P / OTC; lines only carry `Supplier` / `Customer` IDs for an external tool to join.
+Typed **OData V4 Web API** for G/L journal lines (`I_GLAccountLineItemRawData`) plus FI org masters. This is **not** `ZEVO_C2P` (P2P graph) and **not** the V2 `ExtractCds` wrapper. Supplier/customer / BP **masters** live on [`ZEVO_MD`](#odata-v4-master-data-zevo_md); lines only carry `Supplier` / `Customer` IDs for an external tool to join.
 
 | Item | Value |
 |------|--------|

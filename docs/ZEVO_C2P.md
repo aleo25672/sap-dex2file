@@ -34,7 +34,23 @@ Canonical list (and **how to add a new CDS**): root README
 
 No purchase-requisition **header** CDS is used (none in the sample packs). PR is item-only.
 
-**Masters moved to [`ZEVO_MD`](ZEVO_MD.md):** `BusinessPartnerSupplier`, `BusinessPartnerBank`, rich `Supplier` / `Customer`, full BP field list. C2P `BusinessPartner` is general data only for document `$expand` (`_Supplier` / `_InvoicingParty`).
+**Masters on [`ZEVO_MD`](ZEVO_MD.md):** `BusinessPartnerSupplier`, `BusinessPartnerBank`, rich `Supplier` / `Customer`, full BP field list. C2P `BusinessPartner` is general data only for document `$expand` (`_Supplier` / `_InvoicingParty`).
+
+### Lean `BusinessPartner` fields
+
+| Field | Notes |
+|-------|--------|
+| `BusinessPartner` | Key |
+| `BusinessPartnerCategory` | Org / person |
+| `BusinessPartnerGrouping` | Grouping |
+| `BusinessPartnerName` / `BusinessPartnerFullName` | Display names |
+| `OrganizationBPName1` | Org name |
+| `FirstName` / `LastName` | Person names |
+| `FormOfAddress` / `SearchTerm1` | Address form / search |
+| `AuthorizationGroup` | Auth |
+| `BusinessPartnerIsBlocked` / `IsActiveEntity` | Status |
+| `CreatedByUser` / `CreationDate` | Create audit |
+| `LastChangedByUser` / `LastChangeDate` / `LastChangeTime` | Delta (`LastChangeDate` annotated) |
 
 ---
 
@@ -69,12 +85,28 @@ End-to-end setup (Eclipse install, CAL/`10.0.0.19`, abapGit pull, binding activa
 
 Short checklist:
 
-1. **abapGit** — Pull `main`; mass-activate all 12 `ZEVO_C_*` DDLS + service definition `ZEVO_C2P` (allow delete of obsolete `ZEVO_C_BPSupplier` / `ZEVO_C_BPBank` if present).
+1. **abapGit** — Pull `main`; mass-activate all 12 `ZEVO_C_*` DDLS + service definition `ZEVO_C2P`. Allow **Delete local** for any DDLS no longer in Git; **never** delete SRVB/G4BA `ZEVO_C2P`.
 2. If SRVD import fails: create `ZEVO_C2P` in ADT and paste from `src/zevo_c2p.srvd.srvdsrv`.
-3. **ADT** — New Service Binding `ZEVO_C2P`, type **OData V4 - Web API**, definition `ZEVO_C2P` → **Activate** → **Publish**.
+3. **ADT** — Service Binding `ZEVO_C2P`, type **OData V4 - Web API**, definition `ZEVO_C2P` → **Activate** → **Publish** (republish after CDS/SRVD changes).
 4. URL shape: `/sap/opu/odata4/sap/zevo_c2p/srvd_a2x/sap/zevo_c2p/0001/`
 
 > DDLX (`*_D`) and `zevo_c2p.srvb.xml` are **not** in the repo — they broke abapGit import. Delta Semantics are inline on the views; create/publish the binding in ADT.
+
+---
+
+## Smoke tests (lean BP)
+
+Base: `https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_c2p/srvd_a2x/sap/zevo_c2p/0001`
+
+| # | Request | Expect |
+|---|---------|--------|
+| 1 | `GET {base}/$metadata` | 12 entity sets; **no** `BusinessPartnerBank` / `BusinessPartnerSupplier`; BP has **no** `_Bank` / `_BPSupplier` |
+| 2 | `GET {base}/BusinessPartner?$filter=BusinessPartner eq '1000559'` | Lean fields only (see table above) |
+| 3 | `GET {base}/PurchaseOrder?$filter=PurchaseOrder eq '4500002146'&$expand=_Supplier` | `_Supplier` = lean BP; no `_BPSupplier` |
+| 4 | `GET {base}/PurchaseContract?$filter=PurchaseContract eq '4600000041'&$expand=_Supplier` | Same lean `_Supplier` |
+| 5 | `GET {base}/BusinessPartnerBank` (and `…/BusinessPartnerSupplier`) | **404** / not found |
+| 6 | `GET {base}/BusinessPartner?$filter=BusinessPartner eq '1000559'&$expand=_Bank` | Invalid navigation |
+| 7 | Same BP expand on **`ZEVO_MD`** (`_Bank`, `_BPSupplier`) | Still works (canonical masters) |
 
 ---
 
@@ -141,7 +173,13 @@ GET {base}/BusinessPartner
   ?$filter=BusinessPartner eq '1000559'
 ```
 
-For bank details, supplier DEX role, or rich `I_Supplier` / `I_Customer`, call [`ZEVO_MD`](ZEVO_MD.md) (e.g. `BusinessPartnerBank`, `$expand=_BPSupplier($expand=_Supplier)`).
+For bank details, supplier DEX role, or rich `I_Supplier` / `I_Customer`, call [`ZEVO_MD`](ZEVO_MD.md):
+
+```http
+GET https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_md/srvd_a2x/sap/zevo_md/0001/BusinessPartner
+  ?$filter=BusinessPartner eq '1000559'
+  &$expand=_BPSupplier($expand=_Supplier),_Bank
+```
 
 ---
 
