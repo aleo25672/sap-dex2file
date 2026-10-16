@@ -16,8 +16,6 @@ define view ZEVO_M_Product
       NetWeight,
       ProductHierarchy,
       Division,
-      ProductVolume,
-      VolumeUnit,
       IsMarkedForDeletion,
       CrossPlantStatus,
       CrossPlantStatusValidityDate,
