@@ -1,6 +1,6 @@
 # Contract to Payment
 
-The use case with the sample tables is [`CONTRACT_TO_PAYMENT.docx`](CONTRACT_TO_PAYMENT.docx) (contract `4600000041`, purchase order `4500002146`). This page is the same walkthrough in markdown.
+The use case with the sample tables is [`CONTRACT_TO_PAYMENT.docx`](CONTRACT_TO_PAYMENT.docx) (contract `4600000041`, purchase order `4500002146`). This page is the same walkthrough in markdown. The entity diagram is [`CONTRACT_TO_PAYMENT_ER.md`](CONTRACT_TO_PAYMENT_ER.md).
 
 Worked example of how ZEVO extracts line up from a quantity contract through the release purchase order, goods receipt, supplier invoice, and the universal journal.
 
