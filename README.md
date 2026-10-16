@@ -963,10 +963,12 @@ Each OData entity set is a thin Z projection over an SAP CDS. Clients call the *
 | `PurchaseOrderAccountAssignment` | `ZEVO_C_PurOrdAcctAssgmt` | `C_PurOrdAccountAssignmentDEX` |
 | `SupplierInvoice` | `ZEVO_C_SupplierInvoice` | `C_SupplierInvoiceDEX` |
 | `SupplierInvoiceItem` | `ZEVO_C_SupplierInvItem` | `C_SupplierInvoiceItemDEX` |
-| `GoodsMovementDocument` | `ZEVO_C_GoodsMovementDoc` | `I_GoodsMovementDocumentDEX` |
+| `GoodsMovementDocument` | `ZEVO_C_GoodsMovementDoc` | `I_GoodsMovementDocumentDEX` (full DEX; **filter PO** for C2P) |
 | `BusinessPartner` | `ZEVO_C_BusinessPartner` | `I_BusinessPartner` (lean: id/name/block/delta) |
 
 Out of scope for this service: PR **header**, GL/journal, cost/profit center, product masters, ref-doc texts, and **full BP / supplier role / bank** (use [`ZEVO_MD`](#odata-v4-master-data-zevo_md)).
+
+**Goods movements:** the entity set is the **full** `I_GoodsMovementDocumentDEX` (not clipped to PO history). For C2P extracts, always `$filter` PO-related rows, e.g. `PurchaseOrder ne ''` or `PurchaseOrder eq '…'`, or expand `_GoodsMovement` from `PurchaseOrderHistory` with `PurchasingHistoryDocumentType eq '1'`. Details: [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md#goods-movements--full-dex-filter-for-po).
 
 ### Add a new CDS to `ZEVO_C2P`
 
@@ -1111,6 +1113,14 @@ Lean supplier on a PO (full bank / role → [`ZEVO_MD`](#odata-v4-master-data-ze
 ```http
 GET .../PurchaseOrder?$filter=PurchaseOrder eq '4500002146'&$expand=_Supplier
 GET .../BusinessPartner?$filter=BusinessPartner eq '1000559'
+```
+
+PO-related goods movements only (entity set is otherwise the full DEX):
+
+```http
+GET .../GoodsMovementDocument?$filter=PurchaseOrder%20ne%20''&$top=1000&$count=true
+GET .../GoodsMovementDocument?$filter=PurchaseOrder%20eq%20'4500002146'
+GET .../PurchaseOrderHistory?$filter=PurchaseOrder%20eq%20'4500002146'%20and%20PurchasingHistoryDocumentType%20eq%20'1'&$expand=_GoodsMovement
 ```
 
 Smoke tests (lean BP / removed masters): [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md#smoke-tests-lean-bp).  
