@@ -181,11 +181,14 @@ For `$expand` examples, see [Navigation example](#navigation-example-expand) abo
 
 ---
 
-## Relation to `ZEVO_C2P`
+## Relation to other services
 
-| | `ZEVO_C2P` | `ZEVO_MD` | `ZEVO_GENERALLEDGER` |
-|--|------------|----------|----------------------|
-| Focus | P2P documents + lean BP | Full BP / roles / bank / product | Journal lines + FI org masters |
-| Invoice | `SupplierInvoice` | — | Lines with `RMRP` + invoice number |
-| Banks | — (use MD) | `BusinessPartnerBank` (supplier) | `HouseBank` (company) + clearing fields |
-| Join | External tool | External tool | External tool |
+Full key matrix and pack recipes: [`CROSS_SERVICE_JOINS.md`](CROSS_SERVICE_JOINS.md).
+
+| | `ZEVO_C2P` | `ZEVO_C2C` | `ZEVO_MD` | `ZEVO_GENERALLEDGER` |
+|--|------------|------------|----------|----------------------|
+| Focus | P2P documents + lean BP | OTC documents + lean BP | Full BP / roles / bank / product | Journal lines + FI org masters |
+| Doc → journal | `SupplierInvoice` → `RMRP`; GM → `MKPF` | `BillingDocument` → `VBRK`; GI → `MKPF` | — | Filter `ReferenceDocumentType` + `ReferenceDocument` |
+| Partner masters | Lean `_Supplier` only | Lean `_SoldToParty` only | Full BP / roles / bank | IDs on line only (`Supplier` / `Customer`) |
+| Banks | — | — | `BusinessPartnerBank` | `HouseBank` + clearing fields |
+| Join across bindings | Client-side | Client-side | Client-side | Client-side |

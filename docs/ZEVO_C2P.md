@@ -65,6 +65,8 @@ Without those filters you also get non-PO movements in the same DEX (e.g. `501`,
 
 **Masters on [`ZEVO_MD`](ZEVO_MD.md):** `BusinessPartnerSupplier`, `BusinessPartnerBank`, rich `Supplier` / `Customer`, full BP field list. C2P `BusinessPartner` is general data only for document `$expand` (`_Supplier` / `_InvoicingParty`).
 
+**Cross-service joins** (C2P → MD / GL): [`CROSS_SERVICE_JOINS.md`](CROSS_SERVICE_JOINS.md).
+
 ### Lean `BusinessPartner` fields
 
 | Field | Notes |

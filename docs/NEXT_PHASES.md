@@ -69,14 +69,14 @@ Phase 1 is live for **C2P**, **C2C**, **MD**, **GENERALLEDGER**, **V2 ExtractCds
 
 | Phase | Priority | Candidates |
 |-------|----------|------------|
-| 2 | High | Client join matrix (docs↔MD↔GL); IC resale 1710↔1010 E2E smoke; SRVD ADT fallback + republish runbook |
+| 2 | High | ~~Client join matrix~~ → [`CROSS_SERVICE_JOINS.md`](CROSS_SERVICE_JOINS.md); IC resale 1710↔1010 E2E smoke; SRVD ADT fallback + republish runbook |
 | 3 | Medium | Unified delta strategy doc; default `$top` / date / ITT performance guidance; security review before any privileged association |
 
 ---
 
 ## Suggested order
 
-1. **Cross-service join matrix** (docs only — highest leverage).  
+1. ~~**Cross-service join matrix**~~ — done: [`CROSS_SERVICE_JOINS.md`](CROSS_SERVICE_JOINS.md).  
 2. **MD Phase 2** (Plant + IC fields).  
 3. **C2C Phase 2** headers only if sources exist; otherwise deepen filters/examples.  
 4. Explorer annotation scan when delivery/header DEX catalog gaps hurt discovery again.

@@ -24,6 +24,7 @@ Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the ge
 | [C2P reference](docs/ZEVO_C2P.md) | Navigations, delta fields, URL cookbook |
 | **[OData V4 C2C (`ZEVO_C2C`)](#odata-v4-contract-to-cash-zevo_c2c)** | Contract → SO item → delivery → GI → billing + `$expand` + lean BP |
 | [C2C reference](docs/ZEVO_C2C.md) | Entity sets, FK navigations, discoveries, smoke URLs |
+| [Cross-service joins](docs/CROSS_SERVICE_JOINS.md) | C2P/C2C → MD → GL key matrix + pack recipes |
 | [Next phases](docs/NEXT_PHASES.md) | Phase 2 / 3 backlog across C2P, C2C, MD, GL, V2, explorer |
 | **[OData V4 General Ledger (`ZEVO_GENERALLEDGER`)](#odata-v4-general-ledger-zevo_generalledger)** | G/L lines + FI masters, `$expand`, sample URLs, binding pitfalls |
 | [GL reference](docs/ZEVO_GENERALLEDGER.md) | `RMRP` / `RE`/`KZ` meanings, clearing joins, delta fields |
