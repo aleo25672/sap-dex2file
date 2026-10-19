@@ -152,7 +152,9 @@ https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_c2c/srvd_a2x/sap/zevo_c2c/0001/$
 
 ## Notes
 
-- Delivery DEX: extraction-annotated **view entities**; typed OData / OpenSQL work even when ODP catalogs omit them.  
+- Delivery **header**: `C_OutboundDeliveryDEX` (view entity; OpenSQL OK even if ODP catalogs omit it).  
+- Delivery **item**: `I_DeliveryDocumentItem` (for `ReferenceSDDocument*` / SO `$expand`); not `C_OutboundDeliveryItemDEX` on this stack.  
 - Billing: Phase 1 = `I_BillingDocumentItemDEX`; classic ODP alt = `C_BillingDocumentItemBasicDEX`.  
+- Process flow: do not expose `C_SDDocMultiLevelProcFlowDEX` (`PRIVILEGED_ONLY`).  
 - Product / customer role / bank → [`ZEVO_MD`](ZEVO_MD.md).  
-- Sample pack path: SO **6321** → delivery → GI → billing **0090005785** → receipt (GL) — [`ORDER_TO_CASH.docx`](ORDER_TO_CASH.docx).
+- Sample pack: SO **0000006321** (2 items) → delivery **0080006423** → GI **601** → billing **0090005785** → customer **0001000569** — [`ORDER_TO_CASH.docx`](ORDER_TO_CASH.docx).
