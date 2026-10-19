@@ -20,7 +20,7 @@ Typed **OData V4** service for the sales / contract-to-cash extract graph. This 
 | `SalesContract` | `ZEVO_O_SalesContract` | `I_SalesContract` |
 | `SalesContractItem` | `ZEVO_O_SalesContractItem` | `I_SalesContractItem` |
 | `SalesDocumentItem` | `ZEVO_O_SalesDocumentItem` | `C_SalesDocumentItemDEX` |
-| `SalesDocumentScheduleLine` | `ZEVO_O_SalesDocSchedLine` | `C_SalesDocumentScheduleLineDEX` |
+| `SalesDocumentScheduleLine` | `ZEVO_O_SalesDocSchedLine` | `C_SalesDocumentSchedLineDEX` (not `…ScheduleLine…`; newer alt `…DEX_1`) |
 | `OutboundDelivery` | `ZEVO_O_OutboundDelivery` | `C_OutboundDeliveryDEX` |
 | `OutboundDeliveryItem` | `ZEVO_O_OutboundDelivItem` | `C_OutboundDeliveryItemDEX` |
 | `BillingDocumentItem` | `ZEVO_O_BillingDocumentItem` | `I_BillingDocumentItemDEX` |
@@ -63,7 +63,7 @@ GET {base}/GoodsMovementDocument
 
 | Topic | Finding |
 |-------|---------|
-| No SO header DEX | Item DEX `C_SalesDocumentItemDEX` + schedule `C_SalesDocumentScheduleLineDEX` |
+| No SO header DEX | Item DEX `C_SalesDocumentItemDEX` + schedule `C_SalesDocumentSchedLineDEX` (SAP abbreviates Sched; `_1` successor on some releases) |
 | Contract | `I_SalesContract` / `I_SalesContractItem` |
 | Delivery bulk | `C_OutboundDeliveryDEX` / `C_OutboundDeliveryItemDEX` (not `I_DeliveryDocument*` for bulk). View entities; OpenSQL/Data Preview OK; may be missing from `RSODPABAPCDSVIEW` / released `IXTRCTNENBLDVW` |
 | Billing | `I_BillingDocumentItemDEX` (Phase 1); alt classic `C_BillingDocumentItemBasicDEX` (`CSDBILDOCITMBCDX`) for ODP |
