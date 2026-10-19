@@ -157,4 +157,5 @@ https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_c2c/srvd_a2x/sap/zevo_c2c/0001/$
 - Billing: Phase 1 = `I_BillingDocumentItemDEX`; classic ODP alt = `C_BillingDocumentItemBasicDEX`.  
 - Process flow: do not expose `C_SDDocMultiLevelProcFlowDEX` (`PRIVILEGED_ONLY`).  
 - Product / customer role / bank → [`ZEVO_MD`](ZEVO_MD.md).  
+- Cross-service joins (C2C → MD / GL): [`CROSS_SERVICE_JOINS.md`](CROSS_SERVICE_JOINS.md).  
 - Sample pack: SO **0000006321** (2 items) → delivery **0080006423** → GI **601** → billing **0090005785** → customer **0001000569** — [`ORDER_TO_CASH.docx`](ORDER_TO_CASH.docx).
