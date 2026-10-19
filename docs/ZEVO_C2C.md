@@ -68,6 +68,7 @@ GET {base}/GoodsMovementDocument
 | Delivery bulk | `C_OutboundDeliveryDEX` / `C_OutboundDeliveryItemDEX` (not `I_DeliveryDocument*` for bulk). View entities; OpenSQL/Data Preview OK; may be missing from `RSODPABAPCDSVIEW` / released `IXTRCTNENBLDVW` |
 | Billing | `I_BillingDocumentItemDEX` (Phase 1); alt classic `C_BillingDocumentItemBasicDEX` (`CSDBILDOCITMBCDX`) for ODP |
 | Explorer | **Include non-released DEX** lists non-released `IXTRCTNENBLDVW` rows only — does not invent views absent from that catalog |
+| SO → delivery / billing `$expand` | FK on `ReferenceSDDocument*` / `SalesDocument` (C2P pattern) — **not** `C_SDDocMultiLevelProcFlowDEX` (`PRIVILEGED_ONLY`) |
 
 ---
 
