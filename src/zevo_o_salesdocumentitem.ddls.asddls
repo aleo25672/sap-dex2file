@@ -8,6 +8,12 @@ define view ZEVO_O_SalesDocumentItem
   association [0..*] to ZEVO_O_SalesDocSchedLine as _ScheduleLine
     on $projection.SalesDocument = _ScheduleLine.SalesDocument
    and $projection.SalesDocumentItem = _ScheduleLine.SalesDocumentItem
+  association [0..*] to ZEVO_O_OutboundDelivItem as _OutboundDeliveryItem
+    on $projection.SalesDocument = _OutboundDeliveryItem.ReferenceSDDocument
+   and $projection.SalesDocumentItem = _OutboundDeliveryItem.ReferenceSDDocumentItem
+  association [0..*] to ZEVO_O_BillingDocumentItem as _BillingDocumentItem
+    on $projection.SalesDocument = _BillingDocumentItem.SalesDocument
+   and $projection.SalesDocumentItem = _BillingDocumentItem.SalesDocumentItem
   association [0..1] to ZEVO_O_BusinessPartner as _SoldToParty
     on $projection.SoldToParty = _SoldToParty.BusinessPartner
 {
@@ -37,5 +43,7 @@ define view ZEVO_O_SalesDocumentItem
       ReferenceSDDocument,
       ReferenceSDDocumentCategory,
       _ScheduleLine,
+      _OutboundDeliveryItem,
+      _BillingDocumentItem,
       _SoldToParty
 }

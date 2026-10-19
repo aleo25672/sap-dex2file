@@ -5,6 +5,8 @@
 @ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #TRANSACTIONAL }
 define view ZEVO_O_BillingDocumentItem
   as select from I_BillingDocumentItemDEX
+  association [0..1] to ZEVO_O_OutboundDelivery as _OutboundDelivery
+    on $projection.ReferenceSDDocument = _OutboundDelivery.OutboundDelivery
   association [0..1] to ZEVO_O_BusinessPartner as _SoldToParty
     on $projection.SoldToParty = _SoldToParty.BusinessPartner
   association [0..1] to ZEVO_O_BusinessPartner as _BillToParty
@@ -45,6 +47,7 @@ define view ZEVO_O_BillingDocumentItem
       OverallSDProcessStatus,
       OverallBillingStatus,
       CancelledBillingDocument,
+      _OutboundDelivery,
       _SoldToParty,
       _BillToParty
 }

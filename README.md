@@ -1296,10 +1296,12 @@ Typed **OData V4 Web API** for the sales / contract-to-cash graph (9 entity sets
 | `SalesDocumentItem` | `ZEVO_O_SalesDocumentItem` | `C_SalesDocumentItemDEX` |
 | `SalesDocumentScheduleLine` | `ZEVO_O_SalesDocSchedLine` | `C_SalesDocumentSchedLineDEX` |
 | `OutboundDelivery` | `ZEVO_O_OutboundDelivery` | `C_OutboundDeliveryDEX` |
-| `OutboundDeliveryItem` | `ZEVO_O_OutboundDelivItem` | `C_OutboundDeliveryItemDEX` |
+| `OutboundDeliveryItem` | `ZEVO_O_OutboundDelivItem` | `C_OutboundDeliveryItemDEX` (incl. `ReferenceSDDocument*`) |
 | `BillingDocumentItem` | `ZEVO_O_BillingDocumentItem` | `I_BillingDocumentItemDEX` |
 | `GoodsMovementDocument` | `ZEVO_O_GoodsMovementDoc` | `I_GoodsMovementDocumentDEX` (full DEX; **no CDS `WHERE`**) |
 | `BusinessPartner` | `ZEVO_O_BusinessPartner` | `I_BusinessPartner` (lean) |
+
+**`$expand` (C2P-style FK, not process-flow DEX):** `SalesDocumentItem` → `_OutboundDeliveryItem` / `_BillingDocumentItem` / `_ScheduleLine`; `OutboundDelivery` → `_GoodsMovement`; `BillingDocumentItem` → `_OutboundDelivery`. Details: [`docs/ZEVO_C2C.md`](docs/ZEVO_C2C.md#navigations-expand).
 
 ### Source / filter discoveries (Phase 1)
 
