@@ -1,47 +1,28 @@
 @AbapCatalog.sqlViewName: 'ZEVOOOUTBDITM'
 @AbapCatalog.compiler.compareFilter: true
 @AccessControl.authorizationCheck: #CHECK
-@EndUserText.label: 'Outbound Delivery Item DEX (C2C)'
+@EndUserText.label: 'Outbound Delivery Item (C2C)'
 @ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #TRANSACTIONAL }
 define view ZEVO_O_OutboundDelivItem
-  as select from C_OutboundDeliveryItemDEX
-  association [0..1] to ZEVO_O_BusinessPartner as _SoldToParty
-    on $projection.SoldToParty = _SoldToParty.BusinessPartner
-  association [0..1] to ZEVO_O_BusinessPartner as _ShipToParty
-    on $projection.ShipToParty = _ShipToParty.BusinessPartner
+  as select from I_DeliveryDocumentItem
 {
-  key OutboundDelivery,
-  key OutboundDeliveryItem,
-      SalesOrganization,
-      BillingCompanyCode,
-      ForwardingAgent,
-      BillToParty,
-      PayerParty,
-      ShipToParty,
-      SoldToParty,
-      Supplier,
-      CustomerGroup,
-      OverallGoodsMovementStatus,
-      OverallPackingStatus,
-      ActualGoodsMovementDate,
-      DeliveryDate,
-      StatisticsDate,
-      PlannedGoodsIssueDate,
-      DeliveryBlockReason,
-      DeliveryDocumentType as DeliveryDocumentTypeCode,
-      DeliveryPriority,
+  key DeliveryDocument     as OutboundDelivery,
+  key DeliveryDocumentItem as OutboundDeliveryItem,
       SDDocumentCategory,
-      ShippingPoint,
-      TotalNumberOfPackage,
-      UnloadingPointName,
-      IncotermsClassification,
-      IncotermsTransferLocation,
-      IncotermsVersion,
-      IncotermsLocation1,
-      IncotermsLocation2,
+      CreationDate,
+      CreationTime,
+      @Semantics.systemDate.lastChangedAt: true
+      LastChangeDate,
+      Material,
+      Product,
+      Plant,
+      ActualDeliveryQuantity,
+      DeliveryQuantityUnit,
+      ActualDeliveredQtyInBaseUnit,
+      BaseUnit,
+      // SO link — not on C_OutboundDeliveryItemDEX; use I_* for FK $expand
       ReferenceSDDocument,
       ReferenceSDDocumentItem,
-      ReferenceSDDocumentCategory,
-      _SoldToParty,
-      _ShipToParty
+      ReferenceSDDocumentCategory
 }
+where SDDocumentCategory = 'J'

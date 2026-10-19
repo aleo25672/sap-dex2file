@@ -22,7 +22,7 @@ Typed **OData V4** service for the sales / contract-to-cash extract graph. This 
 | `SalesDocumentItem` | `ZEVO_O_SalesDocumentItem` | `C_SalesDocumentItemDEX` |
 | `SalesDocumentScheduleLine` | `ZEVO_O_SalesDocSchedLine` | `C_SalesDocumentSchedLineDEX` (not `…ScheduleLine…`; newer alt `…DEX_1`) |
 | `OutboundDelivery` | `ZEVO_O_OutboundDelivery` | `C_OutboundDeliveryDEX` |
-| `OutboundDeliveryItem` | `ZEVO_O_OutboundDelivItem` | `C_OutboundDeliveryItemDEX` |
+| `OutboundDeliveryItem` | `ZEVO_O_OutboundDelivItem` | `I_DeliveryDocumentItem` (alias keys; `where` category `J`) — **not** `C_OutboundDeliveryItemDEX` (no `ReferenceSDDocument*`) |
 | `BillingDocumentItem` | `ZEVO_O_BillingDocumentItem` | `I_BillingDocumentItemDEX` |
 | `GoodsMovementDocument` | `ZEVO_O_GoodsMovementDoc` | `I_GoodsMovementDocumentDEX` (full DEX; **no CDS `WHERE`**) |
 | `BusinessPartner` | `ZEVO_O_BusinessPartner` | `I_BusinessPartner` (lean) |
@@ -65,7 +65,8 @@ GET {base}/GoodsMovementDocument
 |-------|---------|
 | No SO header DEX | Item DEX `C_SalesDocumentItemDEX` + schedule `C_SalesDocumentSchedLineDEX` (SAP abbreviates Sched; `_1` successor on some releases) |
 | Contract | `I_SalesContract` / `I_SalesContractItem` |
-| Delivery bulk | `C_OutboundDeliveryDEX` / `C_OutboundDeliveryItemDEX` (not `I_DeliveryDocument*` for bulk). View entities; OpenSQL/Data Preview OK; may be missing from `RSODPABAPCDSVIEW` / released `IXTRCTNENBLDVW` |
+| Delivery header | `C_OutboundDeliveryDEX` (view entity; may be missing from ODP / released explorer) |
+| Delivery item + SO FK | **`I_DeliveryDocumentItem`** — `C_OutboundDeliveryItemDEX` has no `ReferenceSDDocument*` on this stack, so SO → delivery `$expand` needs the `I_*` item view |
 | Billing | `I_BillingDocumentItemDEX` (Phase 1); alt classic `C_BillingDocumentItemBasicDEX` (`CSDBILDOCITMBCDX`) for ODP |
 | Explorer | **Include non-released DEX** lists non-released `IXTRCTNENBLDVW` rows only — does not invent views absent from that catalog |
 | SO → delivery / billing `$expand` | FK on `ReferenceSDDocument*` / `SalesDocument` (C2P pattern) — **not** `C_SDDocMultiLevelProcFlowDEX` (`PRIVILEGED_ONLY`) |
@@ -85,13 +86,13 @@ Same pattern as C2P: **one-way FK joins on document numbers** already on the DEX
 | `SalesDocumentItem` | `_BillingDocumentItem` | billing items | `SalesDocument` + item |
 | `SalesDocumentItem` | `_SoldToParty` | lean BP | BP |
 | `OutboundDelivery` | `_Item`, `_GoodsMovement`, `_SoldToParty`, `_ShipToParty` | items / GI / BP | delivery = `DeliveryDocument` on GM |
-| `OutboundDeliveryItem` | `_SoldToParty`, `_ShipToParty` | lean BP | BP |
+| `OutboundDeliveryItem` | *(no partner nav — use header)* | — | partners on `OutboundDelivery` |
 | `BillingDocumentItem` | `_OutboundDelivery`, `_SoldToParty`, `_BillToParty` | delivery header / BP | `ReferenceSDDocument` = delivery (when category `J`) |
 | `GoodsMovementDocument` | `_Customer` | lean BP | BP |
 
 Document-type properties that would clash with OData V4 entity type names are aliased to `*TypeCode`.
 
-**Activate order tip:** mass-activate `ZEVO_O_*` together. Delivery item must expose `ReferenceSDDocument*` before SO → delivery `$expand` works.
+**Activate order tip:** mass-activate `ZEVO_O_OutboundDelivItem` first (needs `ReferenceSDDocument*`), then `ZEVO_O_OutboundDelivery` / `ZEVO_O_SalesDocumentItem` / `ZEVO_O_BillingDocumentItem`.
 
 ---
 
