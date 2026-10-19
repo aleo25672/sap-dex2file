@@ -84,6 +84,12 @@
     </item>
     <item>
      <ID>S</ID>
+     <KEY>P_UNREL</KEY>
+     <ENTRY>Include non-released DEX</ENTRY>
+     <LENGTH>25</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
      <KEY>S_API</KEY>
      <ENTRY>API CDS entity</ENTRY>
      <LENGTH>14</LENGTH>

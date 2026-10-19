@@ -1,15 +1,16 @@
 # sap-dex2file
 
-ABAP tools for **S/4HANA** to extract CDS data in three ways:
+ABAP tools for **S/4HANA** to extract CDS data in several ways:
 
 1. **File extract** — report `ZEVO_CDS_EXPLORER_2_FILE` discovers DEX / API CDS views and downloads **full**, **delta**, or **bounded (date/time window)** extracts to CSV/tab/AL11.
 2. **OData V2 extract** — Gateway service with function imports `ExtractCds` / `GetCdsMetadata`: pass a CDS name + OData `$filter`, paginate with `Skip`/`Top`, optional caller-managed delta, return **JSON or XML**.
 3. **OData V4 C2P** — typed service + binding `ZEVO_C2P` for the P2P document graph + **lean** `BusinessPartner` for `$expand` (full BP/bank/roles on `ZEVO_MD`).
-4. **OData V4 General Ledger** — typed service + binding `ZEVO_GENERALLEDGER` for G/L line items and FI org masters (company, G/L account, cost/profit center, ledger, document type, house bank).
-5. **OData V4 Master Data** — typed service + binding `ZEVO_MD` for cross-scenario masters (BP + supplier/customer roles + bank, product).
+4. **OData V4 C2C** — typed service + binding `ZEVO_C2C` for the sales / contract-to-cash graph + lean BP (`ZEVO_O_*`).
+5. **OData V4 General Ledger** — typed service + binding `ZEVO_GENERALLEDGER` for G/L line items and FI org masters (company, G/L account, cost/profit center, ledger, document type, house bank).
+6. **OData V4 Master Data** — typed service + binding `ZEVO_MD` for cross-scenario masters (BP + supplier/customer roles + bank, product).
 
-> **Where to read the OData docs:** start at [OData CDS extract service](#odata-cds-extract-service) (V2), [OData V4 C2P service](#odata-v4-c2p-service-zevo_c2p), [OData V4 General Ledger](#odata-v4-general-ledger-zevo_generalledger), and [OData V4 Master Data](#odata-v4-master-data-zevo_md).  
-> V2 copy: [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md). C2P: [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md). GL: [`docs/ZEVO_GENERALLEDGER.md`](docs/ZEVO_GENERALLEDGER.md). MD: [`docs/ZEVO_MD.md`](docs/ZEVO_MD.md).  
+> **Where to read the OData docs:** start at [OData CDS extract service](#odata-cds-extract-service) (V2), [OData V4 C2P](#odata-v4-c2p-service-zevo_c2p), [OData V4 C2C](#odata-v4-contract-to-cash-zevo_c2c), [OData V4 General Ledger](#odata-v4-general-ledger-zevo_generalledger), and [OData V4 Master Data](#odata-v4-master-data-zevo_md).  
+> V2: [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md). C2P: [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md). C2C: [`docs/ZEVO_C2C.md`](docs/ZEVO_C2C.md). GL: [`docs/ZEVO_GENERALLEDGER.md`](docs/ZEVO_GENERALLEDGER.md). MD: [`docs/ZEVO_MD.md`](docs/ZEVO_MD.md).  
 > **Note:** abapGit only syncs `src/` — `README.md` / `docs/` are **not** imported into SAP; read them on GitHub or in a git clone.
 
 Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the generic OData extract now lives **in this repo**.
@@ -21,6 +22,8 @@ Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the ge
 | **[OData CDS extract service](#odata-cds-extract-service)** | V2 `ExtractCds`, `GetCdsMetadata`, [URL cookbook](#url-cookbook-c_purchaseorderdex) |
 | **[OData V4 C2P (`ZEVO_C2P`)](#odata-v4-c2p-service-zevo_c2p)** | Typed V4 Web API — supported CDS, add-new steps, Eclipse/ADT publish |
 | [C2P reference](docs/ZEVO_C2P.md) | Navigations, delta fields, URL cookbook |
+| **[OData V4 C2C (`ZEVO_C2C`)](#odata-v4-contract-to-cash-zevo_c2c)** | Sales contract → order item → delivery → billing + lean BP |
+| [C2C reference](docs/ZEVO_C2C.md) | Entity sets, filters, sample URLs |
 | **[OData V4 General Ledger (`ZEVO_GENERALLEDGER`)](#odata-v4-general-ledger-zevo_generalledger)** | G/L lines + FI masters, `$expand`, sample URLs, binding pitfalls |
 | [GL reference](docs/ZEVO_GENERALLEDGER.md) | `RMRP` / `RE`/`KZ` meanings, clearing joins, delta fields |
 | **[OData V4 Master Data (`ZEVO_MD`)](#odata-v4-master-data-zevo_md)** | Cross-scenario BP (full) + roles + bank + product |
@@ -1273,9 +1276,44 @@ After CDS changes: pull → activate → republish binding → `$metadata`. More
 
 ---
 
+## OData V4 Contract-to-Cash (`ZEVO_C2C`)
+
+Typed **OData V4 Web API** for the sales / contract-to-cash graph (9 entity sets + `$expand`). Canonical partner / bank / product masters live on [`ZEVO_MD`](#odata-v4-master-data-zevo_md); C2C keeps a **lean** `BusinessPartner` for document `$expand` only. Cash / AR journal lines stay on [`ZEVO_GENERALLEDGER`](#odata-v4-general-ledger-zevo_generalledger).
+
+| Item | Value |
+|------|--------|
+| CDS projections | 9 × `ZEVO_O_*` (classic `define view`, explicit fields, one-way associations) |
+| Service definition | `ZEVO_C2C` — in abapGit (`zevo_c2c.srvd.*`) |
+| Service binding | **Create in ADT only** as `ZEVO_C2C` — **OData V4 - Web API** |
+| Reference | [`docs/ZEVO_C2C.md`](docs/ZEVO_C2C.md) |
+
+### Supported CDS (9)
+
+| Entity set (OData) | Z CDS | Source CDS |
+|--------------------|-------|------------|
+| `SalesContract` | `ZEVO_O_SalesContract` | `I_SalesContract` |
+| `SalesContractItem` | `ZEVO_O_SalesContractItem` | `I_SalesContractItem` |
+| `SalesDocumentItem` | `ZEVO_O_SalesDocumentItem` | `C_SalesDocumentItemDEX` |
+| `SalesDocumentScheduleLine` | `ZEVO_O_SalesDocSchedLine` | `C_SalesDocumentScheduleLineDEX` |
+| `OutboundDelivery` | `ZEVO_O_OutboundDelivery` | `C_OutboundDeliveryDEX` |
+| `OutboundDeliveryItem` | `ZEVO_O_OutboundDelivItem` | `C_OutboundDeliveryItemDEX` |
+| `BillingDocumentItem` | `ZEVO_O_BillingDocumentItem` | `I_BillingDocumentItemDEX` |
+| `GoodsMovementDocument` | `ZEVO_O_GoodsMovementDoc` | `I_GoodsMovementDocumentDEX` |
+| `BusinessPartner` | `ZEVO_O_BusinessPartner` | `I_BusinessPartner` (lean) |
+
+**Filters:** orders → `SDDocumentCategory eq 'C'` on sales document item/schedule; GM → delivery/SO filters (full DEX). Delivery/billing CDS already restrict document categories.
+
+Eclipse / abapGit / ADT habits match **[C2P](#odata-v4-c2p-service-zevo_c2p)**. Binding name **`ZEVO_C2C`**; activate all **`ZEVO_O_*`** + SRVD; **never** let abapGit delete local SRVB/G4BA `ZEVO_C2C`.
+
+```text
+https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_c2c/srvd_a2x/sap/zevo_c2c/0001/$metadata
+```
+
+---
+
 ## OData V4 Master Data (`ZEVO_MD`)
 
-Typed **OData V4 Web API** for **cross-scenario masters**: full business partner, DEX supplier/customer roles, rich `I_Customer` / `I_Supplier`, bank, and product. Scenario services (`ZEVO_C2P`, planned `ZEVO_C2C`) keep **lean BP** for document `$expand`; **canonical** partner/bank/product reads use this service. FI org masters stay on [`ZEVO_GENERALLEDGER`](#odata-v4-general-ledger-zevo_generalledger).
+Typed **OData V4 Web API** for **cross-scenario masters**: full business partner, DEX supplier/customer roles, rich `I_Customer` / `I_Supplier`, bank, and product. Scenario services (`ZEVO_C2P`, `ZEVO_C2C`) keep **lean BP** for document `$expand`; **canonical** partner/bank/product reads use this service. FI org masters stay on [`ZEVO_GENERALLEDGER`](#odata-v4-general-ledger-zevo_generalledger).
 
 | Item | Value |
 |------|--------|
@@ -1338,12 +1376,14 @@ On the selection screen, **Source type** chooses what to discover:
 
 | Option | What is listed |
 |--------|----------------|
-| **DEX** | Released extraction-enabled views from `IXTRCTNENBLDVW` (unchanged behaviour) |
+| **DEX** | Extraction-enabled views from `IXTRCTNENBLDVW`. Default: **`IsSAPReleasedView` only**. Check **Include non-released DEX** to list all catalog rows (ALV column **SAP released**). |
 | **API CDS** | CDS DDL sources (`TADIR` object `DDLS`) whose names match the API pattern (default `I_*API*`, e.g. `I_PurchaseOrderAPI01`) |
 | **Both** | Union of the two (DEX wins if the same entity appears in both) |
 
 **Not listed:** OData service bindings such as `API_PURCHASEORDER_2` - those are not `DDLS`
-objects, and names matching `API_*` are skipped as an extra guard.
+objects, and names matching `API_*` are skipped as an extra guard. Views that exist only in
+`DDDDLSRC` (never registered in `IXTRCTNENBLDVW`) still need OpenSQL / typed OData / a later
+annotation-scan enhancement — the non-released checkbox does not invent catalog rows.
 
 Empty **API CDS** selection defaults to pattern `I_*API*`. Use select-options to pick
 single entities, multiple values, or `*` wildcards (option CP). Entity select-options are
@@ -1461,6 +1501,9 @@ instead of "since the last run":
 | `ZEVO_C_*` (12) | CDS view (`define view`) | C2P document projections + lean BP with associations |
 | `ZEVO_C2P` | service definition | exposes the 12 C2P entity sets |
 | `ZEVO_C2P` | service binding | create + publish in ADT (OData V4 Web API; not in abapGit) |
+| `ZEVO_O_*` (9) | CDS view (`define view`) | C2C sales document projections + lean BP |
+| `ZEVO_C2C` | service definition | exposes the 9 C2C entity sets |
+| `ZEVO_C2C` | service binding | create + publish in ADT (OData V4 Web API; not in abapGit) |
 | `ZEVO_FI_*` | CDS view (`define view`) | General Ledger line + FI org masters |
 | `ZEVO_GENERALLEDGER` | service definition | exposes GL line item + FI masters |
 | `ZEVO_GENERALLEDGER` | service binding | create + publish in ADT (OData V4 Web API; not in abapGit) |
@@ -1470,6 +1513,7 @@ instead of "since the last run":
 
 Full OData documentation: see **[OData CDS extract service](#odata-cds-extract-service)** above (also [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md)).  
 OData V4 C2P: **[section above](#odata-v4-c2p-service-zevo_c2p)** · [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md).  
+OData V4 C2C: **[section above](#odata-v4-contract-to-cash-zevo_c2c)** · [`docs/ZEVO_C2C.md`](docs/ZEVO_C2C.md).  
 OData V4 General Ledger: **[section above](#odata-v4-general-ledger-zevo_generalledger)** · [`docs/ZEVO_GENERALLEDGER.md`](docs/ZEVO_GENERALLEDGER.md).  
 OData V4 Master Data: **[section above](#odata-v4-master-data-zevo_md)** · [`docs/ZEVO_MD.md`](docs/ZEVO_MD.md).
 
@@ -1689,8 +1733,9 @@ Activate in this order (or select all and mass-activate so dependencies resolve)
 3. `ZEVO_CDS_EXPLORER_2_FILE` (report).
 4. For **OData V2** (`ExtractCds`): register/activate per **[OData CDS extract service](#odata-cds-extract-service)** above.
 5. For **OData V4 C2P**: activate all `ZEVO_C_*` DDLS + service definition `ZEVO_C2P`, then create/publish the binding in **Eclipse ADT** per **[OData V4 C2P service](#odata-v4-c2p-service-zevo_c2p)** above.
-6. For **OData V4 General Ledger**: activate all `ZEVO_FI_*` DDLS + service definition `ZEVO_GENERALLEDGER`, then create/publish binding **`ZEVO_GENERALLEDGER`** (OData V4 Web API) per **[OData V4 General Ledger](#odata-v4-general-ledger-zevo_generalledger)** above.
-7. For **OData V4 Master Data**: activate all `ZEVO_M_*` DDLS + service definition `ZEVO_MD`, then create/publish binding **`ZEVO_MD`** (OData V4 Web API) per **[OData V4 Master Data](#odata-v4-master-data-zevo_md)** above.
+6. For **OData V4 C2C**: activate all `ZEVO_O_*` DDLS + service definition `ZEVO_C2C`, then create/publish binding **`ZEVO_C2C`** (OData V4 Web API) per **[OData V4 Contract-to-Cash](#odata-v4-contract-to-cash-zevo_c2c)** above.
+7. For **OData V4 General Ledger**: activate all `ZEVO_FI_*` DDLS + service definition `ZEVO_GENERALLEDGER`, then create/publish binding **`ZEVO_GENERALLEDGER`** (OData V4 Web API) per **[OData V4 General Ledger](#odata-v4-general-ledger-zevo_generalledger)** above.
+8. For **OData V4 Master Data**: activate all `ZEVO_M_*` DDLS + service definition `ZEVO_MD`, then create/publish binding **`ZEVO_MD`** (OData V4 Web API) per **[OData V4 Master Data](#odata-v4-master-data-zevo_md)** above.
 
 After a rename from older `Z_CDS_*` / `ZCL_DXF_*` / `ZDXF_*` objects: delete the old objects (or let abapGit remove them), then pull/activate the `ZEVO*` ones.
 
