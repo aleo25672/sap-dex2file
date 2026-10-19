@@ -1294,7 +1294,7 @@ Typed **OData V4 Web API** for the sales / contract-to-cash graph (9 entity sets
 | `SalesContract` | `ZEVO_O_SalesContract` | `I_SalesContract` |
 | `SalesContractItem` | `ZEVO_O_SalesContractItem` | `I_SalesContractItem` |
 | `SalesDocumentItem` | `ZEVO_O_SalesDocumentItem` | `C_SalesDocumentItemDEX` |
-| `SalesDocumentScheduleLine` | `ZEVO_O_SalesDocSchedLine` | `C_SalesDocumentScheduleLineDEX` |
+| `SalesDocumentScheduleLine` | `ZEVO_O_SalesDocSchedLine` | `C_SalesDocumentSchedLineDEX` |
 | `OutboundDelivery` | `ZEVO_O_OutboundDelivery` | `C_OutboundDeliveryDEX` |
 | `OutboundDeliveryItem` | `ZEVO_O_OutboundDelivItem` | `C_OutboundDeliveryItemDEX` |
 | `BillingDocumentItem` | `ZEVO_O_BillingDocumentItem` | `I_BillingDocumentItemDEX` |
@@ -1305,7 +1305,7 @@ Typed **OData V4 Web API** for the sales / contract-to-cash graph (9 entity sets
 
 | Topic | Finding |
 |-------|---------|
-| Sales order header DEX | **None** — use item DEX `C_SalesDocumentItemDEX` (+ schedule `C_SalesDocumentScheduleLineDEX`); client filter `SDDocumentCategory eq 'C'` for orders |
+| Sales order header DEX | **None** — use item DEX `C_SalesDocumentItemDEX` (+ schedule `C_SalesDocumentSchedLineDEX`); client filter `SDDocumentCategory eq 'C'` for orders |
 | Sales contract | `I_SalesContract` / `I_SalesContractItem` (API CDS; ADT Data Preview OK) |
 | Outbound delivery | Prefer **`C_OutboundDeliveryDEX`** / **`C_OutboundDeliveryItemDEX`** (extraction-annotated view entities over `I_DeliveryDocument*`). SAP source already has `where SDDocumentCategory = 'J'`. Optional client filter `DeliveryDocumentTypeCode eq 'LF'` |
 | Delivery vs ODP | Those `C_OutboundDelivery*DEX` may appear in `DDDDLSRC` and work in OpenSQL / typed OData, yet be **absent** from `RSODPABAPCDSVIEW` and from released `IXTRCTNENBLDVW` — ODP activate tools won’t see them; explorer **Include non-released DEX** only helps rows that exist in `IXTRCTNENBLDVW` |

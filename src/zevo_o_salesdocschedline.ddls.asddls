@@ -4,7 +4,7 @@
 @EndUserText.label: 'Sales Document Schedule Line DEX (C2C)'
 @ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #TRANSACTIONAL }
 define view ZEVO_O_SalesDocSchedLine
-  as select from C_SalesDocumentScheduleLineDEX
+  as select from C_SalesDocumentSchedLineDEX
 {
   key SalesDocument,
   key SalesDocumentItem,
