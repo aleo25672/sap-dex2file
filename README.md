@@ -1296,7 +1296,7 @@ Typed **OData V4 Web API** for the sales / contract-to-cash graph (9 entity sets
 | `SalesDocumentItem` | `ZEVO_O_SalesDocumentItem` | `C_SalesDocumentItemDEX` |
 | `SalesDocumentScheduleLine` | `ZEVO_O_SalesDocSchedLine` | `C_SalesDocumentSchedLineDEX` |
 | `OutboundDelivery` | `ZEVO_O_OutboundDelivery` | `C_OutboundDeliveryDEX` |
-| `OutboundDeliveryItem` | `ZEVO_O_OutboundDelivItem` | `C_OutboundDeliveryItemDEX` (incl. `ReferenceSDDocument*`) |
+| `OutboundDeliveryItem` | `ZEVO_O_OutboundDelivItem` | `I_DeliveryDocumentItem` (`ReferenceSDDocument*`; category `J`) |
 | `BillingDocumentItem` | `ZEVO_O_BillingDocumentItem` | `I_BillingDocumentItemDEX` |
 | `GoodsMovementDocument` | `ZEVO_O_GoodsMovementDoc` | `I_GoodsMovementDocumentDEX` (full DEX; **no CDS `WHERE`**) |
 | `BusinessPartner` | `ZEVO_O_BusinessPartner` | `I_BusinessPartner` (lean) |
@@ -1309,7 +1309,7 @@ Typed **OData V4 Web API** for the sales / contract-to-cash graph (9 entity sets
 |-------|---------|
 | Sales order header DEX | **None** — use item DEX `C_SalesDocumentItemDEX` (+ schedule `C_SalesDocumentSchedLineDEX`); client filter `SDDocumentCategory eq 'C'` for orders |
 | Sales contract | `I_SalesContract` / `I_SalesContractItem` (API CDS; ADT Data Preview OK) |
-| Outbound delivery | Prefer **`C_OutboundDeliveryDEX`** / **`C_OutboundDeliveryItemDEX`** (extraction-annotated view entities over `I_DeliveryDocument*`). SAP source already has `where SDDocumentCategory = 'J'`. Optional client filter `DeliveryDocumentTypeCode eq 'LF'` |
+| Outbound delivery | Header: **`C_OutboundDeliveryDEX`**. Item: **`I_DeliveryDocumentItem`** (for `ReferenceSDDocument*` SO FK / `$expand`) — `C_OutboundDeliveryItemDEX` lacks those columns on this stack. Item view filters category `J`. Optional header filter `DeliveryDocumentTypeCode eq 'LF'` |
 | Delivery vs ODP | Those `C_OutboundDelivery*DEX` may appear in `DDDDLSRC` and work in OpenSQL / typed OData, yet be **absent** from `RSODPABAPCDSVIEW` and from released `IXTRCTNENBLDVW` — ODP activate tools won’t see them; explorer **Include non-released DEX** only helps rows that exist in `IXTRCTNENBLDVW` |
 | Billing | Item-centric: Phase 1 uses **`I_BillingDocumentItemDEX`** (rich; SAP `where` on invoice categories). Classic ODP-friendly alt: `C_BillingDocumentItemBasicDEX` (`CSDBILDOCITMBCDX`) |
 | `I_DeliveryDocument*` | Suitable for samples / API; **not** chosen for C2C bulk path |
