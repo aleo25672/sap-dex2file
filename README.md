@@ -22,8 +22,8 @@ Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the ge
 | **[OData CDS extract service](#odata-cds-extract-service)** | V2 `ExtractCds`, `GetCdsMetadata`, [URL cookbook](#url-cookbook-c_purchaseorderdex) |
 | **[OData V4 C2P (`ZEVO_C2P`)](#odata-v4-c2p-service-zevo_c2p)** | Typed V4 Web API — supported CDS, add-new steps, Eclipse/ADT publish |
 | [C2P reference](docs/ZEVO_C2P.md) | Navigations, delta fields, URL cookbook |
-| **[OData V4 C2C (`ZEVO_C2C`)](#odata-v4-contract-to-cash-zevo_c2c)** | Sales contract → order item → delivery → billing + lean BP |
-| [C2C reference](docs/ZEVO_C2C.md) | Entity sets, filters, sample URLs |
+| **[OData V4 C2C (`ZEVO_C2C`)](#odata-v4-contract-to-cash-zevo_c2c)** | Contract → SO item → delivery → GI → billing + `$expand` + lean BP |
+| [C2C reference](docs/ZEVO_C2C.md) | Entity sets, FK navigations, discoveries, smoke URLs |
 | **[OData V4 General Ledger (`ZEVO_GENERALLEDGER`)](#odata-v4-general-ledger-zevo_generalledger)** | G/L lines + FI masters, `$expand`, sample URLs, binding pitfalls |
 | [GL reference](docs/ZEVO_GENERALLEDGER.md) | `RMRP` / `RE`/`KZ` meanings, clearing joins, delta fields |
 | **[OData V4 Master Data (`ZEVO_MD`)](#odata-v4-master-data-zevo_md)** | Cross-scenario BP (full) + roles + bank + product |
@@ -1278,13 +1278,14 @@ After CDS changes: pull → activate → republish binding → `$metadata`. More
 
 ## OData V4 Contract-to-Cash (`ZEVO_C2C`)
 
-Typed **OData V4 Web API** for the sales / contract-to-cash graph (9 entity sets + `$expand`). Canonical partner / bank / product masters live on [`ZEVO_MD`](#odata-v4-master-data-zevo_md); C2C keeps a **lean** `BusinessPartner` for document `$expand` only. Cash / AR journal lines stay on [`ZEVO_GENERALLEDGER`](#odata-v4-general-ledger-zevo_generalledger).
+Typed **OData V4 Web API** for the sales / contract-to-cash graph (9 entity sets + C2P-style `$expand`). Canonical partner / bank / product masters live on [`ZEVO_MD`](#odata-v4-master-data-zevo_md); C2C keeps a **lean** `BusinessPartner` for document `$expand` only. Cash / AR journal lines stay on [`ZEVO_GENERALLEDGER`](#odata-v4-general-ledger-zevo_generalledger).
 
 | Item | Value |
 |------|--------|
-| CDS projections | 9 × `ZEVO_O_*` (classic `define view`, explicit fields, one-way associations) |
-| Service definition | `ZEVO_C2C` — in abapGit (`zevo_c2c.srvd.*`) |
-| Service binding | **Create in ADT only** as `ZEVO_C2C` — **OData V4 - Web API** |
+| CDS projections | 9 × `ZEVO_O_*` (classic `define view`, explicit fields, **one-way** associations) |
+| Service definition | `ZEVO_C2C` — in abapGit (`zevo_c2c.srvd.*`); create in ADT if pull skips it |
+| Service binding | **Create in ADT only** as `ZEVO_C2C` — **OData V4 - Web API** (republish after CDS changes) |
+| Sample pack | SO **0000006321** (2 items) → delivery **0080006423** → GI **601** → billing **0090005785** → customer **0001000569** — [`ORDER_TO_CASH.docx`](docs/ORDER_TO_CASH.docx) |
 | Reference | [`docs/ZEVO_C2C.md`](docs/ZEVO_C2C.md) |
 
 ### Supported CDS (9)
@@ -1294,57 +1295,89 @@ Typed **OData V4 Web API** for the sales / contract-to-cash graph (9 entity sets
 | `SalesContract` | `ZEVO_O_SalesContract` | `I_SalesContract` |
 | `SalesContractItem` | `ZEVO_O_SalesContractItem` | `I_SalesContractItem` |
 | `SalesDocumentItem` | `ZEVO_O_SalesDocumentItem` | `C_SalesDocumentItemDEX` |
-| `SalesDocumentScheduleLine` | `ZEVO_O_SalesDocSchedLine` | `C_SalesDocumentSchedLineDEX` |
+| `SalesDocumentScheduleLine` | `ZEVO_O_SalesDocSchedLine` | `C_SalesDocumentSchedLineDEX` (not `…ScheduleLine…`; alt `…DEX_1`) |
 | `OutboundDelivery` | `ZEVO_O_OutboundDelivery` | `C_OutboundDeliveryDEX` |
-| `OutboundDeliveryItem` | `ZEVO_O_OutboundDelivItem` | `I_DeliveryDocumentItem` (`ReferenceSDDocument*`; category `J`) |
+| `OutboundDeliveryItem` | `ZEVO_O_OutboundDelivItem` | `I_DeliveryDocumentItem` (keys aliased; `where` category `J`) |
 | `BillingDocumentItem` | `ZEVO_O_BillingDocumentItem` | `I_BillingDocumentItemDEX` |
 | `GoodsMovementDocument` | `ZEVO_O_GoodsMovementDoc` | `I_GoodsMovementDocumentDEX` (full DEX; **no CDS `WHERE`**) |
 | `BusinessPartner` | `ZEVO_O_BusinessPartner` | `I_BusinessPartner` (lean) |
 
-**`$expand` (C2P-style FK, not process-flow DEX):** `SalesDocumentItem` → `_OutboundDeliveryItem` / `_BillingDocumentItem` / `_ScheduleLine`; `OutboundDelivery` → `_GoodsMovement`; `BillingDocumentItem` → `_OutboundDelivery`. Details: [`docs/ZEVO_C2C.md`](docs/ZEVO_C2C.md#navigations-expand).
+No SO **header** DEX and no billing **header** DEX — use item entity sets.
+
+### Navigations (`$expand`) — C2P-style FK (not VBFA / process-flow DEX)
+
+Do **not** use `C_SDDocMultiLevelProcFlowDEX` (`@AccessControl.authorizationCheck: #PRIVILEGED_ONLY` — empty without privileged access).
+
+| From | Navigation | Join |
+|------|------------|------|
+| `SalesDocumentItem` | `_ScheduleLine` | SO + item |
+| `SalesDocumentItem` | `_OutboundDeliveryItem` | SO = `ReferenceSDDocument` (+ item) |
+| `SalesDocumentItem` | `_BillingDocumentItem` | `SalesDocument` + item |
+| `SalesDocumentItem` | `_SoldToParty` | lean BP |
+| `OutboundDelivery` | `_Item`, `_GoodsMovement`, `_SoldToParty`, `_ShipToParty` | delivery = `DeliveryDocument` on GM |
+| `BillingDocumentItem` | `_OutboundDelivery`, `_SoldToParty`, `_BillToParty` | `ReferenceSDDocument` = delivery (category `J`) |
+| `SalesContract` | `_Item`, `_SoldToParty` | contract / lean BP |
+| `GoodsMovementDocument` | `_Customer` | lean BP |
+
+`OutboundDeliveryItem` has **no** partner navigations (partners are on the delivery header).
 
 ### Source / filter discoveries (Phase 1)
 
 | Topic | Finding |
 |-------|---------|
-| Sales order header DEX | **None** — use item DEX `C_SalesDocumentItemDEX` (+ schedule `C_SalesDocumentSchedLineDEX`); client filter `SDDocumentCategory eq 'C'` for orders |
-| Sales contract | `I_SalesContract` / `I_SalesContractItem` (API CDS; ADT Data Preview OK) |
-| Outbound delivery | Header: **`C_OutboundDeliveryDEX`**. Item: **`I_DeliveryDocumentItem`** (for `ReferenceSDDocument*` SO FK / `$expand`) — `C_OutboundDeliveryItemDEX` lacks those columns on this stack. Item view filters category `J`. Optional header filter `DeliveryDocumentTypeCode eq 'LF'` |
-| Delivery vs ODP | Those `C_OutboundDelivery*DEX` may appear in `DDDDLSRC` and work in OpenSQL / typed OData, yet be **absent** from `RSODPABAPCDSVIEW` and from released `IXTRCTNENBLDVW` — ODP activate tools won’t see them; explorer **Include non-released DEX** only helps rows that exist in `IXTRCTNENBLDVW` |
-| Billing | Item-centric: Phase 1 uses **`I_BillingDocumentItemDEX`** (rich; SAP `where` on invoice categories). Classic ODP-friendly alt: `C_BillingDocumentItemBasicDEX` (`CSDBILDOCITMBCDX`) |
-| `I_DeliveryDocument*` | Suitable for samples / API; **not** chosen for C2C bulk path |
-| Goods movement | Same DEX as C2P — see below |
+| SO header DEX | **None** — item + schedule DEX; filter `SDDocumentCategory eq 'C'` |
+| Schedule DEX name | **`C_SalesDocumentSchedLineDEX`** (SAP shortens *Sched*; misspelling `…ScheduleLine…` fails activation) |
+| Contract | `I_SalesContract` / `I_SalesContractItem` |
+| Delivery header | `C_OutboundDeliveryDEX` (view entity; OpenSQL OK; may be absent from ODP / released `IXTRCTNENBLDVW`) |
+| Delivery item | **`I_DeliveryDocumentItem`** — `C_OutboundDeliveryItemDEX` has **no** `ReferenceSDDocument*` on this stack (needed for SO `$expand`) |
+| Billing | `I_BillingDocumentItemDEX`; ODP alt `C_BillingDocumentItemBasicDEX` |
+| Process flow DEX | `C_SDDocMultiLevelProcFlowDEX` / `I_SDDocumentMultiLevelProcFlow` = **PRIVILEGED_ONLY** — not used for typed OData |
+| Explorer | Checkbox **Include non-released DEX** (`p_unrel` → `ZEVO_CL_CATALOG`); lists only rows that exist in `IXTRCTNENBLDVW` |
+| Goods movement | Full `I_GoodsMovementDocumentDEX` in both C2P and C2C — **no** ZEVO CDS `WHERE` |
 
-### Goods movements (C2C) — no CDS filter
+### Goods movements — no CDS filter
 
-`ZEVO_O_GoodsMovementDoc` selects from **`I_GoodsMovementDocumentDEX` with no `WHERE` clause** (same approach as C2P). The entity set returns the **full** DEX.
-
-| Service | CDS `WHERE` on GM? | Client `$filter` for scenario |
-|---------|-------------------|-------------------------------|
-| **C2P** | **None** | PO-related: `PurchaseOrder ne ''` / specific PO / history type `1` + `$expand=_GoodsMovement` |
-| **C2C** | **None** | Sales/delivery: e.g. `DeliveryDocument ne ''`, `SalesOrder ne ''`, and/or `GoodsMovementType eq '601'` |
-
-```http
-GET .../GoodsMovementDocument?$filter=DeliveryDocument%20ne%20''&$top=1000&$count=true
-GET .../GoodsMovementDocument?$filter=SalesOrder%20ne%20''%20and%20GoodsMovementType%20eq%20'601'
-```
+| Service | CDS `WHERE` on GM? | Client `$filter` |
+|---------|-------------------|------------------|
+| **C2P** | **None** | `PurchaseOrder ne ''` / history type `1` + `$expand=_GoodsMovement` |
+| **C2C** | **None** | `DeliveryDocument ne ''`, `SalesOrder ne ''`, `GoodsMovementType eq '601'`, and/or `InventoryTransactionType eq 'WL'` |
 
 ### Client filters (documents)
 
 | Entity set | Filter |
 |------------|--------|
-| `SalesDocumentItem` / schedule | `SDDocumentCategory eq 'C'` (orders; DEX also has quotations `B`, …) |
+| `SalesDocumentItem` / schedule | `SDDocumentCategory eq 'C'` |
 | `OutboundDelivery` | SAP CDS already `J`; optional `DeliveryDocumentTypeCode eq 'LF'` |
-| `BillingDocumentItem` | SAP CDS already invoice categories (`M`/`N`/`O`/`P`/…) |
+| `OutboundDeliveryItem` | ZEVO CDS `where SDDocumentCategory = 'J'` |
+| `BillingDocumentItem` | SAP CDS already invoice categories |
 | `GoodsMovementDocument` | **Client-only** — see table above |
 
-Eclipse / abapGit / ADT habits match **[C2P](#odata-v4-c2p-service-zevo_c2p)**. Binding name **`ZEVO_C2C`**; activate all **`ZEVO_O_*`** DDLS **before** SRVD; **never** let abapGit delete local SRVB/G4BA `ZEVO_C2C`.
+### Activate & publish
 
-**If abapGit says `SRVDSRV ZEVO_C2C does not exist`:** another pull will not create it — open ADT → New → Service Definition **`ZEVO_C2C`** → paste [`src/zevo_c2c.srvd.srvdsrv`](src/zevo_c2c.srvd.srvdsrv) → Activate (all `ZEVO_O_*` must already be active) → New Binding **`ZEVO_C2C`** (OData V4 Web API) → Publish.
+1. abapGit **Pull** `main`.
+2. Mass-activate **`ZEVO_O_*`** (order tip: `OutboundDelivItem` → `OutboundDelivery` / `SalesDocumentItem` / `BillingDocumentItem`).
+3. Activate SRVD **`ZEVO_C2C`**. If abapGit reports `SRVDSRV ZEVO_C2C does not exist`: ADT → New → Service Definition → paste [`src/zevo_c2c.srvd.srvdsrv`](src/zevo_c2c.srvd.srvdsrv) → Activate.
+4. ADT binding **`ZEVO_C2C`** (OData V4 Web API) → Activate → **Publish** (republish after CDS/nav changes).
+5. Later pulls: **Overwrite** SRVD; **never** delete local SRVB/G4BA `ZEVO_C2C`.
+6. Explorer: activate **`ZEVO_CL_CATALOG`** before / with `ZEVO_CDS_EXPLORER_2_FILE` (report calls `GET_VIEWS` dynamically if the class is one pull behind).
+
+### Smoke URLs (CAL)
+
+Base: `https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_c2c/srvd_a2x/sap/zevo_c2c/0001`
 
 ```text
 https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_c2c/srvd_a2x/sap/zevo_c2c/0001/$metadata
+
+https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_c2c/srvd_a2x/sap/zevo_c2c/0001/SalesDocumentItem?$filter=SDDocumentCategory%20eq%20'C'%20and%20SalesDocument%20eq%20'0000006321'&$expand=_OutboundDeliveryItem,_BillingDocumentItem($expand=_OutboundDelivery),_ScheduleLine,_SoldToParty&$count=true
+
+https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_c2c/srvd_a2x/sap/zevo_c2c/0001/OutboundDelivery?$filter=OutboundDelivery%20eq%20'0080006423'&$expand=_Item,_GoodsMovement,_SoldToParty,_ShipToParty
+
+https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_c2c/srvd_a2x/sap/zevo_c2c/0001/BillingDocumentItem?$filter=BillingDocument%20eq%20'0090005785'&$expand=_OutboundDelivery,_SoldToParty,_BillToParty
+
+https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_c2c/srvd_a2x/sap/zevo_c2c/0001/GoodsMovementDocument?$filter=DeliveryDocument%20eq%20'0080006423'%20and%20GoodsMovementType%20eq%20'601'&$count=true
 ```
+
+Do **not** call `.../0001/?$count=true` on the service root — `$count` belongs on an entity set.
 
 More detail: [`docs/ZEVO_C2C.md`](docs/ZEVO_C2C.md).
 
