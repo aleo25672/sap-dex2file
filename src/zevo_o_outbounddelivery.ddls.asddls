@@ -7,6 +7,8 @@ define view ZEVO_O_OutboundDelivery
   as select from C_OutboundDeliveryDEX
   association [0..*] to ZEVO_O_OutboundDelivItem as _Item
     on $projection.OutboundDelivery = _Item.OutboundDelivery
+  association [0..*] to ZEVO_O_GoodsMovementDoc as _GoodsMovement
+    on $projection.OutboundDelivery = _GoodsMovement.DeliveryDocument
   association [0..1] to ZEVO_O_BusinessPartner as _SoldToParty
     on $projection.SoldToParty = _SoldToParty.BusinessPartner
   association [0..1] to ZEVO_O_BusinessPartner as _ShipToParty
@@ -39,6 +41,7 @@ define view ZEVO_O_OutboundDelivery
       DeliveryBlockReason,
       ShippingCondition,
       _Item,
+      _GoodsMovement,
       _SoldToParty,
       _ShipToParty
 }

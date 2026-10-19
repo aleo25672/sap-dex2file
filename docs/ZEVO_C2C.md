@@ -68,22 +68,30 @@ GET {base}/GoodsMovementDocument
 | Delivery bulk | `C_OutboundDeliveryDEX` / `C_OutboundDeliveryItemDEX` (not `I_DeliveryDocument*` for bulk). View entities; OpenSQL/Data Preview OK; may be missing from `RSODPABAPCDSVIEW` / released `IXTRCTNENBLDVW` |
 | Billing | `I_BillingDocumentItemDEX` (Phase 1); alt classic `C_BillingDocumentItemBasicDEX` (`CSDBILDOCITMBCDX`) for ODP |
 | Explorer | **Include non-released DEX** lists non-released `IXTRCTNENBLDVW` rows only — does not invent views absent from that catalog |
+| SO → delivery / billing `$expand` | FK on `ReferenceSDDocument*` / `SalesDocument` (C2P pattern) — **not** `C_SDDocMultiLevelProcFlowDEX` (`PRIVILEGED_ONLY`) |
 
 ---
 
 ## Navigations (`$expand`)
 
-| From | Navigation | To |
-|------|------------|-----|
-| `SalesContract` | `_Item`, `_SoldToParty` | items / lean BP |
-| `SalesContractItem` | `_SoldToParty` | lean BP |
-| `SalesDocumentItem` | `_ScheduleLine`, `_SoldToParty` | schedule / lean BP |
-| `OutboundDelivery` | `_Item`, `_SoldToParty`, `_ShipToParty` | items / lean BP |
-| `OutboundDeliveryItem` | `_SoldToParty`, `_ShipToParty` | lean BP |
-| `BillingDocumentItem` | `_SoldToParty`, `_BillToParty` | lean BP |
-| `GoodsMovementDocument` | `_Customer` | lean BP |
+Same pattern as C2P: **one-way FK joins on document numbers** already on the DEX (not VBFA / `C_SDDocMultiLevelProcFlowDEX`).
+
+| From | Navigation | To | Join |
+|------|------------|-----|------|
+| `SalesContract` | `_Item`, `_SoldToParty` | items / lean BP | contract |
+| `SalesContractItem` | `_SoldToParty` | lean BP | BP |
+| `SalesDocumentItem` | `_ScheduleLine` | schedule | SO + item |
+| `SalesDocumentItem` | `_OutboundDeliveryItem` | delivery items | SO = `ReferenceSDDocument` (+ item) |
+| `SalesDocumentItem` | `_BillingDocumentItem` | billing items | `SalesDocument` + item |
+| `SalesDocumentItem` | `_SoldToParty` | lean BP | BP |
+| `OutboundDelivery` | `_Item`, `_GoodsMovement`, `_SoldToParty`, `_ShipToParty` | items / GI / BP | delivery = `DeliveryDocument` on GM |
+| `OutboundDeliveryItem` | `_SoldToParty`, `_ShipToParty` | lean BP | BP |
+| `BillingDocumentItem` | `_OutboundDelivery`, `_SoldToParty`, `_BillToParty` | delivery header / BP | `ReferenceSDDocument` = delivery (when category `J`) |
+| `GoodsMovementDocument` | `_Customer` | lean BP | BP |
 
 Document-type properties that would clash with OData V4 entity type names are aliased to `*TypeCode`.
+
+**Activate order tip:** mass-activate `ZEVO_O_*` together. Delivery item must expose `ReferenceSDDocument*` before SO → delivery `$expand` works.
 
 ---
 
@@ -114,20 +122,22 @@ Pull does **not** always create SRVD on this stack (same as early C2P). The serv
 ```http
 GET {base}/$metadata
 
+# SO → schedule + delivery items + billing items + sold-to (C2P-style chain)
 GET {base}/SalesDocumentItem
   ?$filter=SDDocumentCategory eq 'C' and SalesDocument eq '0000006321'
-  &$expand=_ScheduleLine,_SoldToParty
+  &$expand=_ScheduleLine,_OutboundDeliveryItem,_BillingDocumentItem($expand=_OutboundDelivery),_SoldToParty
+  &$count=true
 
 GET {base}/OutboundDelivery
-  ?$filter=OutboundDelivery eq '0080000000'
-  &$expand=_Item,_SoldToParty
+  ?$filter=OutboundDelivery eq '0080006423'
+  &$expand=_Item,_GoodsMovement,_SoldToParty,_ShipToParty
 
 GET {base}/BillingDocumentItem
   ?$filter=BillingDocument eq '0090005785'
-  &$expand=_SoldToParty
+  &$expand=_OutboundDelivery,_SoldToParty,_BillToParty
 
 GET {base}/GoodsMovementDocument
-  ?$filter=DeliveryDocument ne '' and GoodsMovementType eq '601'
+  ?$filter=DeliveryDocument eq '0080006423' and GoodsMovementType eq '601'
   &$top=100
 ```
 

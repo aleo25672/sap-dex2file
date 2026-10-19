@@ -39,6 +39,9 @@ define view ZEVO_O_OutboundDelivItem
       IncotermsVersion,
       IncotermsLocation1,
       IncotermsLocation2,
+      ReferenceSDDocument,
+      ReferenceSDDocumentItem,
+      ReferenceSDDocumentCategory,
       _SoldToParty,
       _ShipToParty
 }
