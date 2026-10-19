@@ -89,10 +89,21 @@ Document-type properties that would clash with OData V4 entity type names are al
 
 ## Activate & publish (ADT)
 
-1. abapGit pull `main` — activate all `ZEVO_O_*` + SRVD `ZEVO_C2C`.  
-2. ADT: New Service Binding **`ZEVO_C2C`**, type **OData V4 - Web API**, definition `ZEVO_C2C` → Activate → Publish.  
-3. URL shape: `/sap/opu/odata4/sap/zevo_c2c/srvd_a2x/sap/zevo_c2c/0001/`  
-4. **Uncheck** abapGit delete of SRVB/G4BA `ZEVO_C2C` on later pulls.
+1. abapGit pull `main`.
+2. Mass-activate all **`ZEVO_O_*`** DDLS first (schedule source must be `C_SalesDocumentSchedLineDEX`, not `…ScheduleLine…`).
+3. Activate service definition **`ZEVO_C2C`**.
+4. ADT: New Service Binding **`ZEVO_C2C`**, type **OData V4 - Web API**, definition `ZEVO_C2C` → Activate → Publish.
+5. URL shape: `/sap/opu/odata4/sap/zevo_c2c/srvd_a2x/sap/zevo_c2c/0001/`
+6. **Uncheck** abapGit delete of SRVB/G4BA `ZEVO_C2C` on later pulls.
+
+### If abapGit says `SRVDSRV ZEVO_C2C does not exist`
+
+The service **definition** was not created on the system (binding is separate and never in Git).
+
+1. In **Eclipse ADT**: New → Service Definition → name **`ZEVO_C2C`**, same package as the other ZEVO objects.
+2. Paste the body from [`src/zevo_c2c.srvd.srvdsrv`](../src/zevo_c2c.srvd.srvdsrv) (the `define service … { expose … }` block).
+3. Activate the SRVD, then create/publish the binding as above.
+4. On the next abapGit pull, choose **Overwrite** for SRVD `ZEVO_C2C` so Git stays the source of truth.
 
 ---
 
