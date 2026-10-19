@@ -24,7 +24,7 @@ Typed **OData V4** service for the sales / contract-to-cash extract graph. This 
 | `OutboundDelivery` | `ZEVO_O_OutboundDelivery` | `C_OutboundDeliveryDEX` |
 | `OutboundDeliveryItem` | `ZEVO_O_OutboundDelivItem` | `C_OutboundDeliveryItemDEX` |
 | `BillingDocumentItem` | `ZEVO_O_BillingDocumentItem` | `I_BillingDocumentItemDEX` |
-| `GoodsMovementDocument` | `ZEVO_O_GoodsMovementDoc` | `I_GoodsMovementDocumentDEX` |
+| `GoodsMovementDocument` | `ZEVO_O_GoodsMovementDoc` | `I_GoodsMovementDocumentDEX` (full DEX; **no CDS `WHERE`**) |
 | `BusinessPartner` | `ZEVO_O_BusinessPartner` | `I_BusinessPartner` (lean) |
 
 No separate sales-order **header** DEX — use `SalesDocumentItem` (filter `SDDocumentCategory eq 'C'`).  
@@ -35,9 +35,39 @@ No separate billing **header** DEX — header fields are on `BillingDocumentItem
 | Entity set | Filter |
 |------------|--------|
 | `SalesDocumentItem` / schedule lines | `SDDocumentCategory eq 'C'` (orders) |
-| `OutboundDelivery` | CDS already restricts category `J`; optional `DeliveryDocumentTypeCode eq 'LF'` |
-| `BillingDocumentItem` | CDS already restricts invoice categories (`M`/`N`/`O`/`P`/…) |
-| `GoodsMovementDocument` | Sales/delivery scope, e.g. `DeliveryDocument ne ''` or `SalesOrder ne ''` / movement type `601` |
+| `OutboundDelivery` | SAP source CDS already restricts category `J`; optional `DeliveryDocumentTypeCode eq 'LF'` |
+| `BillingDocumentItem` | SAP source CDS already restricts invoice categories (`M`/`N`/`O`/`P`/…) |
+| `GoodsMovementDocument` | **Client-only** — see [Goods movements](#goods-movements--full-dex-no-cds-where) |
+
+### Goods movements — full DEX, no CDS `WHERE`
+
+`ZEVO_O_GoodsMovementDoc` selects from **`I_GoodsMovementDocumentDEX` with no `WHERE` clause** (same as C2P’s `ZEVO_C_GoodsMovementDoc`).
+
+| Service | ZEVO CDS filter on GM | Client `$filter` for scenario |
+|---------|----------------------|-------------------------------|
+| C2P | **None** | `PurchaseOrder ne ''` / specific PO / history type `1` + `$expand` |
+| C2C | **None** | e.g. `DeliveryDocument ne ''`, `SalesOrder ne ''`, `GoodsMovementType eq '601'` |
+
+```http
+GET {base}/GoodsMovementDocument
+  ?$filter=DeliveryDocument ne ''
+  &$top=1000&$count=true
+
+GET {base}/GoodsMovementDocument
+  ?$filter=SalesOrder ne '' and GoodsMovementType eq '601'
+```
+
+---
+
+## Source discoveries (Phase 1)
+
+| Topic | Finding |
+|-------|---------|
+| No SO header DEX | Item DEX `C_SalesDocumentItemDEX` + schedule `C_SalesDocumentScheduleLineDEX` |
+| Contract | `I_SalesContract` / `I_SalesContractItem` |
+| Delivery bulk | `C_OutboundDeliveryDEX` / `C_OutboundDeliveryItemDEX` (not `I_DeliveryDocument*` for bulk). View entities; OpenSQL/Data Preview OK; may be missing from `RSODPABAPCDSVIEW` / released `IXTRCTNENBLDVW` |
+| Billing | `I_BillingDocumentItemDEX` (Phase 1); alt classic `C_BillingDocumentItemBasicDEX` (`CSDBILDOCITMBCDX`) for ODP |
+| Explorer | **Include non-released DEX** lists non-released `IXTRCTNENBLDVW` rows only — does not invent views absent from that catalog |
 
 ---
 
@@ -98,6 +128,7 @@ https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_c2c/srvd_a2x/sap/zevo_c2c/0001/$
 
 ## Notes
 
-- Delivery DEX sources are **CDS view entities** with extraction annotations; they may be absent from `RSODPABAPCDSVIEW` / released `IXTRCTNENBLDVW` rows. Typed OData and OpenSQL still work (verified via ADT Data Preview).  
-- Billing alt for classic ODP: `C_BillingDocumentItemBasicDEX` (`CSDBILDOCITMBCDX`) — Phase 1 uses the richer `I_BillingDocumentItemDEX`.  
-- Product / customer role / bank → [`ZEVO_MD`](ZEVO_MD.md).
+- Delivery DEX: extraction-annotated **view entities**; typed OData / OpenSQL work even when ODP catalogs omit them.  
+- Billing: Phase 1 = `I_BillingDocumentItemDEX`; classic ODP alt = `C_BillingDocumentItemBasicDEX`.  
+- Product / customer role / bank → [`ZEVO_MD`](ZEVO_MD.md).  
+- Sample pack path: SO **6321** → delivery → GI → billing **0090005785** → receipt (GL) — [`ORDER_TO_CASH.docx`](ORDER_TO_CASH.docx).

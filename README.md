@@ -966,12 +966,12 @@ Each OData entity set is a thin Z projection over an SAP CDS. Clients call the *
 | `PurchaseOrderAccountAssignment` | `ZEVO_C_PurOrdAcctAssgmt` | `C_PurOrdAccountAssignmentDEX` |
 | `SupplierInvoice` | `ZEVO_C_SupplierInvoice` | `C_SupplierInvoiceDEX` |
 | `SupplierInvoiceItem` | `ZEVO_C_SupplierInvItem` | `C_SupplierInvoiceItemDEX` |
-| `GoodsMovementDocument` | `ZEVO_C_GoodsMovementDoc` | `I_GoodsMovementDocumentDEX` (full DEX; **filter PO** for C2P) |
+| `GoodsMovementDocument` | `ZEVO_C_GoodsMovementDoc` | `I_GoodsMovementDocumentDEX` (full DEX; **no CDS `WHERE`**) |
 | `BusinessPartner` | `ZEVO_C_BusinessPartner` | `I_BusinessPartner` (lean: id/name/block/delta) |
 
 Out of scope for this service: PR **header**, GL/journal, cost/profit center, product masters, ref-doc texts, and **full BP / supplier role / bank** (use [`ZEVO_MD`](#odata-v4-master-data-zevo_md)).
 
-**Goods movements:** the entity set is the **full** `I_GoodsMovementDocumentDEX` (not clipped to PO history). For C2P extracts, always `$filter` PO-related rows, e.g. `PurchaseOrder ne ''` or `PurchaseOrder eq '…'`, or expand `_GoodsMovement` from `PurchaseOrderHistory` with `PurchasingHistoryDocumentType eq '1'`. Details: [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md#goods-movements--full-dex-filter-for-po).
+**Goods movements (C2P):** `ZEVO_C_GoodsMovementDoc` selects from **`I_GoodsMovementDocumentDEX` with no `WHERE` clause** — the entity set is the **full** DEX (not clipped to PO history). For P2P extracts, clients must `$filter` PO-related rows, e.g. `PurchaseOrder ne ''` or `PurchaseOrder eq '…'`, or expand `_GoodsMovement` from `PurchaseOrderHistory` with `PurchasingHistoryDocumentType eq '1'`. Details: [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md#goods-movements--full-dex-filter-for-po).
 
 ### Add a new CDS to `ZEVO_C2P`
 
@@ -1298,16 +1298,51 @@ Typed **OData V4 Web API** for the sales / contract-to-cash graph (9 entity sets
 | `OutboundDelivery` | `ZEVO_O_OutboundDelivery` | `C_OutboundDeliveryDEX` |
 | `OutboundDeliveryItem` | `ZEVO_O_OutboundDelivItem` | `C_OutboundDeliveryItemDEX` |
 | `BillingDocumentItem` | `ZEVO_O_BillingDocumentItem` | `I_BillingDocumentItemDEX` |
-| `GoodsMovementDocument` | `ZEVO_O_GoodsMovementDoc` | `I_GoodsMovementDocumentDEX` |
+| `GoodsMovementDocument` | `ZEVO_O_GoodsMovementDoc` | `I_GoodsMovementDocumentDEX` (full DEX; **no CDS `WHERE`**) |
 | `BusinessPartner` | `ZEVO_O_BusinessPartner` | `I_BusinessPartner` (lean) |
 
-**Filters:** orders → `SDDocumentCategory eq 'C'` on sales document item/schedule; GM → delivery/SO filters (full DEX). Delivery/billing CDS already restrict document categories.
+### Source / filter discoveries (Phase 1)
+
+| Topic | Finding |
+|-------|---------|
+| Sales order header DEX | **None** — use item DEX `C_SalesDocumentItemDEX` (+ schedule `C_SalesDocumentScheduleLineDEX`); client filter `SDDocumentCategory eq 'C'` for orders |
+| Sales contract | `I_SalesContract` / `I_SalesContractItem` (API CDS; ADT Data Preview OK) |
+| Outbound delivery | Prefer **`C_OutboundDeliveryDEX`** / **`C_OutboundDeliveryItemDEX`** (extraction-annotated view entities over `I_DeliveryDocument*`). SAP source already has `where SDDocumentCategory = 'J'`. Optional client filter `DeliveryDocumentTypeCode eq 'LF'` |
+| Delivery vs ODP | Those `C_OutboundDelivery*DEX` may appear in `DDDDLSRC` and work in OpenSQL / typed OData, yet be **absent** from `RSODPABAPCDSVIEW` and from released `IXTRCTNENBLDVW` — ODP activate tools won’t see them; explorer **Include non-released DEX** only helps rows that exist in `IXTRCTNENBLDVW` |
+| Billing | Item-centric: Phase 1 uses **`I_BillingDocumentItemDEX`** (rich; SAP `where` on invoice categories). Classic ODP-friendly alt: `C_BillingDocumentItemBasicDEX` (`CSDBILDOCITMBCDX`) |
+| `I_DeliveryDocument*` | Suitable for samples / API; **not** chosen for C2C bulk path |
+| Goods movement | Same DEX as C2P — see below |
+
+### Goods movements (C2C) — no CDS filter
+
+`ZEVO_O_GoodsMovementDoc` selects from **`I_GoodsMovementDocumentDEX` with no `WHERE` clause** (same approach as C2P). The entity set returns the **full** DEX.
+
+| Service | CDS `WHERE` on GM? | Client `$filter` for scenario |
+|---------|-------------------|-------------------------------|
+| **C2P** | **None** | PO-related: `PurchaseOrder ne ''` / specific PO / history type `1` + `$expand=_GoodsMovement` |
+| **C2C** | **None** | Sales/delivery: e.g. `DeliveryDocument ne ''`, `SalesOrder ne ''`, and/or `GoodsMovementType eq '601'` |
+
+```http
+GET .../GoodsMovementDocument?$filter=DeliveryDocument%20ne%20''&$top=1000&$count=true
+GET .../GoodsMovementDocument?$filter=SalesOrder%20ne%20''%20and%20GoodsMovementType%20eq%20'601'
+```
+
+### Client filters (documents)
+
+| Entity set | Filter |
+|------------|--------|
+| `SalesDocumentItem` / schedule | `SDDocumentCategory eq 'C'` (orders; DEX also has quotations `B`, …) |
+| `OutboundDelivery` | SAP CDS already `J`; optional `DeliveryDocumentTypeCode eq 'LF'` |
+| `BillingDocumentItem` | SAP CDS already invoice categories (`M`/`N`/`O`/`P`/…) |
+| `GoodsMovementDocument` | **Client-only** — see table above |
 
 Eclipse / abapGit / ADT habits match **[C2P](#odata-v4-c2p-service-zevo_c2p)**. Binding name **`ZEVO_C2C`**; activate all **`ZEVO_O_*`** + SRVD; **never** let abapGit delete local SRVB/G4BA `ZEVO_C2C`.
 
 ```text
 https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_c2c/srvd_a2x/sap/zevo_c2c/0001/$metadata
 ```
+
+More detail: [`docs/ZEVO_C2C.md`](docs/ZEVO_C2C.md).
 
 ---
 
@@ -1362,7 +1397,7 @@ GET {base}/Product?$filter=Product eq 'MZ-TG-Y240'
 | Topic | Choice |
 |-------|--------|
 | vs C2P BP | MD = extensive / canonical; C2P = lean BP for document `$expand` only |
-| vs C2C (planned) | C2C lean BP general data only; roles/banks/product from MD |
+| vs C2C | C2C lean BP general data only; roles/banks/product from MD |
 | DEX vs `I_*` | DEX = BP key + plant identity; `Customer`/`Supplier` = rich classic masters |
 | Customer DEX | `Plant`; `CustomerTradingPartnerId` as `TradingPartner` |
 | Supplier DEX | `SupplierPlant`; company `TradingPartner` on `I_Supplier` via `_Supplier` |

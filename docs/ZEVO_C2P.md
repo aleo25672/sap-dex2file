@@ -36,9 +36,12 @@ No purchase-requisition **header** CDS is used (none in the sample packs). PR is
 
 ### Goods movements — full DEX, filter for PO
 
-`GoodsMovementDocument` projects **`I_GoodsMovementDocumentDEX`** as a standalone entity set. It is **not** limited to rows reachable from `PurchaseOrderHistory`; the history `_GoodsMovement` navigation is only one join path for GRs.
+`ZEVO_C_GoodsMovementDoc` / entity set `GoodsMovementDocument` selects from **`I_GoodsMovementDocumentDEX` with no CDS `WHERE`**. It is **not** limited to rows reachable from `PurchaseOrderHistory`; the history `_GoodsMovement` navigation is only one join path for GRs.
 
-Clients **can** query any movement the DEX returns. For the **C2P / P2P** flow, restrict to PO-related movements with `$filter` (or expand from history type `1`):
+| Layer | Filter on GM? |
+|-------|----------------|
+| ZEVO CDS (`ZEVO_C_GoodsMovementDoc`) | **None** — full DEX |
+| Client `$filter` (recommended for C2P) | PO-related only |
 
 ```http
 # PO-related only (recommended for C2P extracts)
@@ -58,7 +61,7 @@ GET {base}/PurchaseOrderHistory
 
 Without those filters you also get non-PO movements in the same DEX (e.g. `501`, `412`, `631`, `601`). Source is the DEX view, not raw `MSEG`.
 
-Planned **`ZEVO_C2C`** will use the same pattern (own `ZEVO_O_*` over the same DEX) and document **sales/delivery** filters (`SalesOrder`, `DeliveryDocument`, movement type `601`, …) instead of PO.
+**`ZEVO_C2C`** uses the same pattern (`ZEVO_O_GoodsMovementDoc`, also **no CDS `WHERE`**) with **sales/delivery** client filters — see [`ZEVO_C2C.md`](ZEVO_C2C.md#goods-movements--full-dex-no-cds-where).
 
 **Masters on [`ZEVO_MD`](ZEVO_MD.md):** `BusinessPartnerSupplier`, `BusinessPartnerBank`, rich `Supplier` / `Customer`, full BP field list. C2P `BusinessPartner` is general data only for document `$expand` (`_Supplier` / `_InvoicingParty`).
 
