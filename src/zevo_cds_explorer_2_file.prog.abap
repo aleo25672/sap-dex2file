@@ -123,15 +123,45 @@ CLASS lcl_app IMPLEMENTATION.
     DATA(lv_src) = COND string( WHEN p_api  = abap_true THEN `A`
                                 WHEN p_both = abap_true THEN `B`
                                 ELSE `D` ).
-    mt_views = NEW zevo_cl_catalog( )->get_views(
-      it_name_range      = s_name[]
-      it_api_range       = s_api[]
-      it_ddl_range       = s_ddl[]
-      it_dbtab_range     = s_dbtab[]
-      iv_source          = lv_src
-      iv_dataclass       = lv_dc
-      iv_incl_unreleased = p_unrel
-      io_delta_store     = lo_store ).
+
+    " Dynamic call so the report still activates when ZEVO_CL_CATALOG on the
+    " system is older (no IV_INCL_UNRELEASED yet). Prefer the new signature.
+    DATA lo_catalog TYPE REF TO zevo_cl_catalog.
+    DATA lt_parm    TYPE abap_parmbind_tab.
+    DATA lt_name    TYPE zevo_cl_catalog=>ty_entity_range.
+    DATA lt_api     TYPE zevo_cl_catalog=>ty_entity_range.
+    DATA lt_ddl     TYPE zevo_cl_catalog=>ty_entity_range.
+    DATA lt_dbtab   TYPE zevo_cl_catalog=>ty_entity_range.
+
+    lo_catalog = NEW #( ).
+    lt_name  = s_name[].
+    lt_api   = s_api[].
+    lt_ddl   = s_ddl[].
+    lt_dbtab = s_dbtab[].
+
+    lt_parm = VALUE #(
+      ( name = 'IT_NAME_RANGE'      kind = cl_abap_objectdescr=>exporting value = REF #( lt_name ) )
+      ( name = 'IT_API_RANGE'       kind = cl_abap_objectdescr=>exporting value = REF #( lt_api ) )
+      ( name = 'IT_DDL_RANGE'       kind = cl_abap_objectdescr=>exporting value = REF #( lt_ddl ) )
+      ( name = 'IT_DBTAB_RANGE'     kind = cl_abap_objectdescr=>exporting value = REF #( lt_dbtab ) )
+      ( name = 'IV_SOURCE'          kind = cl_abap_objectdescr=>exporting value = REF #( lv_src ) )
+      ( name = 'IV_DATACLASS'       kind = cl_abap_objectdescr=>exporting value = REF #( lv_dc ) )
+      ( name = 'IV_INCL_UNRELEASED' kind = cl_abap_objectdescr=>exporting value = REF #( p_unrel ) )
+      ( name = 'IO_DELTA_STORE'     kind = cl_abap_objectdescr=>exporting value = REF #( lo_store ) )
+      ( name = 'RT_VIEWS'           kind = cl_abap_objectdescr=>receiving  value = REF #( mt_views ) ) ).
+
+    TRY.
+        CALL METHOD lo_catalog->('GET_VIEWS')
+          PARAMETER-TABLE lt_parm.
+      CATCH cx_sy_dyn_call_param_not_found.
+        DELETE lt_parm WHERE name = 'IV_INCL_UNRELEASED'.
+        CALL METHOD lo_catalog->('GET_VIEWS')
+          PARAMETER-TABLE lt_parm.
+        IF p_unrel = abap_true.
+          MESSAGE 'ZEVO_CL_CATALOG is outdated — pull/activate class for Include non-released DEX'(m14)
+                  TYPE 'S' DISPLAY LIKE 'W'.
+        ENDIF.
+    ENDTRY.
 
     IF mt_views IS INITIAL.
       MESSAGE 'No CDS views found for the source / filter'(m01)

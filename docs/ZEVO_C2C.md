@@ -98,12 +98,14 @@ Document-type properties that would clash with OData V4 entity type names are al
 
 ### If abapGit says `SRVDSRV ZEVO_C2C does not exist`
 
-The service **definition** was not created on the system (binding is separate and never in Git).
+Pull does **not** always create SRVD on this stack (same as early C2P). The service **definition** must exist before the binding. Do this once in ADT (do not wait for another pull to invent it):
 
-1. In **Eclipse ADT**: New → Service Definition → name **`ZEVO_C2C`**, same package as the other ZEVO objects.
-2. Paste the body from [`src/zevo_c2c.srvd.srvdsrv`](../src/zevo_c2c.srvd.srvdsrv) (the `define service … { expose … }` block).
-3. Activate the SRVD, then create/publish the binding as above.
-4. On the next abapGit pull, choose **Overwrite** for SRVD `ZEVO_C2C` so Git stays the source of truth.
+1. Confirm all **`ZEVO_O_*`** DDLS are **active** (especially `ZEVO_O_SalesDocSchedLine` → source `C_SalesDocumentSchedLineDEX`).
+2. Eclipse ADT → **New** → **Service Definition** → name **`ZEVO_C2C`**, same package as other ZEVO objects.
+3. Replace the template with the full contents of [`src/zevo_c2c.srvd.srvdsrv`](../src/zevo_c2c.srvd.srvdsrv).
+4. **Activate** the SRVD (errors here almost always mean a still-inactive `ZEVO_O_*`).
+5. **New** → **Service Binding** `ZEVO_C2C` → **OData V4 - Web API** → Activate → Publish.
+6. Later abapGit pulls: **Overwrite** SRVD `ZEVO_C2C`; **never** delete local SRVB/G4BA.
 
 ---
 

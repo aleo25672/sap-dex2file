@@ -5,7 +5,7 @@
    <VSEOCLASS>
     <CLSNAME>ZEVO_CL_CATALOG</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>ZEVO CDS Explorer - discover DEX/API CDS + delta field</DESCRIPT>
+    <DESCRIPT>ZEVO CDS Explorer catalog (incl. non-released DEX)</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>
