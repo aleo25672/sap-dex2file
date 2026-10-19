@@ -1338,7 +1338,7 @@ GET .../GoodsMovementDocument?$filter=SalesOrder%20ne%20''%20and%20GoodsMovement
 
 Eclipse / abapGit / ADT habits match **[C2P](#odata-v4-c2p-service-zevo_c2p)**. Binding name **`ZEVO_C2C`**; activate all **`ZEVO_O_*`** DDLS **before** SRVD; **never** let abapGit delete local SRVB/G4BA `ZEVO_C2C`.
 
-**If abapGit / activation says `SRVDSRV ZEVO_C2C does not exist`:** create service definition **`ZEVO_C2C`** in ADT and paste from [`src/zevo_c2c.srvd.srvdsrv`](src/zevo_c2c.srvd.srvdsrv), then Activate → create binding **`ZEVO_C2C`** (OData V4 Web API) → Publish. Same fallback as C2P.
+**If abapGit says `SRVDSRV ZEVO_C2C does not exist`:** another pull will not create it — open ADT → New → Service Definition **`ZEVO_C2C`** → paste [`src/zevo_c2c.srvd.srvdsrv`](src/zevo_c2c.srvd.srvdsrv) → Activate (all `ZEVO_O_*` must already be active) → New Binding **`ZEVO_C2C`** (OData V4 Web API) → Publish.
 
 ```text
 https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_c2c/srvd_a2x/sap/zevo_c2c/0001/$metadata
@@ -1767,7 +1767,7 @@ Activate in this order (or select all and mass-activate so dependencies resolve)
 
 1. **`ZEVO_DELTA`** (table) - first, because the classes reference it.
 2. `ZEVO_CL_*` classes (including OData helpers; MPC/DPC need Gateway `/IWBEP/*`).
-3. `ZEVO_CDS_EXPLORER_2_FILE` (report) — **after** `ZEVO_CL_CATALOG`. If the report errors with **`IV_INCL_UNRELEASED` does not exist**, the class is still the old signature: re-pull/activate **`ZEVO_CL_CATALOG`**, then the report.
+3. `ZEVO_CL_CATALOG` then `ZEVO_CDS_EXPLORER_2_FILE`. The report calls `GET_VIEWS` dynamically so it still activates if the class is one pull behind; activate the class for **Include non-released DEX** to take effect.
 4. For **OData V2** (`ExtractCds`): register/activate per **[OData CDS extract service](#odata-cds-extract-service)** above.
 5. For **OData V4 C2P**: activate all `ZEVO_C_*` DDLS + service definition `ZEVO_C2P`, then create/publish the binding in **Eclipse ADT** per **[OData V4 C2P service](#odata-v4-c2p-service-zevo_c2p)** above.
 6. For **OData V4 C2C**: activate all `ZEVO_O_*` DDLS + service definition `ZEVO_C2C`, then create/publish binding **`ZEVO_C2C`** (OData V4 Web API) per **[OData V4 Contract-to-Cash](#odata-v4-contract-to-cash-zevo_c2c)** above. If SRVD is missing (`SRVDSRV ZEVO_C2C does not exist`), create the definition in ADT from `src/zevo_c2c.srvd.srvdsrv`.
