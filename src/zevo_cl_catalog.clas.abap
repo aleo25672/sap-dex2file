@@ -299,6 +299,14 @@ CLASS zevo_cl_catalog IMPLEMENTATION.
     " DEX
     " ------------------------------------------------------------------
     IF lv_source = 'D' OR lv_source = 'B'.
+      TYPES: BEGIN OF ty_dex_row,
+               dataextractionviewname          TYPE c LENGTH 30,
+               dataextractionviewdescription   TYPE c LENGTH 60,
+               deltachgdatacaptureissupported  TYPE abap_bool,
+               issapreleasedview               TYPE abap_bool,
+             END OF ty_dex_row.
+      DATA lt_dex TYPE STANDARD TABLE OF ty_dex_row WITH DEFAULT KEY.
+
       " Default: SAP-released extractors only. Optional: all rows in
       " IXTRCTNENBLDVW (including IsSAPReleasedView blank / false).
       IF iv_incl_unreleased = abap_true.
@@ -309,7 +317,7 @@ CLASS zevo_cl_catalog IMPLEMENTATION.
                  issapreleasedview
             FROM ixtrctnenbldvw
             ORDER BY dataextractionviewname
-            INTO TABLE @DATA(lt_dex).
+            INTO CORRESPONDING FIELDS OF TABLE @lt_dex.
         ELSE.
           SELECT dataextractionviewname,
                  dataextractionviewdescription,
@@ -318,7 +326,7 @@ CLASS zevo_cl_catalog IMPLEMENTATION.
             FROM ixtrctnenbldvw
             WHERE dataextractionviewname IN @lt_name_sel
             ORDER BY dataextractionviewname
-            INTO TABLE @lt_dex.
+            INTO CORRESPONDING FIELDS OF TABLE @lt_dex.
         ENDIF.
       ELSE.
         IF lt_name_sel IS INITIAL.
@@ -329,7 +337,7 @@ CLASS zevo_cl_catalog IMPLEMENTATION.
             FROM ixtrctnenbldvw
             WHERE issapreleasedview = @abap_true
             ORDER BY dataextractionviewname
-            INTO TABLE @lt_dex.
+            INTO CORRESPONDING FIELDS OF TABLE @lt_dex.
         ELSE.
           SELECT dataextractionviewname,
                  dataextractionviewdescription,
@@ -339,7 +347,7 @@ CLASS zevo_cl_catalog IMPLEMENTATION.
             WHERE issapreleasedview = @abap_true
               AND dataextractionviewname IN @lt_name_sel
             ORDER BY dataextractionviewname
-            INTO TABLE @lt_dex.
+            INTO CORRESPONDING FIELDS OF TABLE @lt_dex.
         ENDIF.
       ENDIF.
 

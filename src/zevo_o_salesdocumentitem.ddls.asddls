@@ -36,8 +36,6 @@ define view ZEVO_O_SalesDocumentItem
       TransactionCurrency,
       ReferenceSDDocument,
       ReferenceSDDocumentCategory,
-      Plant,
-      ShippingPoint,
       _ScheduleLine,
       _SoldToParty
 }
