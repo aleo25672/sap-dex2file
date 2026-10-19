@@ -1,6 +1,7 @@
 " Discover CDS views for file extraction and detect the change-timestamp
 " field used for timestamp-based delta.
-"   - DEX : released extraction-enabled views from IXTRCTNENBLDVW
+"   - DEX : extraction-enabled views from IXTRCTNENBLDVW
+"           (default: IsSAPReleasedView only; optional include non-released)
 "   - API : CDS DDL sources (TADIR object DDLS) named like I_*API*
 "           (example I_PurchaseOrderAPI01). OData bindings like
 "           API_PURCHASEORDER_2 are not listed.
@@ -28,6 +29,7 @@ CLASS zevo_cl_catalog DEFINITION
         description       TYPE c LENGTH 60,
         source_type       TYPE c LENGTH 3,
         family            TYPE c LENGTH 20,
+        is_sap_released   TYPE abap_bool,
         is_cdc_enabled    TYPE abap_bool,
         delta_field       TYPE c LENGTH 30,
         delta_capable     TYPE abap_bool,
@@ -43,13 +45,14 @@ CLASS zevo_cl_catalog DEFINITION
 
     METHODS get_views
       IMPORTING
-        it_name_range  TYPE ty_entity_range OPTIONAL
-        it_api_range   TYPE ty_entity_range OPTIONAL
-        it_ddl_range   TYPE ty_entity_range OPTIONAL
-        it_dbtab_range TYPE ty_entity_range OPTIONAL
-        iv_source      TYPE clike DEFAULT 'D'
-        iv_dataclass   TYPE clike DEFAULT space
-        io_delta_store TYPE REF TO zevo_cl_delta_store OPTIONAL
+        it_name_range       TYPE ty_entity_range OPTIONAL
+        it_api_range        TYPE ty_entity_range OPTIONAL
+        it_ddl_range        TYPE ty_entity_range OPTIONAL
+        it_dbtab_range      TYPE ty_entity_range OPTIONAL
+        iv_source           TYPE clike DEFAULT 'D'
+        iv_dataclass        TYPE clike DEFAULT space
+        iv_incl_unreleased  TYPE abap_bool DEFAULT abap_false
+        io_delta_store      TYPE REF TO zevo_cl_delta_store OPTIONAL
       RETURNING
         VALUE(rt_views) TYPE ty_views.
 ENDCLASS.
@@ -296,23 +299,48 @@ CLASS zevo_cl_catalog IMPLEMENTATION.
     " DEX
     " ------------------------------------------------------------------
     IF lv_source = 'D' OR lv_source = 'B'.
-      IF lt_name_sel IS INITIAL.
-        SELECT dataextractionviewname,
-               dataextractionviewdescription,
-               deltachgdatacaptureissupported
-          FROM ixtrctnenbldvw
-          WHERE issapreleasedview = @abap_true
-          ORDER BY dataextractionviewname
-          INTO TABLE @DATA(lt_dex).
+      " Default: SAP-released extractors only. Optional: all rows in
+      " IXTRCTNENBLDVW (including IsSAPReleasedView blank / false).
+      IF iv_incl_unreleased = abap_true.
+        IF lt_name_sel IS INITIAL.
+          SELECT dataextractionviewname,
+                 dataextractionviewdescription,
+                 deltachgdatacaptureissupported,
+                 issapreleasedview
+            FROM ixtrctnenbldvw
+            ORDER BY dataextractionviewname
+            INTO TABLE @DATA(lt_dex).
+        ELSE.
+          SELECT dataextractionviewname,
+                 dataextractionviewdescription,
+                 deltachgdatacaptureissupported,
+                 issapreleasedview
+            FROM ixtrctnenbldvw
+            WHERE dataextractionviewname IN @lt_name_sel
+            ORDER BY dataextractionviewname
+            INTO TABLE @lt_dex.
+        ENDIF.
       ELSE.
-        SELECT dataextractionviewname,
-               dataextractionviewdescription,
-               deltachgdatacaptureissupported
-          FROM ixtrctnenbldvw
-          WHERE issapreleasedview = @abap_true
-            AND dataextractionviewname IN @lt_name_sel
-          ORDER BY dataextractionviewname
-          INTO TABLE @lt_dex.
+        IF lt_name_sel IS INITIAL.
+          SELECT dataextractionviewname,
+                 dataextractionviewdescription,
+                 deltachgdatacaptureissupported,
+                 issapreleasedview
+            FROM ixtrctnenbldvw
+            WHERE issapreleasedview = @abap_true
+            ORDER BY dataextractionviewname
+            INTO TABLE @lt_dex.
+        ELSE.
+          SELECT dataextractionviewname,
+                 dataextractionviewdescription,
+                 deltachgdatacaptureissupported,
+                 issapreleasedview
+            FROM ixtrctnenbldvw
+            WHERE issapreleasedview = @abap_true
+              AND dataextractionviewname IN @lt_name_sel
+            ORDER BY dataextractionviewname
+            INTO TABLE @lt_dex.
+        ENDIF.
       ENDIF.
 
       LOOP AT lt_dex INTO DATA(ls_dex).
@@ -320,6 +348,7 @@ CLASS zevo_cl_catalog IMPLEMENTATION.
         ls_out-entity_name    = ls_dex-dataextractionviewname.
         ls_out-description    = ls_dex-dataextractionviewdescription.
         ls_out-source_type    = 'DEX'.
+        ls_out-is_sap_released = xsdbool( ls_dex-issapreleasedview IS NOT INITIAL ).
         ls_out-is_cdc_enabled = ls_dex-deltachgdatacaptureissupported.
 
         lv_ent_up = to_upper( ls_dex-dataextractionviewname ).

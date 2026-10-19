@@ -9,6 +9,7 @@ SELECTION-SCREEN BEGIN OF BLOCK b_src WITH FRAME TITLE TEXT-b06.
 PARAMETERS p_dex  RADIOBUTTON GROUP src DEFAULT 'X'.  " DEX (extraction-enabled)
 PARAMETERS p_api  RADIOBUTTON GROUP src.              " API CDS (I_*API*)
 PARAMETERS p_both RADIOBUTTON GROUP src.              " Both
+PARAMETERS p_unrel AS CHECKBOX.                       " DEX: include non-released
 SELECTION-SCREEN END OF BLOCK b_src.
 
 SELECTION-SCREEN BEGIN OF BLOCK b_sel WITH FRAME TITLE TEXT-b01.
@@ -123,13 +124,14 @@ CLASS lcl_app IMPLEMENTATION.
                                 WHEN p_both = abap_true THEN `B`
                                 ELSE `D` ).
     mt_views = NEW zevo_cl_catalog( )->get_views(
-      it_name_range  = s_name[]
-      it_api_range   = s_api[]
-      it_ddl_range   = s_ddl[]
-      it_dbtab_range = s_dbtab[]
-      iv_source      = lv_src
-      iv_dataclass   = lv_dc
-      io_delta_store = lo_store ).
+      it_name_range      = s_name[]
+      it_api_range       = s_api[]
+      it_ddl_range       = s_ddl[]
+      it_dbtab_range     = s_dbtab[]
+      iv_source          = lv_src
+      iv_dataclass       = lv_dc
+      iv_incl_unreleased = p_unrel
+      io_delta_store     = lo_store ).
 
     IF mt_views IS INITIAL.
       MESSAGE 'No CDS views found for the source / filter'(m01)
@@ -163,6 +165,7 @@ CLASS lcl_app IMPLEMENTATION.
     set_col_text( io_cols = lo_cols iv_col = 'DESCRIPTION'    iv_text = 'Description' ).
     set_col_text( io_cols = lo_cols iv_col = 'SOURCE_TYPE'    iv_text = 'Source' ).
     set_col_text( io_cols = lo_cols iv_col = 'FAMILY'         iv_text = 'Data class' ).
+    set_col_text( io_cols = lo_cols iv_col = 'IS_SAP_RELEASED' iv_text = 'SAP released' ).
     set_col_text( io_cols = lo_cols iv_col = 'IS_CDC_ENABLED' iv_text = 'CDC' ).
     set_col_text( io_cols = lo_cols iv_col = 'DELTA_FIELD'        iv_text = 'Delta field' ).
     set_col_text( io_cols = lo_cols iv_col = 'DELTA_CAPABLE'      iv_text = 'Delta capable' ).

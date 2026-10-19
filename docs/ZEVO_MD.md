@@ -63,7 +63,7 @@ GET {base}/BusinessPartner
 |---------|------|
 | `ZEVO_MD` | Full BP, DEX roles, rich Customer/Supplier, bank, product |
 | `ZEVO_C2P` | P2P documents + lean BP for expand (supplier context) |
-| `ZEVO_C2C` (planned) | SD documents + lean BP for expand (customer context); GM same DEX as C2P with sales/delivery `$filter` |
+| `ZEVO_C2C` | SD documents + lean BP for expand (customer context); GM same DEX as C2P with sales/delivery `$filter` — see [`ZEVO_C2C.md`](ZEVO_C2C.md) |
 | `ZEVO_GENERALLEDGER` | Journal lines + FI org masters (company, G/L, cost center, …) |
 
 Clients join scenario document IDs (`Supplier`, `SoldToParty`, `Material` / `Product`) to `ZEVO_MD` entity sets.

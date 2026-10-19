@@ -1,0 +1,12 @@
+@EndUserText.label: 'ZEVO Contract-to-Cash OData V4'
+define service ZEVO_C2C {
+  expose ZEVO_O_SalesContract as SalesContract;
+  expose ZEVO_O_SalesContractItem as SalesContractItem;
+  expose ZEVO_O_SalesDocumentItem as SalesDocumentItem;
+  expose ZEVO_O_SalesDocSchedLine as SalesDocumentScheduleLine;
+  expose ZEVO_O_OutboundDelivery as OutboundDelivery;
+  expose ZEVO_O_OutboundDelivItem as OutboundDeliveryItem;
+  expose ZEVO_O_BillingDocumentItem as BillingDocumentItem;
+  expose ZEVO_O_GoodsMovementDoc as GoodsMovementDocument;
+  expose ZEVO_O_BusinessPartner as BusinessPartner;
+}
