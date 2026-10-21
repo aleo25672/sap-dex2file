@@ -1461,7 +1461,7 @@ Typed **OData V4 Web API** for the **canonical organizational structure**: contr
 
 Eclipse / abapGit / ADT habits match **[C2P](#odata-v4-c2p-service-zevo_c2p)**. Use binding name **`ZEVO_ORG`** and activate all **`ZEVO_ORG_*`** + the SRVD.
 
-### Entity sets (19)
+### Entity sets (27)
 
 | Entity set (OData) | Z CDS | Source CDS |
 |--------------------|-------|------------|
@@ -1484,8 +1484,16 @@ Eclipse / abapGit / ADT habits match **[C2P](#odata-v4-c2p-service-zevo_c2p)**. 
 | `SalesArea` | `ZEVO_ORG_SalesArea` | `I_SalesArea` |
 | `SalesAreaPlant` | `ZEVO_ORG_SalesAreaPlant` | `tvkwz` (TVKWZ) |
 | `ShippingPointPlant` | `ZEVO_ORG_ShipPointPlant` | `tvswz` (TVSWZ) |
+| `CostCenterText` | `ZEVO_ORG_CostCenterText` | `I_CostCenterText` |
+| `ProfitCenterText` | `ZEVO_ORG_ProfitCenterText` | `I_ProfitCenterText` |
+| `SalesOrganizationText` | `ZEVO_ORG_SalesOrgText` | `I_SalesOrganizationText` |
+| `DistributionChannelText` | `ZEVO_ORG_DistChannelText` | `I_DistributionChannelText` |
+| `DivisionText` | `ZEVO_ORG_DivisionText` | `I_DivisionText` |
+| `ShippingPointText` | `ZEVO_ORG_ShippingPointText` | `I_ShippingPointText` |
+| `SalesOfficeText` | `ZEVO_ORG_SalesOfficeText` | `I_SalesOfficeText` |
+| `SalesGroupText` | `ZEVO_ORG_SalesGroupText` | `I_SalesGroupText` |
 
-Plant → company code: `$expand=_ValuationArea($expand=_CompanyCode)`.
+Plant → company code: `$expand=_ValuationArea($expand=_CompanyCode)`. Texts: `$filter=Language eq 'E'` on `*Text` entity sets.
 
 ### Service URL + samples
 
@@ -1501,6 +1509,8 @@ GET {base}/StorageLocation?$filter=Plant eq '1710'
 GET {base}/PlantPurchasingOrganization?$filter=Plant eq '1710'
 GET {base}/SalesArea
 GET {base}/ShippingPointPlant?$filter=Plant eq '1710'
+GET {base}/SalesOrganizationText?$filter=Language eq 'E'
+GET {base}/CostCenterText?$filter=Language eq 'E' and ControllingArea eq 'A000'
 ```
 
 ### Design notes
@@ -1510,7 +1520,7 @@ GET {base}/ShippingPointPlant?$filter=Plant eq '1710'
 | vs GL org masters | ORG = canonical catalog; GL keeps CompanyCode/CC/PC for journal `$expand` |
 | vs MD | Plant / org structure on ORG; BP/product on MD |
 | Assignment tables | Sales↔plant / shipping↔plant use `tvkwz` / `tvswz` — no released `I_*` on this stack |
-| Missing name fields | Omit `*Name` elements if only on `*_Text` views locally |
+| Descriptions | Language-dependent via `*Text` entity sets (`I_*Text` from DEX catalog); filter `Language` |
 
 ---
 
