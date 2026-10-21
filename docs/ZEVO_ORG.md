@@ -75,8 +75,6 @@ Masters that already carry a language-independent `*Name` (no Text set): Company
 | `ShippingPoint` | `_Text` | texts |
 | `SalesOffice` | `_Text` | texts |
 | `SalesGroup` | `_Text` | texts |
-
-Convention: language texts always use **`_Text`**. Expand with `$expand=_Text($filter=Language eq 'E')`.
 | `ValuationArea` | `_CompanyCode` | company (plant→CC path) |
 | `Plant` | `_ValuationArea` | valuation area (+ expand `_CompanyCode`) |
 | `StorageLocation` | `_Plant` | plant |
@@ -85,6 +83,8 @@ Convention: language texts always use **`_Text`**. Expand with `$expand=_Text($f
 | `SalesArea` | `_SalesOrganization`, `_DistributionChannel`, `_Division` | sales-area parts |
 | `SalesAreaPlant` | `_Plant`, `_SalesOrganization` | ends of the edge |
 | `ShippingPointPlant` | `_Plant`, `_ShippingPoint` | ends of the edge |
+
+Language texts always use generic **`_Text`**: `$expand=_Text($filter=Language eq 'E')`.
 
 Plant → company code: `$expand=_ValuationArea($expand=_CompanyCode)`.
 
