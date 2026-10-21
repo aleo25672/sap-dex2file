@@ -30,11 +30,16 @@ CLASS zevo_cl_cds_meta DEFINITION
       IMPORTING iv_entity TYPE clike
       RETURNING VALUE(rv_field) TYPE string.
 
+    " Field used for Bounded windows (prefers POSTINGDATE / DOCUMENTDATE).
+    CLASS-METHODS get_bounded_field
+      IMPORTING iv_entity TYPE clike
+      RETURNING VALUE(rv_field) TYPE string.
+
     CLASS-METHODS get_field_names
       IMPORTING iv_entity TYPE clike
       RETURNING VALUE(rt_fields) TYPE zevo_cl_filter_parser=>ty_fields.
 
-    " CREATIONDATE|CREATIONTIME / DOCUMENTDATE: never for master-data CDS.
+    " CREATIONDATE|CREATIONTIME / DOCUMENTDATE / POSTINGDATE: never for master-data CDS.
     CLASS-METHODS creation_pair_token
       IMPORTING iv_entity TYPE clike
       RETURNING VALUE(rv_token) TYPE string.
@@ -42,6 +47,17 @@ CLASS zevo_cl_cds_meta DEFINITION
     CLASS-METHODS document_date_token
       IMPORTING iv_entity TYPE clike
       RETURNING VALUE(rv_token) TYPE string.
+
+    CLASS-METHODS posting_date_token
+      IMPORTING iv_entity TYPE clike
+      RETURNING VALUE(rv_token) TYPE string.
+
+    CLASS-METHODS field_token
+      IMPORTING
+        iv_entity TYPE clike
+        iv_field  TYPE clike
+      RETURNING
+        VALUE(rv_token) TYPE string.
 
     CLASS-METHODS is_master_data
       IMPORTING iv_entity TYPE clike
@@ -206,12 +222,64 @@ CLASS zevo_cl_cds_meta IMPLEMENTATION.
       ENDIF.
     ENDIF.
 
+    " DDIF on the CDS entity (view entities may not appear in DD03L under the entity name)
+    DATA lt_dfies_delta TYPE STANDARD TABLE OF dfies WITH DEFAULT KEY.
+    DATA(lv_tab_delta) = CONV ddobjname( lv_up ).
+    CALL FUNCTION 'DDIF_FIELDINFO_GET'
+      EXPORTING
+        tabname   = lv_tab_delta
+      TABLES
+        dfies_tab = lt_dfies_delta
+      EXCEPTIONS
+        OTHERS    = 1.
+    IF sy-subrc = 0.
+      READ TABLE lt_dfies_delta WITH KEY fieldname = 'LASTCHANGEDATETIME'
+           TRANSPORTING NO FIELDS.
+      IF sy-subrc = 0.
+        rv_field = 'LASTCHANGEDATETIME'.
+        RETURN.
+      ENDIF.
+      READ TABLE lt_dfies_delta WITH KEY fieldname = 'CREATIONDATETIME'
+           TRANSPORTING NO FIELDS.
+      IF sy-subrc = 0.
+        rv_field = 'CREATIONDATETIME'.
+        RETURN.
+      ENDIF.
+    ENDIF.
+
     IF is_master_data( iv_entity ) = abap_false.
       rv_field = creation_pair_token( iv_entity ).
       IF rv_field IS INITIAL.
         rv_field = document_date_token( iv_entity ).
       ENDIF.
     ENDIF.
+  ENDMETHOD.
+
+  METHOD get_bounded_field.
+    " Bounded windows should follow business dates (posting/document), not
+    " technical last-changed — otherwise GL extracts look "unfiltered".
+    CLEAR rv_field.
+    IF is_master_data( iv_entity ) = abap_true.
+      rv_field = get_delta_field( iv_entity ).
+      RETURN.
+    ENDIF.
+    rv_field = posting_date_token( iv_entity ).
+    IF rv_field IS NOT INITIAL.
+      RETURN.
+    ENDIF.
+    rv_field = document_date_token( iv_entity ).
+    IF rv_field IS NOT INITIAL.
+      RETURN.
+    ENDIF.
+    rv_field = creation_pair_token( iv_entity ).
+    IF rv_field IS NOT INITIAL.
+      RETURN.
+    ENDIF.
+    rv_field = field_token( iv_entity = iv_entity iv_field = 'CREATIONDATE' ).
+    IF rv_field IS NOT INITIAL.
+      RETURN.
+    ENDIF.
+    rv_field = get_delta_field( iv_entity ).
   ENDMETHOD.
 
   METHOD creation_pair_token.
@@ -289,16 +357,26 @@ CLASS zevo_cl_cds_meta IMPLEMENTATION.
   ENDMETHOD.
 
   METHOD document_date_token.
+    rv_token = field_token( iv_entity = iv_entity iv_field = 'DOCUMENTDATE' ).
+  ENDMETHOD.
+
+  METHOD posting_date_token.
+    rv_token = field_token( iv_entity = iv_entity iv_field = 'POSTINGDATE' ).
+  ENDMETHOD.
+
+  METHOD field_token.
     DATA lt_dfies TYPE STANDARD TABLE OF dfies WITH DEFAULT KEY.
     DATA ls_dfies TYPE dfies.
     DATA lv_tab   TYPE ddobjname.
+    DATA lv_want  TYPE string.
     DATA lv_name  TYPE dd03l-fieldname.
     DATA lr_line  TYPE REF TO data.
     DATA lo_struct TYPE REF TO cl_abap_structdescr.
 
     CLEAR rv_token.
     DATA(lv_up) = to_upper( condense( CONV string( iv_entity ) ) ).
-    IF lv_up IS INITIAL.
+    lv_want = to_upper( condense( CONV string( iv_field ) ) ).
+    IF lv_up IS INITIAL OR lv_want IS INITIAL.
       RETURN.
     ENDIF.
 
@@ -311,7 +389,7 @@ CLASS zevo_cl_cds_meta IMPLEMENTATION.
       EXCEPTIONS
         OTHERS    = 1.
     IF sy-subrc = 0.
-      READ TABLE lt_dfies INTO ls_dfies WITH KEY fieldname = 'DOCUMENTDATE'.
+      READ TABLE lt_dfies INTO ls_dfies WITH KEY fieldname = lv_want.
       IF sy-subrc = 0.
         rv_token = ls_dfies-fieldname.
         RETURN.
@@ -320,7 +398,7 @@ CLASS zevo_cl_cds_meta IMPLEMENTATION.
 
     SELECT SINGLE fieldname FROM dd03l
       WHERE upper( tabname ) = @lv_up
-        AND fieldname = 'DOCUMENTDATE'
+        AND fieldname = @lv_want
         AND as4local = 'A'
       INTO @lv_name.
     IF sy-subrc = 0 AND lv_name IS NOT INITIAL.
@@ -333,8 +411,8 @@ CLASS zevo_cl_cds_meta IMPLEMENTATION.
         lo_struct = CAST cl_abap_structdescr(
                       cl_abap_typedescr=>describe_by_data_ref( lr_line ) ).
         LOOP AT lo_struct->get_components( ) INTO DATA(ls_comp).
-          IF to_upper( CONV string( ls_comp-name ) ) = 'DOCUMENTDATE'.
-            rv_token = 'DOCUMENTDATE'.
+          IF to_upper( CONV string( ls_comp-name ) ) = lv_want.
+            rv_token = lv_want.
             RETURN.
           ENDIF.
         ENDLOOP.
