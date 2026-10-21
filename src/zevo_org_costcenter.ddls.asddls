@@ -9,10 +9,10 @@ define view ZEVO_ORG_CostCenter
     on $projection.CompanyCode = _CompanyCode.CompanyCode
   association [0..1] to ZEVO_ORG_ControllingArea as _ControllingArea
     on $projection.ControllingArea = _ControllingArea.ControllingArea
-  association [0..*] to ZEVO_ORG_CostCenterText as _CostCenterText
-    on $projection.ControllingArea = _CostCenterText.ControllingArea
-   and $projection.CostCenter = _CostCenterText.CostCenter
-   and $projection.ValidityEndDate = _CostCenterText.ValidityEndDate
+  association [0..*] to ZEVO_ORG_CostCenterText as _Text
+    on $projection.ControllingArea = _Text.ControllingArea
+   and $projection.CostCenter = _Text.CostCenter
+   and $projection.ValidityEndDate = _Text.ValidityEndDate
 {
   key ControllingArea,
   key CostCenter,
@@ -23,5 +23,5 @@ define view ZEVO_ORG_CostCenter
       ProfitCenter,
       _CompanyCode,
       _ControllingArea,
-      _CostCenterText
+      _Text
 }
