@@ -105,7 +105,7 @@ GET {gl}/GLAccountLineItem
 | `Customer` | `BusinessPartner` / `Customer` |
 | `Product` / material on line (if filled) | `Product` |
 
-FI org masters (`CompanyCode`, `GLAccount`, `CostCenter`, …) stay on **GL** entity sets, not MD.
+FI org masters (`CompanyCode`, `GLAccount`, `CostCenter`, …) stay on **GL** entity sets for FI-local lookup / `$expand`, not MD. Canonical full-org extract (+ Plant, StorageLocation, purch/sales org, assignment edges) is on **`ZEVO_ORG`** — see [`ZEVO_ORG.md`](ZEVO_ORG.md). GL copies stay.
 
 ---
 
@@ -151,6 +151,10 @@ Pack detail: [`CONTRACT_TO_PAYMENT`](CONTRACT_TO_PAYMENT.md) / [`ORDER_TO_CASH.d
 | FI for material doc (GR/GI) | GL | `MKPF` + `MaterialDocument` |
 | Payment that cleared AP/AR | GL | `ClearingJournalEntry` on open item → that `AccountingDocument` |
 | G/L account master | GL | `CompanyCode` + `ChartOfAccounts` + `GLAccount` |
+| Plant / storage location / purch or sales org | ORG | document scalar → matching ORG entity set |
+| Purch org ↔ plant allow-list | ORG | `PlantPurchasingOrganization` |
+| Sales area / shipping↔plant | ORG | `SalesArea`, `SalesAreaPlant`, `ShippingPointPlant` |
+| Plant → company code | ORG | `Plant` → `_ValuationArea` → `_CompanyCode` |
 
 ---
 

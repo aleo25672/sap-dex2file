@@ -8,9 +8,10 @@ ABAP tools for **S/4HANA** to extract CDS data in several ways:
 4. **OData V4 C2C** — typed service + binding `ZEVO_C2C` for the sales / contract-to-cash graph + lean BP (`ZEVO_O_*`).
 5. **OData V4 General Ledger** — typed service + binding `ZEVO_GENERALLEDGER` for G/L line items and FI org masters (company, G/L account, cost/profit center, ledger, document type, house bank).
 6. **OData V4 Master Data** — typed service + binding `ZEVO_MD` for cross-scenario masters (BP + supplier/customer roles + bank, product).
+7. **OData V4 Org Structure** — typed service + binding `ZEVO_ORG` for canonical org masters + assignment edges (plant, storage location, purch/sales org, …).
 
-> **Where to read the OData docs:** start at [OData CDS extract service](#odata-cds-extract-service) (V2), [OData V4 C2P](#odata-v4-c2p-service-zevo_c2p), [OData V4 C2C](#odata-v4-contract-to-cash-zevo_c2c), [OData V4 General Ledger](#odata-v4-general-ledger-zevo_generalledger), and [OData V4 Master Data](#odata-v4-master-data-zevo_md).  
-> V2: [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md). C2P: [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md). C2C: [`docs/ZEVO_C2C.md`](docs/ZEVO_C2C.md). GL: [`docs/ZEVO_GENERALLEDGER.md`](docs/ZEVO_GENERALLEDGER.md). MD: [`docs/ZEVO_MD.md`](docs/ZEVO_MD.md).  
+> **Where to read the OData docs:** start at [OData CDS extract service](#odata-cds-extract-service) (V2), [OData V4 C2P](#odata-v4-c2p-service-zevo_c2p), [OData V4 C2C](#odata-v4-contract-to-cash-zevo_c2c), [OData V4 General Ledger](#odata-v4-general-ledger-zevo_generalledger), [OData V4 Master Data](#odata-v4-master-data-zevo_md), and [OData V4 Org Structure](#odata-v4-org-structure-zevo_org).  
+> V2: [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md). C2P: [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md). C2C: [`docs/ZEVO_C2C.md`](docs/ZEVO_C2C.md). GL: [`docs/ZEVO_GENERALLEDGER.md`](docs/ZEVO_GENERALLEDGER.md). MD: [`docs/ZEVO_MD.md`](docs/ZEVO_MD.md). ORG: [`docs/ZEVO_ORG.md`](docs/ZEVO_ORG.md).  
 > **Note:** abapGit only syncs `src/` — `README.md` / `docs/` are **not** imported into SAP; read them on GitHub or in a git clone.
 
 Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the generic OData extract now lives **in this repo**.
@@ -30,6 +31,8 @@ Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the ge
 | [GL reference](docs/ZEVO_GENERALLEDGER.md) | `RMRP` / `RE`/`KZ` meanings, clearing joins, delta fields |
 | **[OData V4 Master Data (`ZEVO_MD`)](#odata-v4-master-data-zevo_md)** | Cross-scenario BP (full) + roles + bank + product |
 | [MD reference](docs/ZEVO_MD.md) | Entity sets, expands, publish URL |
+| **[OData V4 Org Structure (`ZEVO_ORG`)](#odata-v4-org-structure-zevo_org)** | Canonical org masters + assignment edges |
+| [ORG reference](docs/ZEVO_ORG.md) | Entity sets, plant→CC path, publish URL |
 | [P2P call flow (Word)](docs/P2P_OData_Extract_Call_Flow.docx) | PO → Item → History → GR / IR extract sequence |
 | [Contract to Payment (Word)](docs/CONTRACT_TO_PAYMENT.docx) | Contract 4600000041 → PO 4500002146 → GR → invoice → payment 1500000000, with sample data |
 | [Order to Cash (Word)](docs/ORDER_TO_CASH.docx) | Sales order 6321 → delivery → goods issue → billing 0090005785 → receipt 1400000000, with sample data |
@@ -1387,7 +1390,7 @@ More detail: [`docs/ZEVO_C2C.md`](docs/ZEVO_C2C.md).
 
 ## OData V4 Master Data (`ZEVO_MD`)
 
-Typed **OData V4 Web API** for **cross-scenario masters**: full business partner, DEX supplier/customer roles, rich `I_Customer` / `I_Supplier`, bank, and product. Scenario services (`ZEVO_C2P`, `ZEVO_C2C`) keep **lean BP** for document `$expand`; **canonical** partner/bank/product reads use this service. FI org masters stay on [`ZEVO_GENERALLEDGER`](#odata-v4-general-ledger-zevo_generalledger).
+Typed **OData V4 Web API** for **cross-scenario masters**: full business partner, DEX supplier/customer roles, rich `I_Customer` / `I_Supplier`, bank, and product. Scenario services (`ZEVO_C2P`, `ZEVO_C2C`) keep **lean BP** for document `$expand`; **canonical** partner/bank/product reads use this service. FI org masters stay on [`ZEVO_GENERALLEDGER`](#odata-v4-general-ledger-zevo_generalledger). Canonical **plant / org structure** lives on [`ZEVO_ORG`](#odata-v4-org-structure-zevo_org).
 
 | Item | Value |
 |------|--------|
@@ -1441,6 +1444,73 @@ GET {base}/Product?$filter=Product eq 'MZ-TG-Y240'
 | Customer DEX | `Plant`; `CustomerTradingPartnerId` as `TradingPartner` |
 | Supplier DEX | `SupplierPlant`; company `TradingPartner` on `I_Supplier` via `_Supplier` |
 | Product | Phase 1 field subset on `I_Product`; trim if activation fails |
+| Plant | **Not on MD** — use [`ZEVO_ORG`](#odata-v4-org-structure-zevo_org) |
+
+---
+
+## OData V4 Org Structure (`ZEVO_ORG`)
+
+Typed **OData V4 Web API** for the **canonical organizational structure**: controlling area, company code, cost/profit center, valuation area, plant, storage location, purchasing & sales org units, plus **assignment** entity sets (purch org↔plant, sales area, sales↔plant, shipping point↔plant). Document services keep org keys as scalars; GL keeps FI-local CompanyCode/CC/PC copies.
+
+| Item | Value |
+|------|--------|
+| CDS projections | `ZEVO_ORG_*` (classic `define view`, explicit fields, one-way associations) |
+| Service definition | `ZEVO_ORG` — in abapGit (`zevo_org.srvd.*`) |
+| Service binding | **Create in ADT only** as `ZEVO_ORG` — **OData V4 - Web API** |
+| Reference | [`docs/ZEVO_ORG.md`](docs/ZEVO_ORG.md) · plan [`docs/ZEVO_ORG_PLAN.md`](docs/ZEVO_ORG_PLAN.md) |
+
+Eclipse / abapGit / ADT habits match **[C2P](#odata-v4-c2p-service-zevo_c2p)**. Use binding name **`ZEVO_ORG`** and activate all **`ZEVO_ORG_*`** + the SRVD.
+
+### Entity sets (19)
+
+| Entity set (OData) | Z CDS | Source CDS |
+|--------------------|-------|------------|
+| `ControllingArea` | `ZEVO_ORG_ControllingArea` | `I_ControllingArea` |
+| `CompanyCode` | `ZEVO_ORG_CompanyCode` | `I_CompanyCode` |
+| `CostCenter` | `ZEVO_ORG_CostCenter` | `I_CostCenter` |
+| `ProfitCenter` | `ZEVO_ORG_ProfitCenter` | `I_ProfitCenter` |
+| `ValuationArea` | `ZEVO_ORG_ValuationArea` | `I_ValuationArea` |
+| `Plant` | `ZEVO_ORG_Plant` | `I_Plant` |
+| `StorageLocation` | `ZEVO_ORG_StorageLocation` | `I_StorageLocation` |
+| `PurchasingOrganization` | `ZEVO_ORG_PurchasingOrg` | `I_PurchasingOrganization` |
+| `PurchasingGroup` | `ZEVO_ORG_PurchasingGroup` | `I_PurchasingGroup` |
+| `SalesOrganization` | `ZEVO_ORG_SalesOrg` | `I_SalesOrganization` |
+| `DistributionChannel` | `ZEVO_ORG_DistChannel` | `I_DistributionChannel` |
+| `Division` | `ZEVO_ORG_Division` | `I_Division` |
+| `ShippingPoint` | `ZEVO_ORG_ShippingPoint` | `I_ShippingPoint` |
+| `SalesOffice` | `ZEVO_ORG_SalesOffice` | `I_SalesOffice` |
+| `SalesGroup` | `ZEVO_ORG_SalesGroup` | `I_SalesGroup` |
+| `PlantPurchasingOrganization` | `ZEVO_ORG_PlantPurchOrg` | `I_PlantPurchasingOrganization` |
+| `SalesArea` | `ZEVO_ORG_SalesArea` | `I_SalesArea` |
+| `SalesAreaPlant` | `ZEVO_ORG_SalesAreaPlant` | `I_SalesAreaToPlant` |
+| `ShippingPointPlant` | `ZEVO_ORG_ShipPointPlant` | `I_ShippingPointToPlant` |
+
+Plant → company code: `$expand=_ValuationArea($expand=_CompanyCode)`.
+
+### Service URL + samples
+
+```text
+https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_org/srvd_a2x/sap/zevo_org/0001/
+https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_org/srvd_a2x/sap/zevo_org/0001/$metadata
+```
+
+```http
+GET {base}/CompanyCode?$filter=CompanyCode eq '1710'&$expand=_ControllingArea
+GET {base}/Plant?$filter=Plant eq '1710'&$expand=_ValuationArea($expand=_CompanyCode)
+GET {base}/StorageLocation?$filter=Plant eq '1710'
+GET {base}/PlantPurchasingOrganization?$filter=Plant eq '1710'
+GET {base}/SalesArea
+GET {base}/ShippingPointPlant?$filter=Plant eq '1710'
+```
+
+### Design notes
+
+| Topic | Choice |
+|-------|--------|
+| vs GL org masters | ORG = canonical catalog; GL keeps CompanyCode/CC/PC for journal `$expand` |
+| vs MD | Plant / org structure on ORG; BP/product on MD |
+| Assignment CDS names | `I_SalesAreaToPlant` / `I_ShippingPointToPlant` — rename or drop if stack differs (see [`ZEVO_ORG.md`](docs/ZEVO_ORG.md)) |
+| Missing name fields | Omit `*Name` elements if only on `*_Text` views locally |
 
 ---
 

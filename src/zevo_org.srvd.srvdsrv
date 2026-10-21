@@ -1,0 +1,22 @@
+@EndUserText.label: 'ZEVO Organizational Structure OData V4'
+define service ZEVO_ORG {
+  expose ZEVO_ORG_ControllingArea as ControllingArea;
+  expose ZEVO_ORG_CompanyCode as CompanyCode;
+  expose ZEVO_ORG_CostCenter as CostCenter;
+  expose ZEVO_ORG_ProfitCenter as ProfitCenter;
+  expose ZEVO_ORG_ValuationArea as ValuationArea;
+  expose ZEVO_ORG_Plant as Plant;
+  expose ZEVO_ORG_StorageLocation as StorageLocation;
+  expose ZEVO_ORG_PurchasingOrg as PurchasingOrganization;
+  expose ZEVO_ORG_PurchasingGroup as PurchasingGroup;
+  expose ZEVO_ORG_SalesOrg as SalesOrganization;
+  expose ZEVO_ORG_DistChannel as DistributionChannel;
+  expose ZEVO_ORG_Division as Division;
+  expose ZEVO_ORG_ShippingPoint as ShippingPoint;
+  expose ZEVO_ORG_SalesOffice as SalesOffice;
+  expose ZEVO_ORG_SalesGroup as SalesGroup;
+  expose ZEVO_ORG_PlantPurchOrg as PlantPurchasingOrganization;
+  expose ZEVO_ORG_SalesArea as SalesArea;
+  expose ZEVO_ORG_SalesAreaPlant as SalesAreaPlant;
+  expose ZEVO_ORG_ShipPointPlant as ShippingPointPlant;
+}
