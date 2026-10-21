@@ -1,10 +1,10 @@
 # ZEVO — next phases (planning backlog)
 
-Phase 1 is live for **C2P**, **C2C**, **MD**, **GENERALLEDGER**, **V2 ExtractCds**, and **ZEVO_CDS_EXPLORER_2_FILE**. This note lists likely Phase 2 / 3 work. It is a backlog, not a commitment.
+Phase 1 is live for **C2P**, **C2C**, **MD**, **GENERALLEDGER**, **ORG**, **V2 ExtractCds**, and **ZEVO_CDS_EXPLORER_2_FILE**. This note lists likely Phase 2 / 3 work. It is a backlog, not a commitment.
 
 **Invariants to keep**
 
-- Scenario services = documents + **lean** BP; partner/product masters on `ZEVO_MD`; journal on `ZEVO_GENERALLEDGER`; **canonical org** planned on `ZEVO_ORG` (see [`ZEVO_ORG_PLAN.md`](ZEVO_ORG_PLAN.md)) — existing FI org copies on GL **stay**.
+- Scenario services = documents + **lean** BP; partner/product masters on `ZEVO_MD`; journal on `ZEVO_GENERALLEDGER`; **canonical org** on `ZEVO_ORG` (see [`ZEVO_ORG.md`](ZEVO_ORG.md)) — existing FI org copies on GL **stay**.
 - One-way **FK `$expand`** on document numbers (C2P / C2C). Do **not** expose `C_SDDocMultiLevelProcFlowDEX` (`PRIVILEGED_ONLY`).
 - Goods movement = full `I_GoodsMovementDocumentDEX`; client filters (PO vs delivery / `601` / `WL`).
 - No cross-binding `$expand` — clients join across services.
@@ -19,7 +19,7 @@ Phase 1 is live for **C2P**, **C2C**, **MD**, **GENERALLEDGER**, **V2 ExtractCds
 | `ZEVO_C2C` | 9 entity sets; SO→delivery/billing FK expand; SchedLine; lean BP |
 | `ZEVO_MD` | Full BP, roles, bank, Customer/Supplier, Product subset |
 | `ZEVO_GENERALLEDGER` | GL lines + FI org masters + expands |
-| `ZEVO_ORG` | Org masters + assignment edges (`ZEVO_ORG_*`); ADT binding local |
+| `ZEVO_ORG` | Org masters + assignments + `*Text` + generic `_Text` expand; smoke pack in docs |
 | V2 `ExtractCds` | Any CDS; `$filter`; Skip/Top; DeltaSince; json/xml |
 | Explorer | DEX/API catalog; full/delta/bounded; Include non-released DEX |
 
@@ -52,8 +52,8 @@ Shipped: [`ZEVO_ORG.md`](ZEVO_ORG.md). Plan history: [`ZEVO_ORG_PLAN.md`](ZEVO_O
 
 | Phase | Priority | Candidates |
 |-------|----------|------------|
-| 1 | — | **Shipped** — masters + assignments + `*Text` entity sets (`I_*Text` from DEX catalog) |
-| 2 | Low | CC/PC hierarchy nodes; optional BusinessArea / CreditControlArea; join-matrix recipes; fix assignment CDS names if stack differs |
+| 1 | — | **Shipped** — masters + assignments + `*Text` + `_Text` expand; smoke tested (`1710` / `A000`) |
+| 2 | Low | CC/PC hierarchy nodes; optional BusinessArea / CreditControlArea; more join recipes |
 
 ## `ZEVO_GENERALLEDGER`
 

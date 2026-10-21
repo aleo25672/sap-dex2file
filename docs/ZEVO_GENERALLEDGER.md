@@ -185,10 +185,11 @@ For `$expand` examples, see [Navigation example](#navigation-example-expand) abo
 
 Full key matrix and pack recipes: [`CROSS_SERVICE_JOINS.md`](CROSS_SERVICE_JOINS.md).
 
-| | `ZEVO_C2P` | `ZEVO_C2C` | `ZEVO_MD` | `ZEVO_GENERALLEDGER` |
-|--|------------|------------|----------|----------------------|
-| Focus | P2P documents + lean BP | OTC documents + lean BP | Full BP / roles / bank / product | Journal lines + FI org masters |
-| Doc → journal | `SupplierInvoice` → `RMRP`; GM → `MKPF` | `BillingDocument` → `VBRK`; GI → `MKPF` | — | Filter `ReferenceDocumentType` + `ReferenceDocument` |
-| Partner masters | Lean `_Supplier` only | Lean `_SoldToParty` only | Full BP / roles / bank | IDs on line only (`Supplier` / `Customer`) |
-| Banks | — | — | `BusinessPartnerBank` | `HouseBank` + clearing fields |
-| Join across bindings | Client-side | Client-side | Client-side | Client-side |
+| | `ZEVO_C2P` | `ZEVO_C2C` | `ZEVO_MD` | `ZEVO_ORG` | `ZEVO_GENERALLEDGER` |
+|--|------------|------------|----------|-----------|----------------------|
+| Focus | P2P documents + lean BP | OTC documents + lean BP | Full BP / roles / bank / product | Canonical org + assignments + texts | Journal lines + FI org masters |
+| Doc → journal | `SupplierInvoice` → `RMRP`; GM → `MKPF` | `BillingDocument` → `VBRK`; GI → `MKPF` | — | — | Filter `ReferenceDocumentType` + `ReferenceDocument` |
+| Partner masters | Lean `_Supplier` only | Lean `_SoldToParty` only | Full BP / roles / bank | — | IDs on line only (`Supplier` / `Customer`) |
+| Org / plant | Document scalars | Document scalars | — | Plant, CA, purch/sales org, edges | FI-local CC / PC / CompanyCode (kept) |
+| Banks | — | — | `BusinessPartnerBank` | — | `HouseBank` + clearing fields |
+| Join across bindings | Client-side | Client-side | Client-side | Client-side | Client-side |
