@@ -120,9 +120,9 @@ GET {base}/CompanyCode?$filter=CompanyCode eq '1710'
   &$expand=_ControllingArea
 
 GET {base}/CostCenter?$filter=ControllingArea eq 'A000'
-  &$expand=_Text($filter=Language eq 'E')&$top=100
+  &$expand=_CostCenterText($filter=Language eq 'E')&$top=100
 GET {base}/ProfitCenter?$filter=ControllingArea eq 'A000'
-  &$expand=_Text($filter=Language eq 'E')&$top=100
+  &$expand=_ProfitCenterText($filter=Language eq 'E')&$top=100
 GET {base}/Plant?$filter=Plant eq '1710'
   &$expand=_ValuationArea($expand=_CompanyCode)
 
