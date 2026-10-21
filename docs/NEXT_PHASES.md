@@ -52,7 +52,7 @@ Plan: [`ZEVO_ORG_PLAN.md`](ZEVO_ORG_PLAN.md). Prefix `ZEVO_ORG_*`. Overlaps with
 | Phase | Priority | Candidates |
 |-------|----------|------------|
 | 1 | High | ControllingArea, CompanyCode, CostCenter, ProfitCenter, Plant, **StorageLocation**, PurchasingOrganization (+ Group if released), SalesOrganization, DistributionChannel, Division if released, **ShippingPoint** if released |
-| 2 | Medium | Purch/sales/plant **assignment** CDS; sales area composite; SalesOffice / SalesGroup; loading point / LE warehouse if needed |
+| 2 | Medium | **Relationship tables**: Plant↔PurchOrg, SalesArea, Sales↔Plant, ShippingPoint↔Plant (see plan); SalesOffice / SalesGroup; loading point / LE warehouse if needed |
 | 3 | Low | CC/PC hierarchy nodes; optional BusinessArea / CreditControlArea; join-matrix recipes for org keys |
 
 ## `ZEVO_GENERALLEDGER`

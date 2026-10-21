@@ -134,17 +134,66 @@ Elements that often sit next to Plant / sales / FI. Include when CDS is released
 
 ---
 
+## Relationship / assignment tables
+
+**Today in ZEVO:** none as entity sets. Masters (and document scalars) only.  
+**Plan:** expose the classic enterprise-structure **assignments** as their own entity sets in Phase 2 (after discovery). Some links are already a **field on a Phase 1 master** — those do **not** need a separate relation entity.
+
+### Already covered by Phase 1 master fields (no extra entity)
+
+| Relationship | Where it usually lives | Notes |
+|--------------|------------------------|-------|
+| Company code → controlling area | `CompanyCode.ControllingArea` | On `I_CompanyCode` / GL copy today |
+| Plant → company code | `Plant` / valuation area → CC | Often on `I_Plant` (via valuation area); confirm locally |
+| Purchasing org → company code | `PurchasingOrganization.CompanyCode` | On purch-org master when assigned (optional in IMG — blank = cross-company purch) |
+| Sales org → company code | `SalesOrganization.CompanyCode` | Typically on `I_SalesOrganization` |
+| Storage location → plant | key of `StorageLocation` | Plant + SLoc |
+
+### Phase 2 — dedicated assignment entity sets (n:m or composite)
+
+Confirm each candidate with explorer / View Browser on the target stack (`PRIVILEGED_ONLY` → skip). Names are **candidates**; rename to whatever exists locally.
+
+| Entity set (proposed) | Candidate CDS | Classic / IMG meaning | Keys (typical) |
+|-----------------------|---------------|------------------------|----------------|
+| `PlantPurchasingOrganization` | `I_PlantPurchasingOrganization` | Purch org ↔ plant (**required** MM assignment; T024W) | PurchasingOrganization + Plant |
+| `SalesArea` | `I_SalesArea` | Sales org + dist. channel + division (TVTA) | SalesOrganization + DistributionChannel + Division |
+| `SalesOrgDistributionChannel` | dist-channel assignment CDS if separate from SalesArea | Dist. channel assigned to sales org (TVKOV) | SalesOrganization + DistributionChannel |
+| `SalesOrgDivision` | division assignment CDS if separate | Division assigned to sales org (TVKOS) | SalesOrganization + Division |
+| `SalesAreaPlant` / `SalesOrgDistChannelPlant` | sales-area↔plant CDS | Sales org + dist. channel → plant (TVKWZ) | SalesOrganization + DistributionChannel + Plant |
+| `ShippingPointPlant` | `I_ShippingPointPlant` / shipping-point assignment CDS | Shipping point ↔ plant (TVSWZ) | ShippingPoint + Plant |
+| `PurchasingOrgCompanyCode` | only if **not** a field on purch-org master | Purch org → company (OX01 / T024E assign) | PurchasingOrganization (+ CompanyCode) |
+
+Optional satellites in the same phase (masters, not pure links): `SalesOffice`, `SalesGroup`, loading point, LE warehouse number.
+
+### Why separate relation entity sets
+
+- Clients building an org graph need **edges**, not only nodes (e.g. which plants a purch org may buy for).
+- Document keys alone do not list allowed combinations (PO has one purch org + plant; assignment table is the allow-list).
+- Prefer **entity sets + client join** over inventing multi-parent `$expand` graphs.
+
+### Discovery checklist (implement time)
+
+```text
+# Explorer / GetCdsMetadata — search patterns
+PlantPurchasingOrganization / PurchasingOrganization*Plant
+SalesArea
+ShippingPoint*Plant
+SalesOrganization*Plant / DistributionChannel*Plant
+```
+
+If a dedicated CDS is missing, do **not** wrap unreleased config tables; document the gap and keep using master fields + document scalars.
+
+---
+
 ## Phase 2 — assignments & sales satellites
 
-Add **relation** and remaining sales/logistics masters when stable CDS exists (names illustrative — pick real `I_*` after discovery):
+Ship the **relationship table** above first (purch org↔plant, sales area, shipping point↔plant, sales↔plant). Then remaining satellites:
 
 | Theme | Examples |
 |-------|----------|
-| Purchasing | Purchasing org ↔ company code; plant ↔ purchasing org |
-| Sales area | Sales org + distribution channel + division (composite); sales area ↔ company code |
 | Sales satellites | Sales office, sales group |
 | Plant logistics | Loading point; LE warehouse number if needed |
-| IC helpers | Fields that today sit in MD Phase 2 backlog (plant shipping customer, IC sales-org customer) — prefer ORG if they hang off Plant / SalesOrganization |
+| IC helpers | Plant shipping customer / IC sales-org customer — prefer ORG if they hang off Plant / SalesOrganization |
 
 Discovery gate: run explorer / `GetCdsMetadata` on candidates; skip `PRIVILEGED_ONLY`.
 
