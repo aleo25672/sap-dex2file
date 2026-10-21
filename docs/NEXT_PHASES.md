@@ -51,9 +51,8 @@ Plan: [`ZEVO_ORG_PLAN.md`](ZEVO_ORG_PLAN.md). Prefix `ZEVO_ORG_*`. Overlaps with
 
 | Phase | Priority | Candidates |
 |-------|----------|------------|
-| 1 | High | ControllingArea, CompanyCode, CostCenter, ProfitCenter, Plant, **StorageLocation**, PurchasingOrganization (+ Group if released), SalesOrganization, DistributionChannel, Division if released, **ShippingPoint** if released |
-| 2 | Medium | **Relationship tables**: Plant↔PurchOrg, SalesArea, Sales↔Plant, ShippingPoint↔Plant (see plan); SalesOffice / SalesGroup; loading point / LE warehouse if needed |
-| 3 | Low | CC/PC hierarchy nodes; optional BusinessArea / CreditControlArea; join-matrix recipes for org keys |
+| 1 | High | **Masters + relationships together**: ControllingArea, CompanyCode, CostCenter, ProfitCenter, Plant, StorageLocation, PurchasingOrganization (+ Group), SalesOrganization, DistributionChannel, Division, ShippingPoint, SalesOffice/Group if released; **and** Plant↔PurchOrg, SalesArea, Sales↔Plant, ShippingPoint↔Plant (see plan) |
+| 2 | Low | CC/PC hierarchy nodes; optional BusinessArea / CreditControlArea; join-matrix recipes for org keys |
 
 ## `ZEVO_GENERALLEDGER`
 
@@ -87,7 +86,7 @@ Plan: [`ZEVO_ORG_PLAN.md`](ZEVO_ORG_PLAN.md). Prefix `ZEVO_ORG_*`. Overlaps with
 ## Suggested order
 
 1. ~~**Cross-service join matrix**~~ — done: [`CROSS_SERVICE_JOINS.md`](CROSS_SERVICE_JOINS.md).  
-2. **`ZEVO_ORG` Phase 1** — plan locked in [`ZEVO_ORG_PLAN.md`](ZEVO_ORG_PLAN.md); implement when green-lit (canonical Plant + CO/MM/SD org).  
+2. **`ZEVO_ORG` Phase 1** — plan locked in [`ZEVO_ORG_PLAN.md`](ZEVO_ORG_PLAN.md); implement when green-lit (**masters + assignment edges** in one ship).  
 3. **MD Phase 2** (company-code / IC partner fields; not Plant master).  
 4. **C2C Phase 2** headers only if sources exist; otherwise deepen filters/examples.  
 5. Explorer annotation scan when delivery/header DEX catalog gaps hurt discovery again.
