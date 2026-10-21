@@ -81,7 +81,6 @@ Convention: language texts always use **`_Text`**. Expand with `$expand=_Text($f
 | `Plant` | `_ValuationArea` | valuation area (+ expand `_CompanyCode`) |
 | `StorageLocation` | `_Plant` | plant |
 | `PurchasingOrganization` | `_CompanyCode` | company when assigned |
-| `SalesOrganization` | `_CompanyCode` | company |
 | `PlantPurchasingOrganization` | `_Plant`, `_PurchasingOrganization` | ends of the edge |
 | `SalesArea` | `_SalesOrganization`, `_DistributionChannel`, `_Division` | sales-area parts |
 | `SalesAreaPlant` | `_Plant`, `_SalesOrganization` | ends of the edge |
@@ -128,9 +127,12 @@ GET {base}/CompanyCode?$filter=CompanyCode eq '1710'
   &$expand=_ControllingArea
 
 GET {base}/CostCenter?$filter=ControllingArea eq 'A000'
-  &$expand=_CostCenterText($filter=Language eq 'E')&$top=100
+  &$expand=_Text($filter=Language eq 'E')&$top=100
 GET {base}/ProfitCenter?$filter=ControllingArea eq 'A000'
-  &$expand=_ProfitCenterText($filter=Language eq 'E')&$top=100
+  &$expand=_Text($filter=Language eq 'E')&$top=100
+GET {base}/SalesOrganization?$expand=_Text($filter=Language eq 'E')
+GET {base}/DistributionChannel?$expand=_Text($filter=Language eq 'E')
+GET {base}/ShippingPoint?$expand=_Text($filter=Language eq 'E')
 GET {base}/Plant?$filter=Plant eq '1710'
   &$expand=_ValuationArea($expand=_CompanyCode)
 
