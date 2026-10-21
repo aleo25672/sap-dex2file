@@ -42,8 +42,8 @@ Scenario documents keep org keys as scalars on `ZEVO_C2P` / `ZEVO_C2C`. FI-local
 |------------|----------|------------|---------|
 | `PlantPurchasingOrganization` | `ZEVO_ORG_PlantPurchOrg` | `I_PlantPurchasingOrganization` | T024W |
 | `SalesArea` | `ZEVO_ORG_SalesArea` | `I_SalesArea` | TVTA |
-| `SalesAreaPlant` | `ZEVO_ORG_SalesAreaPlant` | `I_SalesAreaToPlant` | TVKWZ |
-| `ShippingPointPlant` | `ZEVO_ORG_ShipPointPlant` | `I_ShippingPointToPlant` | TVSWZ |
+| `SalesAreaPlant` | `ZEVO_ORG_SalesAreaPlant` | `tvkwz` (no released `I_*` on stack) | TVKWZ |
+| `ShippingPointPlant` | `ZEVO_ORG_ShipPointPlant` | `tvswz` (no released `I_*` on stack) | TVSWZ |
 
 ### Navigations (safe 0..1 only)
 
@@ -85,7 +85,7 @@ Same pattern as MD / GL / C2P.
 |-----------------------|--------------|-----|
 | Field name unknown | Element missing on local CDS | Omit the field (same habit as GL HouseBank / ProfitCenter) |
 | `I_PurchasingGroup` / `I_SalesOffice` / `I_SalesGroup` missing | Not on stack / not released | Remove that DDLS + `expose` from SRVD |
-| `I_SalesAreaToPlant` / `I_ShippingPointToPlant` missing | Name differs on stack | Find successor via explorer (`*SalesArea*Plant*`, `*ShippingPoint*Plant*`); rename `as select from` or drop entity set |
+| Assignment edges | No released `I_*` for TVKWZ / TVSWZ on this stack | Wrappers select from `tvkwz` / `tvswz` directly |
 | `PurchasingOrganizationName` / `StorageLocationName` / `ControllingAreaName` | Text only on `*_Text` view | Drop the name field; keep the key |
 | EDM clash on `*Type` properties | OData V4 entity type suffix | Alias to `*TypeCode` if needed |
 
