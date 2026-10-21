@@ -67,13 +67,20 @@ Masters that already carry a language-independent `*Name` (no Text set): Company
 | From | Nav | To |
 |------|-----|-----|
 | `CompanyCode` | `_ControllingArea` | controlling area |
-| `CostCenter` | `_CompanyCode`, `_ControllingArea`, `_CostCenterText` | company / CA / texts (`$expand=_CostCenterText($filter=Language eq 'E')`) |
-| `ProfitCenter` | `_ControllingArea`, `_ProfitCenterText` | CA / texts |
+| `CostCenter` | `_CompanyCode`, `_ControllingArea`, `_Text` | company / CA / texts |
+| `ProfitCenter` | `_ControllingArea`, `_Text` | CA / texts |
+| `SalesOrganization` | `_CompanyCode`, `_Text` | company / texts |
+| `DistributionChannel` | `_Text` | texts |
+| `Division` | `_Text` | texts |
+| `ShippingPoint` | `_Text` | texts |
+| `SalesOffice` | `_Text` | texts |
+| `SalesGroup` | `_Text` | texts |
+
+Convention: language texts always use **`_Text`**. Expand with `$expand=_Text($filter=Language eq 'E')`.
 | `ValuationArea` | `_CompanyCode` | company (plant→CC path) |
 | `Plant` | `_ValuationArea` | valuation area (+ expand `_CompanyCode`) |
 | `StorageLocation` | `_Plant` | plant |
 | `PurchasingOrganization` | `_CompanyCode` | company when assigned |
-| `SalesOrganization` | `_CompanyCode` | company |
 | `PlantPurchasingOrganization` | `_Plant`, `_PurchasingOrganization` | ends of the edge |
 | `SalesArea` | `_SalesOrganization`, `_DistributionChannel`, `_Division` | sales-area parts |
 | `SalesAreaPlant` | `_Plant`, `_SalesOrganization` | ends of the edge |
@@ -120,9 +127,12 @@ GET {base}/CompanyCode?$filter=CompanyCode eq '1710'
   &$expand=_ControllingArea
 
 GET {base}/CostCenter?$filter=ControllingArea eq 'A000'
-  &$expand=_CostCenterText($filter=Language eq 'E')&$top=100
+  &$expand=_Text($filter=Language eq 'E')&$top=100
 GET {base}/ProfitCenter?$filter=ControllingArea eq 'A000'
-  &$expand=_ProfitCenterText($filter=Language eq 'E')&$top=100
+  &$expand=_Text($filter=Language eq 'E')&$top=100
+GET {base}/SalesOrganization?$expand=_Text($filter=Language eq 'E')
+GET {base}/DistributionChannel?$expand=_Text($filter=Language eq 'E')
+GET {base}/ShippingPoint?$expand=_Text($filter=Language eq 'E')
 GET {base}/Plant?$filter=Plant eq '1710'
   &$expand=_ValuationArea($expand=_CompanyCode)
 

@@ -5,6 +5,9 @@
 @ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #S, dataClass: #MASTER }
 define view ZEVO_ORG_DistChannel
   as select from I_DistributionChannel
+  association [0..*] to ZEVO_ORG_DistChannelText as _Text
+    on $projection.DistributionChannel = _Text.DistributionChannel
 {
-  key DistributionChannel
+  key DistributionChannel,
+      _Text
 }
