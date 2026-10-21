@@ -1,6 +1,6 @@
 # ZEVO_ORG — Organizational structure service (plan)
 
-**Status:** Phase 1 **implemented** in abapGit (`ZEVO_ORG_*` + `zevo_org.srvd.*`) — ADT binding still created locally.  
+**Status:** Phase 1 **shipped** — masters, assignment edges (`tvkwz`/`tvswz`), `*Text` entity sets, generic `_Text` expand. ADT binding local. Smoke pack: [`ZEVO_ORG.md`](ZEVO_ORG.md).  
 **Reference:** [`ZEVO_ORG.md`](ZEVO_ORG.md).  
 **Decision:** canonical org masters + relationships. Existing copies on other services **stay**.
 
@@ -25,6 +25,7 @@ User constraint (locked): *what we already have in other services stays — each
 | Overlap policy | **Keep** GL `CompanyCode` / `CostCenter` / `ProfitCenter`; **do not remove** | Scenario / FI services stay self-contained for `$expand` and local lookup |
 | Plant home | **Canonical on `ZEVO_ORG`** | Org hierarchy (plant ↔ company / purch / sales) belongs here; MD Phase 2 Plant item becomes “optional lean / IC fields” only if still needed for BP context |
 | First ship scope | **Masters + relationship tables together** | One coherent org graph — do not split assignments into a later phase |
+| Text navigation name | Generic **`_Text`** on every master that has an `I_*Text` | Same expand pattern for all objects: `$expand=_Text($filter=Language eq 'E')` |
 | Cross-service `$expand` | None | Clients join by key (same as [`CROSS_SERVICE_JOINS.md`](CROSS_SERVICE_JOINS.md)) |
 | Time-dependent masters | Expose full keys (`ValidityEndDate` / start); **no** forced 0..1 FK expand where multiplicity breaks OData V4 | Same lesson as GL CostCenter / ProfitCenter |
 
@@ -191,32 +192,14 @@ SalesOffice / SalesGroup / LoadingPoint / WarehouseNumber
 
 ---
 
-## Implementation checklist (when green-lit)
+## Implementation checklist
 
-1. abapGit: `ZEVO_ORG_*` DDLS + `zevo_org.srvd.*` (masters **and** assignment views) — mirror `ZEVO_MD` / GL.
-2. ADT: binding `ZEVO_ORG`, OData V4 Web API → Activate → Publish.
-3. Docs: `docs/ZEVO_ORG.md` (entity table, samples, activation) + README section + NEXT_PHASES “shipped”.
-4. Update MD Phase 2 row: Plant canonical on ORG; MD keeps IC/partner-adjacent work.
-5. Update join matrix: “canonical org → `ZEVO_ORG`”; GL copies remain valid for FI-local joins.
-6. Smoke URLs (company `1710`, CA `A000`, sales/purch org as on demo).
-
-### Suggested smoke (draft)
-
-```http
-GET {base}/$metadata
-GET {base}/ControllingArea
-GET {base}/CompanyCode?$filter=CompanyCode eq '1710'
-GET {base}/CostCenter?$filter=ControllingArea eq 'A000'&$top=50
-GET {base}/Plant?$filter=Plant eq '1710'
-GET {base}/StorageLocation?$filter=Plant eq '1710'
-GET {base}/PurchasingOrganization
-GET {base}/PlantPurchasingOrganization?$filter=Plant eq '1710'
-GET {base}/SalesOrganization
-GET {base}/SalesArea
-GET {base}/DistributionChannel
-GET {base}/ShippingPoint
-GET {base}/ShippingPointPlant
-```
+1. ~~abapGit: `ZEVO_ORG_*` DDLS + `zevo_org.srvd.*` (masters **and** assignment views)~~
+2. ~~ADT: binding `ZEVO_ORG`, OData V4 Web API → Activate → Publish~~ (local binding)
+3. ~~Docs: `docs/ZEVO_ORG.md` + README + NEXT_PHASES “shipped”~~
+4. ~~MD Phase 2: Plant canonical on ORG~~
+5. ~~Join matrix: canonical org → `ZEVO_ORG`~~
+6. ~~Smoke pack (company `1710`, CA `A000`) + `*Text` / `_Text`~~ — live cases in [`ZEVO_ORG.md`](ZEVO_ORG.md)
 
 Base shape (same family as other V4 services):
 

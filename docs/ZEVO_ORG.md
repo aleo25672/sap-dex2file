@@ -62,19 +62,19 @@ Confirmed on stack DEX catalog. Filter e.g. `Language eq 'E'`.
 
 Masters that already carry a language-independent `*Name` (no Text set): CompanyCode, ControllingArea, Plant, StorageLocation, PurchasingOrganization, PurchasingGroup.
 
-### Navigations (safe 0..1 only)
+### Navigations
 
 | From | Nav | To |
 |------|-----|-----|
 | `CompanyCode` | `_ControllingArea` | controlling area |
-| `CostCenter` | `_CompanyCode`, `_ControllingArea`, `_Text` | company / CA / texts |
-| `ProfitCenter` | `_ControllingArea`, `_Text` | CA / texts |
-| `SalesOrganization` | `_CompanyCode`, `_Text` | company / texts |
-| `DistributionChannel` | `_Text` | texts |
-| `Division` | `_Text` | texts |
-| `ShippingPoint` | `_Text` | texts |
-| `SalesOffice` | `_Text` | texts |
-| `SalesGroup` | `_Text` | texts |
+| `CostCenter` | `_CompanyCode`, `_ControllingArea`, `_Text` | company / CA / texts (`0..*`) |
+| `ProfitCenter` | `_ControllingArea`, `_Text` | CA / texts (`0..*`) |
+| `SalesOrganization` | `_CompanyCode`, `_Text` | company / texts (`0..*`) |
+| `DistributionChannel` | `_Text` | texts (`0..*`) |
+| `Division` | `_Text` | texts (`0..*`) |
+| `ShippingPoint` | `_Text` | texts (`0..*`) |
+| `SalesOffice` | `_Text` | texts (`0..*`) |
+| `SalesGroup` | `_Text` | texts (`0..*`) |
 | `ValuationArea` | `_CompanyCode` | company (plant→CC path) |
 | `Plant` | `_ValuationArea` | valuation area (+ expand `_CompanyCode`) |
 | `StorageLocation` | `_Plant` | plant |
@@ -84,9 +84,15 @@ Masters that already carry a language-independent `*Name` (no Text set): Company
 | `SalesAreaPlant` | `_Plant`, `_SalesOrganization` | ends of the edge |
 | `ShippingPointPlant` | `_Plant`, `_ShippingPoint` | ends of the edge |
 
-Language texts always use generic **`_Text`**: `$expand=_Text($filter=Language eq 'E')`.
+Language texts always use generic **`_Text`** (not `_CostCenterText`, etc.):
+
+```http
+$expand=_Text($filter=Language eq 'E')
+```
 
 Plant → company code: `$expand=_ValuationArea($expand=_CompanyCode)`.
+
+There is **no** single `$expand` from `ControllingArea` to the whole org graph — fan out with filtered GETs (see smoke pack below).
 
 ---
 
@@ -112,52 +118,61 @@ Same pattern as MD / GL / C2P.
 | Assignment edges | No released `I_*` for TVKWZ / TVSWZ on this stack | Wrappers select from `tvkwz` / `tvswz` directly |
 | `PurchasingOrganizationName` / `StorageLocationName` / `ControllingAreaName` | Text only on `*_Text` view | Drop the name field; keep the key |
 | EDM clash on `*Type` properties | OData V4 entity type suffix | Alias to `*TypeCode` if needed |
+| `$expand=_Text` → invalid property | Binding metadata stale after CDS change | Activate DDLS + SRVD → binding **Unpublish → Activate → Publish**; confirm `_Text` in `$metadata` |
 
 Confirm candidates with explorer / `GetCdsMetadata` before fighting the binder.
 
 ---
 
-## Sample queries
+## Sample queries & smoke pack (demo `1710` / CA `A000`)
 
-```http
-GET {base}/$metadata
-
-GET {base}/ControllingArea
-GET {base}/CompanyCode?$filter=CompanyCode eq '1710'
-  &$expand=_ControllingArea
-
-GET {base}/CostCenter?$filter=ControllingArea eq 'A000'
-  &$expand=_Text($filter=Language eq 'E')&$top=100
-GET {base}/ProfitCenter?$filter=ControllingArea eq 'A000'
-  &$expand=_Text($filter=Language eq 'E')&$top=100
-GET {base}/SalesOrganization?$expand=_Text($filter=Language eq 'E')
-GET {base}/DistributionChannel?$expand=_Text($filter=Language eq 'E')
-GET {base}/ShippingPoint?$expand=_Text($filter=Language eq 'E')
-GET {base}/Plant?$filter=Plant eq '1710'
-  &$expand=_ValuationArea($expand=_CompanyCode)
-
-GET {base}/StorageLocation?$filter=Plant eq '1710'
-GET {base}/PurchasingOrganization
-GET {base}/PlantPurchasingOrganization?$filter=Plant eq '1710'
-  &$expand=_PurchasingOrganization
-
-GET {base}/SalesOrganization
-GET {base}/SalesArea
-GET {base}/SalesAreaPlant?$filter=SalesOrganization eq '1710'
-GET {base}/ShippingPoint
-GET {base}/ShippingPointPlant?$filter=Plant eq '1710'
-
-GET {base}/CostCenterText?$filter=Language eq 'E' and ControllingArea eq 'A000'&$top=50
-GET {base}/SalesOrganizationText?$filter=Language eq 'E'
-GET {base}/DistributionChannelText?$filter=Language eq 'E'
-GET {base}/ShippingPointText?$filter=Language eq 'E'
-```
-
-One-line base (demo host pattern):
+Base (one slash after `0001`):
 
 ```text
-https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_org/srvd_a2x/sap/zevo_org/0001/
+https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_org/srvd_a2x/sap/zevo_org/0001
 ```
+
+### Happy path
+
+| # | Case | Request | Expect |
+|---|------|---------|--------|
+| 1 | Metadata | `GET {base}/$metadata` | Entity sets + `CostCenter` navigation `_Text` |
+| 2 | Company → CA | `GET {base}/CompanyCode?$filter=CompanyCode eq '1710'&$expand=_ControllingArea` | Company `1710`; nested CA (often `A000`) |
+| 3 | CA list | `GET {base}/ControllingArea` | Includes CA from #2 |
+| 4 | CC + text | `GET {base}/CostCenter?$filter=ControllingArea eq 'A000'&$expand=_Text($filter=Language eq 'E')&$top=100` | Rows; `_Text` has `CostCenterName` / `CostCenterDescription` |
+| 5 | PC + text | `GET {base}/ProfitCenter?$filter=ControllingArea eq 'A000'&$expand=_Text($filter=Language eq 'E')&$top=100` | Same for profit centers |
+| 6 | Text entity set | `GET {base}/CostCenterText?$filter=Language eq 'E' and ControllingArea eq 'A000'&$top=100` | Same names as #4 without expand |
+| 7 | Plant → company | `GET {base}/Plant?$filter=Plant eq '1710'&$expand=_ValuationArea($expand=_CompanyCode)` | Nested company `1710` |
+| 8 | Storage location | `GET {base}/StorageLocation?$filter=Plant eq '1710'` | SLocs; `StorageLocationName` filled |
+| 9 | Purch org ↔ plant | `GET {base}/PlantPurchasingOrganization?$filter=Plant eq '1710'&$expand=_PurchasingOrganization` | Edges + purch org |
+| 10 | Purch by company | `GET {base}/PurchasingOrganization?$filter=CompanyCode eq '1710'` | Orgs for 1710 (empty OK if cross-company purch) |
+| 11 | Sales org + text | `GET {base}/SalesOrganization?$filter=CompanyCode eq '1710'&$expand=_Text($filter=Language eq 'E')` | `_Text.SalesOrganizationName` |
+| 12 | Sales area + texts | `GET {base}/SalesArea?$filter=SalesOrganization eq '1710'&$expand=_DistributionChannel($expand=_Text($filter=Language eq 'E')),_Division($expand=_Text($filter=Language eq 'E'))` | Area + channel/division names |
+| 13 | Sales → plant | `GET {base}/SalesAreaPlant?$filter=SalesOrganization eq '1710'&$expand=_Plant` | Allowed plants |
+| 14 | Shipping ↔ plant | `GET {base}/ShippingPointPlant?$filter=Plant eq '1710'&$expand=_ShippingPoint($expand=_Text($filter=Language eq 'E'))` | Shipping points + names |
+| 15 | Dist / div / office / group | `GET {base}/DistributionChannel?$expand=_Text($filter=Language eq 'E')` (same pattern for `Division`, `SalesOffice`, `SalesGroup`) | Key + `_Text` |
+
+One-line examples:
+
+```text
+https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_org/srvd_a2x/sap/zevo_org/0001/CompanyCode?$filter=CompanyCode%20eq%20'1710'&$expand=_ControllingArea
+
+https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_org/srvd_a2x/sap/zevo_org/0001/CostCenter?$filter=ControllingArea%20eq%20'A000'&$expand=_Text($filter=Language%20eq%20'E')&$top=100
+
+https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_org/srvd_a2x/sap/zevo_org/0001/Plant?$filter=Plant%20eq%20'1710'&$expand=_ValuationArea($expand=_CompanyCode)
+
+https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_org/srvd_a2x/sap/zevo_org/0001/ShippingPointPlant?$filter=Plant%20eq%20'1710'&$expand=_ShippingPoint($expand=_Text($filter=Language%20eq%20'E'))
+```
+
+If sales org key is not `1710`, take it from #11 and reuse in #12–#13.
+
+### Negative / edge
+
+| # | Case | Request | Expect |
+|---|------|---------|--------|
+| N1 | Wrong text nav name | `…/CostCenter?$expand=_CostCenterText` | Expand error — nav is `_Text` |
+| N2 | Missing language | `…/CostCenter?$filter=ControllingArea eq 'A000'&$expand=_Text($filter=Language eq 'Z')&$top=5` | CC rows; `_Text` empty/absent |
+| N3 | Unknown plant | `…/Plant?$filter=Plant eq 'XXXX'` | Empty `value` array |
 
 ---
 
@@ -165,7 +180,7 @@ https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_org/srvd_a2x/sap/zevo_org/0001/
 
 | Service | Owns |
 |---------|------|
-| **`ZEVO_ORG`** | Canonical org nodes + assignment edges |
+| **`ZEVO_ORG`** | Canonical org nodes + assignment edges + `*Text` / `_Text` |
 | `ZEVO_GENERALLEDGER` | Journal + FI-local CompanyCode / CostCenter / ProfitCenter (kept) |
 | `ZEVO_MD` | BP / product — not Plant |
 | `ZEVO_C2P` / `ZEVO_C2C` | Documents; org keys as scalars |

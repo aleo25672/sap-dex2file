@@ -8,7 +8,7 @@ ABAP tools for **S/4HANA** to extract CDS data in several ways:
 4. **OData V4 C2C** — typed service + binding `ZEVO_C2C` for the sales / contract-to-cash graph + lean BP (`ZEVO_O_*`).
 5. **OData V4 General Ledger** — typed service + binding `ZEVO_GENERALLEDGER` for G/L line items and FI org masters (company, G/L account, cost/profit center, ledger, document type, house bank).
 6. **OData V4 Master Data** — typed service + binding `ZEVO_MD` for cross-scenario masters (BP + supplier/customer roles + bank, product).
-7. **OData V4 Org Structure** — typed service + binding `ZEVO_ORG` for canonical org masters + assignment edges (plant, storage location, purch/sales org, …).
+7. **OData V4 Org Structure** — typed service + binding `ZEVO_ORG` for canonical org masters + assignment edges + `*Text` / generic `_Text` expand (plant, storage location, purch/sales org, …).
 
 > **Where to read the OData docs:** start at [OData CDS extract service](#odata-cds-extract-service) (V2), [OData V4 C2P](#odata-v4-c2p-service-zevo_c2p), [OData V4 C2C](#odata-v4-contract-to-cash-zevo_c2c), [OData V4 General Ledger](#odata-v4-general-ledger-zevo_generalledger), [OData V4 Master Data](#odata-v4-master-data-zevo_md), and [OData V4 Org Structure](#odata-v4-org-structure-zevo_org).  
 > V2: [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md). C2P: [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md). C2C: [`docs/ZEVO_C2C.md`](docs/ZEVO_C2C.md). GL: [`docs/ZEVO_GENERALLEDGER.md`](docs/ZEVO_GENERALLEDGER.md). MD: [`docs/ZEVO_MD.md`](docs/ZEVO_MD.md). ORG: [`docs/ZEVO_ORG.md`](docs/ZEVO_ORG.md).  
@@ -31,8 +31,8 @@ Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the ge
 | [GL reference](docs/ZEVO_GENERALLEDGER.md) | `RMRP` / `RE`/`KZ` meanings, clearing joins, delta fields |
 | **[OData V4 Master Data (`ZEVO_MD`)](#odata-v4-master-data-zevo_md)** | Cross-scenario BP (full) + roles + bank + product |
 | [MD reference](docs/ZEVO_MD.md) | Entity sets, expands, publish URL |
-| **[OData V4 Org Structure (`ZEVO_ORG`)](#odata-v4-org-structure-zevo_org)** | Canonical org masters + assignment edges |
-| [ORG reference](docs/ZEVO_ORG.md) | Entity sets, plant→CC path, publish URL |
+| **[OData V4 Org Structure (`ZEVO_ORG`)](#odata-v4-org-structure-zevo_org)** | Canonical org masters + assignments + `_Text` |
+| [ORG reference](docs/ZEVO_ORG.md) | Entity sets, `_Text` expand, smoke pack (`1710` / `A000`) |
 | [P2P call flow (Word)](docs/P2P_OData_Extract_Call_Flow.docx) | PO → Item → History → GR / IR extract sequence |
 | [Contract to Payment (Word)](docs/CONTRACT_TO_PAYMENT.docx) | Contract 4600000041 → PO 4500002146 → GR → invoice → payment 1500000000, with sample data |
 | [Order to Cash (Word)](docs/ORDER_TO_CASH.docx) | Sales order 6321 → delivery → goods issue → billing 0090005785 → receipt 1400000000, with sample data |
@@ -1450,16 +1450,17 @@ GET {base}/Product?$filter=Product eq 'MZ-TG-Y240'
 
 ## OData V4 Org Structure (`ZEVO_ORG`)
 
-Typed **OData V4 Web API** for the **canonical organizational structure**: controlling area, company code, cost/profit center, valuation area, plant, storage location, purchasing & sales org units, plus **assignment** entity sets (purch org↔plant, sales area, sales↔plant, shipping point↔plant). Document services keep org keys as scalars; GL keeps FI-local CompanyCode/CC/PC copies.
+Typed **OData V4 Web API** for the **canonical organizational structure**: controlling area, company code, cost/profit center, valuation area, plant, storage location, purchasing & sales org units, **assignment** edges (purch org↔plant, sales area, sales↔plant, shipping point↔plant), and language **`*Text`** entity sets with generic **`_Text`** expand. Document services keep org keys as scalars; GL keeps FI-local CompanyCode/CC/PC copies.
 
 | Item | Value |
 |------|--------|
 | CDS projections | `ZEVO_ORG_*` (classic `define view`, explicit fields, one-way associations) |
 | Service definition | `ZEVO_ORG` — in abapGit (`zevo_org.srvd.*`) |
 | Service binding | **Create in ADT only** as `ZEVO_ORG` — **OData V4 - Web API** |
+| Smoke pack | Company **`1710`** / CA **`A000`** — 15 happy + 3 negative cases in [`docs/ZEVO_ORG.md`](docs/ZEVO_ORG.md) |
 | Reference | [`docs/ZEVO_ORG.md`](docs/ZEVO_ORG.md) · plan [`docs/ZEVO_ORG_PLAN.md`](docs/ZEVO_ORG_PLAN.md) |
 
-Eclipse / abapGit / ADT habits match **[C2P](#odata-v4-c2p-service-zevo_c2p)**. Use binding name **`ZEVO_ORG`** and activate all **`ZEVO_ORG_*`** + the SRVD.
+Eclipse / abapGit / ADT habits match **[C2P](#odata-v4-c2p-service-zevo_c2p)**. Use binding name **`ZEVO_ORG`** and activate all **`ZEVO_ORG_*`** + the SRVD. After CDS changes: activate → binding **Unpublish → Activate → Publish** → confirm `_Text` in `$metadata`.
 
 ### Entity sets (27)
 
@@ -1493,7 +1494,7 @@ Eclipse / abapGit / ADT habits match **[C2P](#odata-v4-c2p-service-zevo_c2p)**. 
 | `SalesOfficeText` | `ZEVO_ORG_SalesOfficeText` | `I_SalesOfficeText` |
 | `SalesGroupText` | `ZEVO_ORG_SalesGroupText` | `I_SalesGroupText` |
 
-Plant → company code: `$expand=_ValuationArea($expand=_CompanyCode)`. Texts: `$filter=Language eq 'E'` on `*Text` entity sets.
+Plant → company code: `$expand=_ValuationArea($expand=_CompanyCode)`. Language names: generic **`$expand=_Text($filter=Language eq 'E')`** on the master (nav is always `_Text`, not `_CostCenterText`), or `$filter=Language eq 'E'` on a `*Text` entity set. No single `$expand` from `ControllingArea` to the whole org graph — fan out with filtered GETs (smoke pack).
 
 ### Service URL + samples
 
@@ -1504,17 +1505,25 @@ https://10.0.0.19:44300/sap/opu/odata4/sap/zevo_org/srvd_a2x/sap/zevo_org/0001/$
 
 ```http
 GET {base}/CompanyCode?$filter=CompanyCode eq '1710'&$expand=_ControllingArea
+GET {base}/CostCenter?$filter=ControllingArea eq 'A000'
+  &$expand=_Text($filter=Language eq 'E')&$top=100
+GET {base}/ProfitCenter?$filter=ControllingArea eq 'A000'
+  &$expand=_Text($filter=Language eq 'E')&$top=100
 GET {base}/Plant?$filter=Plant eq '1710'&$expand=_ValuationArea($expand=_CompanyCode)
 GET {base}/StorageLocation?$filter=Plant eq '1710'
 GET {base}/PlantPurchasingOrganization?$filter=Plant eq '1710'
-GET {base}/SalesArea
+  &$expand=_PurchasingOrganization
+GET {base}/SalesOrganization?$filter=CompanyCode eq '1710'
+  &$expand=_Text($filter=Language eq 'E')
+GET {base}/SalesArea?$filter=SalesOrganization eq '1710'
+  &$expand=_DistributionChannel($expand=_Text($filter=Language eq 'E')),_Division($expand=_Text($filter=Language eq 'E'))
+GET {base}/SalesAreaPlant?$filter=SalesOrganization eq '1710'&$expand=_Plant
 GET {base}/ShippingPointPlant?$filter=Plant eq '1710'
-GET {base}/SalesOrganizationText?$filter=Language eq 'E'
-GET {base}/CostCenter?$filter=ControllingArea eq 'A000'
-  &$expand=_Text($filter=Language eq 'E')&$top=100
-GET {base}/SalesOrganization?$expand=_Text($filter=Language eq 'E')
+  &$expand=_ShippingPoint($expand=_Text($filter=Language eq 'E'))
 GET {base}/CostCenterText?$filter=Language eq 'E' and ControllingArea eq 'A000'
 ```
+
+Full 15+3 case table (expects + negative cases): [`docs/ZEVO_ORG.md`](docs/ZEVO_ORG.md#sample-queries--smoke-pack-demo-1710--ca-a000).
 
 ### Design notes
 
@@ -1523,7 +1532,8 @@ GET {base}/CostCenterText?$filter=Language eq 'E' and ControllingArea eq 'A000'
 | vs GL org masters | ORG = canonical catalog; GL keeps CompanyCode/CC/PC for journal `$expand` |
 | vs MD | Plant / org structure on ORG; BP/product on MD |
 | Assignment tables | Sales↔plant / shipping↔plant use `tvkwz` / `tvswz` — no released `I_*` on this stack |
-| Descriptions | Language-dependent via `*Text` entity sets (`I_*Text` from DEX catalog); filter `Language` |
+| Descriptions | `*Text` entity sets (`I_*Text` from DEX); masters expand via generic **`_Text`** + `Language` filter |
+| Stale `_Text` | If expand says invalid property → republish binding; confirm nav in `$metadata` |
 
 ---
 

@@ -155,6 +155,8 @@ Pack detail: [`CONTRACT_TO_PAYMENT`](CONTRACT_TO_PAYMENT.md) / [`ORDER_TO_CASH.d
 | Purch org ↔ plant allow-list | ORG | `PlantPurchasingOrganization` |
 | Sales area / shipping↔plant | ORG | `SalesArea`, `SalesAreaPlant`, `ShippingPointPlant` |
 | Plant → company code | ORG | `Plant` → `_ValuationArea` → `_CompanyCode` |
+| Org language names | ORG | `$expand=_Text($filter=Language eq 'E')` on master, or `*Text` entity set |
+| Full org bootstrap (demo) | ORG | smoke pack in [`ZEVO_ORG.md`](ZEVO_ORG.md) — company `1710` / CA `A000` |
 
 ---
 
@@ -172,5 +174,5 @@ Pack detail: [`CONTRACT_TO_PAYMENT`](CONTRACT_TO_PAYMENT.md) / [`ORDER_TO_CASH.d
 
 ## Related
 
-- [`ZEVO_C2P.md`](ZEVO_C2P.md) · [`ZEVO_C2C.md`](ZEVO_C2C.md) · [`ZEVO_MD.md`](ZEVO_MD.md) · [`ZEVO_GENERALLEDGER.md`](ZEVO_GENERALLEDGER.md)  
+- [`ZEVO_C2P.md`](ZEVO_C2P.md) · [`ZEVO_C2C.md`](ZEVO_C2C.md) · [`ZEVO_MD.md`](ZEVO_MD.md) · [`ZEVO_GENERALLEDGER.md`](ZEVO_GENERALLEDGER.md) · [`ZEVO_ORG.md`](ZEVO_ORG.md)  
 - [`NEXT_PHASES.md`](NEXT_PHASES.md) — join matrix was Phase 2 cross-cutting item #1  
