@@ -1511,7 +1511,7 @@ GET {base}/SalesArea
 GET {base}/ShippingPointPlant?$filter=Plant eq '1710'
 GET {base}/SalesOrganizationText?$filter=Language eq 'E'
 GET {base}/CostCenter?$filter=ControllingArea eq 'A000'
-  &$expand=_Text($filter=Language eq 'E')&$top=100
+  &$expand=_CostCenterText($filter=Language eq 'E')&$top=100
 GET {base}/CostCenterText?$filter=Language eq 'E' and ControllingArea eq 'A000'
 ```
 
