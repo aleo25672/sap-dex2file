@@ -105,7 +105,7 @@ GET {gl}/GLAccountLineItem
 | `Customer` | `BusinessPartner` / `Customer` |
 | `Product` / material on line (if filled) | `Product` |
 
-FI org masters (`CompanyCode`, `GLAccount`, `CostCenter`, …) stay on **GL** entity sets, not MD.
+FI org masters (`CompanyCode`, `GLAccount`, `CostCenter`, …) stay on **GL** entity sets for FI-local lookup / `$expand`, not MD. Canonical full-org extract is planned on **`ZEVO_ORG`** (keeps GL copies) — see [`ZEVO_ORG_PLAN.md`](ZEVO_ORG_PLAN.md).
 
 ---
 

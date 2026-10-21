@@ -4,7 +4,7 @@ Phase 1 is live for **C2P**, **C2C**, **MD**, **GENERALLEDGER**, **V2 ExtractCds
 
 **Invariants to keep**
 
-- Scenario services = documents + **lean** BP; masters on `ZEVO_MD`; journal on `ZEVO_GENERALLEDGER`.
+- Scenario services = documents + **lean** BP; partner/product masters on `ZEVO_MD`; journal on `ZEVO_GENERALLEDGER`; **canonical org** planned on `ZEVO_ORG` (see [`ZEVO_ORG_PLAN.md`](ZEVO_ORG_PLAN.md)) — existing FI org copies on GL **stay**.
 - One-way **FK `$expand`** on document numbers (C2P / C2C). Do **not** expose `C_SDDocMultiLevelProcFlowDEX` (`PRIVILEGED_ONLY`).
 - Goods movement = full `I_GoodsMovementDocumentDEX`; client filters (PO vs delivery / `601` / `WL`).
 - No cross-binding `$expand` — clients join across services.
@@ -42,8 +42,18 @@ Phase 1 is live for **C2P**, **C2C**, **MD**, **GENERALLEDGER**, **V2 ExtractCds
 
 | Phase | Priority | Candidates |
 |-------|----------|------------|
-| 2 | High | `Plant` (`I_Plant` + plant→CC); customer/supplier company-code views; IC sales-org / shipping customer; wider Product |
+| 2 | High | Customer/supplier company-code views; IC sales-org / shipping customer (if not on ORG); wider Product. **Plant master → `ZEVO_ORG`** (not MD) |
 | 3 | Low | Address/email (watch privileged CDS); BP relationships / contacts |
+
+## `ZEVO_ORG` (planned — not shipped)
+
+Plan: [`ZEVO_ORG_PLAN.md`](ZEVO_ORG_PLAN.md). Prefix `ZEVO_ORG_*`. Overlaps with GL org masters are intentional.
+
+| Phase | Priority | Candidates |
+|-------|----------|------------|
+| 1 | High | ControllingArea, CompanyCode, CostCenter, ProfitCenter, Plant, PurchasingOrganization (+ Group if released), SalesOrganization, DistributionChannel, Division if released |
+| 2 | Medium | Purch/sales/plant **assignment** CDS; sales area composite |
+| 3 | Low | CC/PC hierarchy nodes; join-matrix recipes for org keys |
 
 ## `ZEVO_GENERALLEDGER`
 
@@ -77,9 +87,10 @@ Phase 1 is live for **C2P**, **C2C**, **MD**, **GENERALLEDGER**, **V2 ExtractCds
 ## Suggested order
 
 1. ~~**Cross-service join matrix**~~ — done: [`CROSS_SERVICE_JOINS.md`](CROSS_SERVICE_JOINS.md).  
-2. **MD Phase 2** (Plant + IC fields).  
-3. **C2C Phase 2** headers only if sources exist; otherwise deepen filters/examples.  
-4. Explorer annotation scan when delivery/header DEX catalog gaps hurt discovery again.
+2. **`ZEVO_ORG` Phase 1** — plan locked in [`ZEVO_ORG_PLAN.md`](ZEVO_ORG_PLAN.md); implement when green-lit (canonical Plant + CO/MM/SD org).  
+3. **MD Phase 2** (company-code / IC partner fields; not Plant master).  
+4. **C2C Phase 2** headers only if sources exist; otherwise deepen filters/examples.  
+5. Explorer annotation scan when delivery/header DEX catalog gaps hurt discovery again.
 
 ## Defer / avoid
 
