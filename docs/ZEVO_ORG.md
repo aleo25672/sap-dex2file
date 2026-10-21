@@ -67,8 +67,8 @@ Masters that already carry a language-independent `*Name` (no Text set): Company
 | From | Nav | To |
 |------|-----|-----|
 | `CompanyCode` | `_ControllingArea` | controlling area |
-| `CostCenter` | `_CompanyCode`, `_ControllingArea`, `_Text` | company / CA / language texts (`$expand=_Text($filter=Language eq 'E')`) |
-| `ProfitCenter` | `_ControllingArea`, `_Text` | CA / language texts |
+| `CostCenter` | `_CompanyCode`, `_ControllingArea`, `_CostCenterText` | company / CA / texts (`$expand=_CostCenterText($filter=Language eq 'E')`) |
+| `ProfitCenter` | `_ControllingArea`, `_ProfitCenterText` | CA / texts |
 | `ValuationArea` | `_CompanyCode` | company (plant→CC path) |
 | `Plant` | `_ValuationArea` | valuation area (+ expand `_CompanyCode`) |
 | `StorageLocation` | `_Plant` | plant |
