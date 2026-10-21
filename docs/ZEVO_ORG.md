@@ -45,6 +45,23 @@ Scenario documents keep org keys as scalars on `ZEVO_C2P` / `ZEVO_C2C`. FI-local
 | `SalesAreaPlant` | `ZEVO_ORG_SalesAreaPlant` | `tvkwz` (no released `I_*` on stack) | TVKWZ |
 | `ShippingPointPlant` | `ZEVO_ORG_ShipPointPlant` | `tvswz` (no released `I_*` on stack) | TVSWZ |
 
+### Texts (language-dependent)
+
+Confirmed on stack DEX catalog. Filter e.g. `Language eq 'E'`.
+
+| Entity set | CDS view | Source CDS | Keys / name fields |
+|------------|----------|------------|--------------------|
+| `CostCenterText` | `ZEVO_ORG_CostCenterText` | `I_CostCenterText` | Language + CA + CC + ValidityEndDate → `CostCenterName`, `CostCenterDescription` |
+| `ProfitCenterText` | `ZEVO_ORG_ProfitCenterText` | `I_ProfitCenterText` | Language + CA + PC + ValidityEndDate → `ProfitCenterName`, `ProfitCenterLongName` |
+| `SalesOrganizationText` | `ZEVO_ORG_SalesOrgText` | `I_SalesOrganizationText` | SalesOrganization + Language → `SalesOrganizationName` |
+| `DistributionChannelText` | `ZEVO_ORG_DistChannelText` | `I_DistributionChannelText` | DistributionChannel + Language → `DistributionChannelName` |
+| `DivisionText` | `ZEVO_ORG_DivisionText` | `I_DivisionText` | Division + Language → `DivisionName` |
+| `ShippingPointText` | `ZEVO_ORG_ShippingPointText` | `I_ShippingPointText` | ShippingPoint + Language → `ShippingPointName` |
+| `SalesOfficeText` | `ZEVO_ORG_SalesOfficeText` | `I_SalesOfficeText` | SalesOffice + Language → `SalesOfficeName` |
+| `SalesGroupText` | `ZEVO_ORG_SalesGroupText` | `I_SalesGroupText` | SalesGroup + Language → `SalesGroupName` |
+
+Masters that already carry a language-independent `*Name` (no Text set): CompanyCode, ControllingArea, Plant, StorageLocation, PurchasingOrganization, PurchasingGroup.
+
 ### Navigations (safe 0..1 only)
 
 | From | Nav | To |
@@ -116,6 +133,11 @@ GET {base}/SalesArea
 GET {base}/SalesAreaPlant?$filter=SalesOrganization eq '1710'
 GET {base}/ShippingPoint
 GET {base}/ShippingPointPlant?$filter=Plant eq '1710'
+
+GET {base}/CostCenterText?$filter=Language eq 'E' and ControllingArea eq 'A000'&$top=50
+GET {base}/SalesOrganizationText?$filter=Language eq 'E'
+GET {base}/DistributionChannelText?$filter=Language eq 'E'
+GET {base}/ShippingPointText?$filter=Language eq 'E'
 ```
 
 One-line base (demo host pattern):

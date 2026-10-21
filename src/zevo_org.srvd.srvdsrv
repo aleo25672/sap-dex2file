@@ -19,4 +19,12 @@ define service ZEVO_ORG {
   expose ZEVO_ORG_SalesArea as SalesArea;
   expose ZEVO_ORG_SalesAreaPlant as SalesAreaPlant;
   expose ZEVO_ORG_ShipPointPlant as ShippingPointPlant;
+  expose ZEVO_ORG_CostCenterText as CostCenterText;
+  expose ZEVO_ORG_ProfitCenterText as ProfitCenterText;
+  expose ZEVO_ORG_SalesOrgText as SalesOrganizationText;
+  expose ZEVO_ORG_DistChannelText as DistributionChannelText;
+  expose ZEVO_ORG_DivisionText as DivisionText;
+  expose ZEVO_ORG_ShippingPointText as ShippingPointText;
+  expose ZEVO_ORG_SalesOfficeText as SalesOfficeText;
+  expose ZEVO_ORG_SalesGroupText as SalesGroupText;
 }

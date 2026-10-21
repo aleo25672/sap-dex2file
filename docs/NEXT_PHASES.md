@@ -52,7 +52,7 @@ Shipped: [`ZEVO_ORG.md`](ZEVO_ORG.md). Plan history: [`ZEVO_ORG_PLAN.md`](ZEVO_O
 
 | Phase | Priority | Candidates |
 |-------|----------|------------|
-| 1 | — | **Shipped** — masters + Plant↔PurchOrg, SalesArea, SalesAreaPlant, ShippingPointPlant |
+| 1 | — | **Shipped** — masters + assignments + `*Text` entity sets (`I_*Text` from DEX catalog) |
 | 2 | Low | CC/PC hierarchy nodes; optional BusinessArea / CreditControlArea; join-matrix recipes; fix assignment CDS names if stack differs |
 
 ## `ZEVO_GENERALLEDGER`
