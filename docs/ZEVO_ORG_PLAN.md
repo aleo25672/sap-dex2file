@@ -1,7 +1,8 @@
 # ZEVO_ORG — Organizational structure service (plan)
 
-**Status:** planning only — no CDS / SRVD / binding in this change.  
-**Decision:** add a new typed OData V4 service for **canonical org masters + relationships**. Existing copies on other services **stay**.
+**Status:** Phase 1 **implemented** in abapGit (`ZEVO_ORG_*` + `zevo_org.srvd.*`) — ADT binding still created locally.  
+**Reference:** [`ZEVO_ORG.md`](ZEVO_ORG.md).  
+**Decision:** canonical org masters + relationships. Existing copies on other services **stay**.
 
 ---
 
