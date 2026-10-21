@@ -119,8 +119,8 @@ Some links are already a **field on a master** — those do **not** need a separ
 | `SalesArea` | `I_SalesArea` | Sales org + dist. channel + division (TVTA) | SalesOrganization + DistributionChannel + Division |
 | `SalesOrgDistributionChannel` | dist-channel assign CDS if separate from SalesArea | Dist. channel → sales org (TVKOV) | SalesOrganization + DistributionChannel |
 | `SalesOrgDivision` | division assign CDS if separate | Division → sales org (TVKOS) | SalesOrganization + Division |
-| `SalesAreaPlant` / `SalesOrgDistChannelPlant` | sales-area↔plant CDS | Sales org + dist. channel → plant (TVKWZ) | SalesOrganization + DistributionChannel + Plant |
-| `ShippingPointPlant` | `I_ShippingPointPlant` / equiv. | Shipping point ↔ plant (TVSWZ) | ShippingPoint + Plant |
+| `SalesAreaPlant` | `tvkwz` (no released `I_*`) | Sales org + dist. channel → plant (TVKWZ) | SalesOrganization + DistributionChannel + Plant |
+| `ShippingPointPlant` | `tvswz` (no released `I_*`) | Shipping point ↔ plant (TVSWZ) | Plant + ShippingPoint |
 | `PurchasingOrgCompanyCode` | only if **not** a field on purch-org master | Purch org → company (OX01 / T024E) | PurchasingOrganization (+ CompanyCode) |
 
 If a dedicated CDS is missing, do **not** wrap unreleased config tables; document the gap and keep using master fields + document scalars.

@@ -1482,8 +1482,8 @@ Eclipse / abapGit / ADT habits match **[C2P](#odata-v4-c2p-service-zevo_c2p)**. 
 | `SalesGroup` | `ZEVO_ORG_SalesGroup` | `I_SalesGroup` |
 | `PlantPurchasingOrganization` | `ZEVO_ORG_PlantPurchOrg` | `I_PlantPurchasingOrganization` |
 | `SalesArea` | `ZEVO_ORG_SalesArea` | `I_SalesArea` |
-| `SalesAreaPlant` | `ZEVO_ORG_SalesAreaPlant` | `I_SalesAreaToPlant` |
-| `ShippingPointPlant` | `ZEVO_ORG_ShipPointPlant` | `I_ShippingPointToPlant` |
+| `SalesAreaPlant` | `ZEVO_ORG_SalesAreaPlant` | `tvkwz` (TVKWZ) |
+| `ShippingPointPlant` | `ZEVO_ORG_ShipPointPlant` | `tvswz` (TVSWZ) |
 
 Plant → company code: `$expand=_ValuationArea($expand=_CompanyCode)`.
 
@@ -1509,7 +1509,7 @@ GET {base}/ShippingPointPlant?$filter=Plant eq '1710'
 |-------|--------|
 | vs GL org masters | ORG = canonical catalog; GL keeps CompanyCode/CC/PC for journal `$expand` |
 | vs MD | Plant / org structure on ORG; BP/product on MD |
-| Assignment CDS names | `I_SalesAreaToPlant` / `I_ShippingPointToPlant` — rename or drop if stack differs (see [`ZEVO_ORG.md`](docs/ZEVO_ORG.md)) |
+| Assignment tables | Sales↔plant / shipping↔plant use `tvkwz` / `tvswz` — no released `I_*` on this stack |
 | Missing name fields | Omit `*Name` elements if only on `*_Text` views locally |
 
 ---
