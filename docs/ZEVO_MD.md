@@ -7,7 +7,7 @@ This is **not** `ZEVO_C2P` / `ZEVO_C2C` (documents) and **not** `ZEVO_GENERALLED
 | Item | Value |
 |------|--------|
 | Service definition | `ZEVO_MD` (`zevo_md.srvd.*`) |
-| Service binding | `ZEVO_MD` — **OData V4 — Web API**. ADT bootstrap, or abapGit `SRVB` after Standalone upgrade (root README §1b / §1c) |
+| Service binding | `ZEVO_MD` — **OData V4 — Web API** (`src/zevo_md.srvb.xml`); abapGit ≥ 1.133.0 (root README prerequisite) |
 | CDS prefix | `ZEVO_M_*` |
 | CDS form | Classic `define view`, explicit fields, one-way associations |
 
@@ -71,14 +71,13 @@ Clients join scenario document IDs (`Supplier`, `SoldToParty`, `Material` / `Pro
 
 ---
 
-## Activate & publish (ADT)
+## Activate & publish
 
-Same pattern as C2P / GL — see root README.
+Same pattern as C2P / GL — see root README ([abapGit ≥ 1.133.0](../README.md#prerequisite--abapgit-version)).
 
-1. abapGit pull `main` — activate all `ZEVO_M_*` + SRVD `ZEVO_MD`.
-2. **Do not** delete local SRVB/G4BA if you recreate the binding later.
-3. ADT: New Service Binding **`ZEVO_MD`**, type **OData V4 - Web API**, definition `ZEVO_MD` → Activate → Publish.
-4. URL shape:
+1. abapGit pull `main` — activate all `ZEVO_M_*` + SRVD `ZEVO_MD` + SRVB `ZEVO_MD` (`zevo_md.srvb.xml`).
+2. ADT fallback if binding missing: New Service Binding **`ZEVO_MD`**, type **OData V4 - Web API** → Activate → Publish.
+3. URL shape:
 
 ```text
 /sap/opu/odata4/sap/zevo_md/srvd_a2x/sap/zevo_md/0001/

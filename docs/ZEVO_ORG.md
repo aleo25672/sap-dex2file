@@ -7,7 +7,7 @@ Scenario documents keep org keys as scalars on `ZEVO_C2P` / `ZEVO_C2C`. FI-local
 | Item | Value |
 |------|--------|
 | Service definition | `ZEVO_ORG` (`zevo_org.srvd.*`) |
-| Service binding | `ZEVO_ORG` — **OData V4 — Web API**. ADT bootstrap, or abapGit `SRVB` after Standalone upgrade (root README §1b / §1c) |
+| Service binding | `ZEVO_ORG` — **OData V4 — Web API** (`src/zevo_org.srvb.xml`); abapGit ≥ 1.133.0 (root README prerequisite) |
 | CDS prefix | `ZEVO_ORG_*` |
 | CDS form | Classic `define view`, explicit fields, one-way associations |
 | Plan | [`ZEVO_ORG_PLAN.md`](ZEVO_ORG_PLAN.md) |
@@ -90,14 +90,13 @@ Plant → company code: `$expand=_ValuationArea($expand=_CompanyCode)`.
 
 ---
 
-## Activate & publish (ADT)
+## Activate & publish
 
-Same pattern as MD / GL / C2P.
+Same pattern as MD / GL / C2P. Requires [abapGit ≥ 1.133.0](../README.md#prerequisite--abapgit-version).
 
-1. abapGit pull — activate all `ZEVO_ORG_*` + SRVD `ZEVO_ORG`.
-2. **Do not** delete local SRVB/G4BA if you recreate the binding later.
-3. ADT: New Service Binding **`ZEVO_ORG`**, type **OData V4 - Web API**, definition `ZEVO_ORG` → Activate → Publish.
-4. URL shape:
+1. abapGit pull — activate all `ZEVO_ORG_*` + SRVD `ZEVO_ORG` + SRVB (`zevo_org.srvb.xml`).
+2. ADT fallback if binding missing: New Service Binding **`ZEVO_ORG`**, type **OData V4 - Web API** → Activate → Publish.
+3. URL shape:
 
 ```text
 /sap/opu/odata4/sap/zevo_org/srvd_a2x/sap/zevo_org/0001/

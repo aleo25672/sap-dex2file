@@ -5,7 +5,7 @@ Typed **OData V4** service for the sales / contract-to-cash extract graph. This 
 | Item | Value |
 |------|--------|
 | Service definition | `ZEVO_C2C` (abapGit: `zevo_c2c.srvd.*`) |
-| Service binding | `ZEVO_C2C` — **OData V4 — Web API**. ADT bootstrap, or abapGit `SRVB` after Standalone upgrade (root README §1b / §1c) |
+| Service binding | `ZEVO_C2C` — **OData V4 — Web API** (`src/zevo_c2c.srvb.xml`); abapGit ≥ 1.133.0 (root README prerequisite) |
 | CDS prefix | `ZEVO_O_*` |
 | CDS form | Classic `define view`, explicit fields, one-way associations |
 | Masters | Lean `BusinessPartner` for `$expand` only; roles / banks / product → [`ZEVO_MD`](ZEVO_MD.md) |
@@ -96,14 +96,15 @@ Document-type properties that would clash with OData V4 entity type names are al
 
 ---
 
-## Activate & publish (ADT)
+## Activate & publish
+
+Requires [abapGit ≥ 1.133.0](../README.md#prerequisite--abapgit-version) for binding auto-publish.
 
 1. abapGit pull `main`.
 2. Mass-activate all **`ZEVO_O_*`** DDLS first (schedule source must be `C_SalesDocumentSchedLineDEX`, not `…ScheduleLine…`).
-3. Activate service definition **`ZEVO_C2C`**.
-4. ADT: New Service Binding **`ZEVO_C2C`**, type **OData V4 - Web API**, definition `ZEVO_C2C` → Activate → Publish.
+3. Activate service definition **`ZEVO_C2C`** and binding **`ZEVO_C2C`** (`zevo_c2c.srvb.xml`).
+4. ADT fallback if `SRVB` missing: New Service Binding **`ZEVO_C2C`**, type **OData V4 - Web API** → Activate → Publish.
 5. URL shape: `/sap/opu/odata4/sap/zevo_c2c/srvd_a2x/sap/zevo_c2c/0001/`
-6. **Uncheck** abapGit delete of SRVB/G4BA `ZEVO_C2C` on later pulls.
 
 ### If abapGit says `SRVDSRV ZEVO_C2C does not exist`
 
@@ -113,8 +114,8 @@ Pull does **not** always create SRVD on this stack (same as early C2P). The serv
 2. Eclipse ADT → **New** → **Service Definition** → name **`ZEVO_C2C`**, same package as other ZEVO objects.
 3. Replace the template with the full contents of [`src/zevo_c2c.srvd.srvdsrv`](../src/zevo_c2c.srvd.srvdsrv).
 4. **Activate** the SRVD (errors here almost always mean a still-inactive `ZEVO_O_*`).
-5. **New** → **Service Binding** `ZEVO_C2C` → **OData V4 - Web API** → Activate → Publish.
-6. Later abapGit pulls: **Overwrite** SRVD `ZEVO_C2C`; **never** delete local SRVB/G4BA.
+5. Pull/activate `SRVB` `ZEVO_C2C`, or **New** → **Service Binding** `ZEVO_C2C` → **OData V4 - Web API** → Activate → Publish.
+6. Later abapGit pulls: **Overwrite** SRVD / SRVB as offered.
 
 ---
 

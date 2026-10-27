@@ -45,7 +45,7 @@ Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the ge
 | [Naming convention](#naming-convention) / [Objects](#objects) | `ZEVO*` inventory |
 | [Using ZEVO_CDS_EXPLORER_2_FILE](#using-zevo_cds_explorer_2_file) | Selection screen & file extract |
 | [External file interface](#external-file-interface) | AL11 / jobs / `.ok` sidecar |
-| [Installing & importing with abapGit](#installing--importing-with-abapgit) | Install, upgrade standalone, pull & activate |
+| [Installing & importing with abapGit](#installing--importing-with-abapgit) | abapGit ≥ 1.133, Standalone upgrade via build.git, `SRVB` pull |
 
 ---
 
@@ -952,7 +952,7 @@ Typed **OData V4 Web API** for the contract-to-payment / P2P graph (12 entity se
 |------|--------|
 | CDS projections | 12 × `ZEVO_C_*` (classic `define view`, explicit fields, one-way associations) |
 | Service definition | `ZEVO_C2P` — in abapGit (`zevo_c2p.srvd.srvdsrv` + `.xml`) |
-| Service binding | `ZEVO_C2P` — **OData V4 - Web API**. Bootstrap in **ADT** (Activate → Publish); on S/4HANA 2025 prefer shipping via abapGit `SRVB` after [Standalone upgrade](#1-install-abapgit-one-time--standalone) — do not hand-write SRVB XML |
+| Service binding | `ZEVO_C2P` — **OData V4 - Web API** in abapGit (`zevo_c2p.srvb.xml`); requires [abapGit ≥ 1.133.0](#prerequisite--abapgit-version) for auto-publish |
 | Reference | Navigations, delta, more URLs — [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md) |
 
 ### Supported CDS (12)
@@ -1006,14 +1006,12 @@ expose ZEVO_C_<Name> as <EntitySetName>;
 
 1. **abapGit → Pull** `main`.
 2. On the pull dialog:
-   - **Keep** checked: new DDLS (**Add local object**), changed DDLS (**Delete and recreate** / overwrite), **SRVD** `ZEVO_C2P` (**Overwrite**).
+   - **Keep** checked: new/changed DDLS, **SRVD** / **SRVB** `ZEVO_C2P` (**Overwrite** / add).
    - If abapGit offers **Delete local** for obsolete DDLS no longer in Git, allow those deletes (do **not** keep old C2P bank/role views).
-   - **Uncheck** anything that would **Delete local** the **SRVB** / **G4BA** `ZEVO_C2P` (binding is ADT-only, not in Git).
    - **Uncheck** deletes for local SEGW/Gateway objects (`ZEVO_CDS_EXTRACT_*`, SICF, …).
-3. **Mass-activate** the new/changed `ZEVO_C_*` views and service definition `ZEVO_C2P`.
-4. Open service binding **`ZEVO_C2P`** in ADT → **Activate** (**Cmd+F3** / **Ctrl+F3**).
-5. **Unpublish** then **Publish** (or Publish again) so the local endpoint picks up the new entity set.
-6. Confirm in the binding tree and in `$metadata` that the new entity set (and nav, if any) appear.
+3. **Mass-activate** the new/changed `ZEVO_C_*` views, service definition `ZEVO_C2P`, and binding `ZEVO_C2P` (auto-publish with [abapGit ≥ 1.133.0](#prerequisite--abapgit-version)).
+4. On older abapGit, or after CDS-only changes: open binding **`ZEVO_C2P`** in ADT → **Activate** → **Unpublish** then **Publish**.
+5. Confirm in the binding tree and in `$metadata` that the new entity set (and nav, if any) appear.
 
 #### 3. Quick test / smoke
 
@@ -1054,9 +1052,9 @@ Service definition / binding / CDS activation for V4 is done in **ABAP Developme
    2. Service definition **`ZEVO_C2P`**.
 4. If SRVD import fails: in ADT create service definition **`ZEVO_C2P`** and paste the expose list from [`src/zevo_c2p.srvd.srvdsrv`](src/zevo_c2p.srvd.srvdsrv).
 
-> **DDLX:** not in the repo (inline Delta Semantics on the views). **`SRVB`:** not hand-written — either create/publish in ADT (next step) or, after a [recent Standalone](#1b-upgrade-standalone-keep-one-report), serialize the working binding from abapGit into Git ([§1c](#1c-service-bindings-srvb--abapgit-vs-adt)).
+> **DDLX:** not in the repo (inline Delta Semantics on the views). **`SRVB`:** shipped as `src/zevo_c2p.srvb.xml` — pull with [abapGit ≥ 1.133.0](#prerequisite--abapgit-version). Use the ADT steps below only as a fallback if the binding did not import.
 
-### C. Create + publish the service binding (ADT bootstrap)
+### C. Create + publish the service binding (ADT fallback)
 
 1. In the ABAP project: **New → Other… → ABAP Repository Object → Service Binding** (or search “Service Binding”).
 2. Fields:
@@ -1144,8 +1142,8 @@ More examples (delta, contract, PR): [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md).
 | `$metadata`: *Property `PurchaseOrderType` has the same EDM name as entity type `PurchaseOrderType`* | Pull latest — properties aliased to `*TypeCode` |
 | `$expand`: *invalid property `Item`* | Use `_Item` (and `_History`, `_AccountAssignment`, `_Supplier`) |
 | `$expand=_Bank` / `BusinessPartnerBank` on C2P | **Expected gone** — use [`ZEVO_MD`](#odata-v4-master-data-zevo_md) |
-| Hand-written `SRVB` XML fails import | Serialize binding from a working system with abapGit ([§1c](#1c-service-bindings-srvb--abapgit-vs-adt)); or create binding in ADT |
-| abapGit wants to **Delete local** SRVB / G4BA `ZEVO_C2P` | **Uncheck** until that binding is committed to Git; then pull/overwrite instead |
+| `SRVB` import / publish fails | Upgrade to [abapGit ≥ 1.133.0](#prerequisite--abapgit-version); or create/publish binding in ADT (same name, OData V4 Web API) |
+| Bindings exist but URL 404 | Older abapGit left them unpublished — **Publish** in ADT, or upgrade abapGit and pull again |
 | New entity missing after pull | Activate SRVD + binding, then **Unpublish → Publish**; confirm name in `$metadata` |
 
 After CDS changes: follow **[Add a new CDS](#add-a-new-cds-to-zevo_c2p)** (pull → activate → republish binding → `$metadata`).
@@ -1160,7 +1158,7 @@ Typed **OData V4 Web API** for G/L journal lines (`I_GLAccountLineItemRawData`) 
 |------|--------|
 | CDS projections | `ZEVO_FI_*` (classic `define view`, explicit fields, one-way associations) |
 | Service definition | `ZEVO_GENERALLEDGER` — in abapGit (`zevo_generalledger.srvd.*`) |
-| Service binding | `ZEVO_GENERALLEDGER` — **OData V4 - Web API**. ADT bootstrap, or abapGit `SRVB` after [Standalone upgrade](#1b-upgrade-standalone-keep-one-report) ([§1c](#1c-service-bindings-srvb--abapgit-vs-adt)) |
+| Service binding | `ZEVO_GENERALLEDGER` — **OData V4 - Web API** in abapGit (`zevo_generalledger.srvb.xml`); [abapGit ≥ 1.133.0](#prerequisite--abapgit-version) auto-publishes |
 | Reference | `RMRP`/`MKPF`, `RE`/`KZ`, clearing joins — [`docs/ZEVO_GENERALLEDGER.md`](docs/ZEVO_GENERALLEDGER.md) |
 
 Eclipse / abapGit / ADT habits match **[C2P](#odata-v4-c2p-service-zevo_c2p)** (sections A–C). Use binding name **`ZEVO_GENERALLEDGER`** and activate all **`ZEVO_FI_*`** + the SRVD.
@@ -1289,7 +1287,7 @@ Typed **OData V4 Web API** for the sales / contract-to-cash graph (9 entity sets
 |------|--------|
 | CDS projections | 9 × `ZEVO_O_*` (classic `define view`, explicit fields, **one-way** associations) |
 | Service definition | `ZEVO_C2C` — in abapGit (`zevo_c2c.srvd.*`); create in ADT if pull skips it |
-| Service binding | `ZEVO_C2C` — **OData V4 - Web API**. ADT bootstrap, or abapGit `SRVB` after [Standalone upgrade](#1b-upgrade-standalone-keep-one-report) ([§1c](#1c-service-bindings-srvb--abapgit-vs-adt)); republish after CDS changes |
+| Service binding | `ZEVO_C2C` — **OData V4 - Web API** in abapGit (`zevo_c2c.srvb.xml`); [abapGit ≥ 1.133.0](#prerequisite--abapgit-version) auto-publishes; republish after CDS changes on older builds |
 | Sample pack | SO **0000006321** (2 items) → delivery **0080006423** → GI **601** → billing **0090005785** → customer **0001000569** — [`ORDER_TO_CASH.docx`](docs/ORDER_TO_CASH.docx) |
 | Reference | [`docs/ZEVO_C2C.md`](docs/ZEVO_C2C.md) |
 
@@ -1396,7 +1394,7 @@ Typed **OData V4 Web API** for **cross-scenario masters**: full business partner
 |------|--------|
 | CDS projections | `ZEVO_M_*` (classic `define view`, explicit fields, one-way associations) |
 | Service definition | `ZEVO_MD` — in abapGit (`zevo_md.srvd.*`) |
-| Service binding | `ZEVO_MD` — **OData V4 - Web API**. ADT bootstrap, or abapGit `SRVB` after [Standalone upgrade](#1b-upgrade-standalone-keep-one-report) ([§1c](#1c-service-bindings-srvb--abapgit-vs-adt)) |
+| Service binding | `ZEVO_MD` — **OData V4 - Web API** in abapGit (`zevo_md.srvb.xml`); [abapGit ≥ 1.133.0](#prerequisite--abapgit-version) auto-publishes |
 | Reference | [`docs/ZEVO_MD.md`](docs/ZEVO_MD.md) |
 
 Eclipse / abapGit / ADT habits match **[C2P](#odata-v4-c2p-service-zevo_c2p)**. Use binding name **`ZEVO_MD`** and activate all **`ZEVO_M_*`** + the SRVD.
@@ -1456,7 +1454,7 @@ Typed **OData V4 Web API** for the **canonical organizational structure**: contr
 |------|--------|
 | CDS projections | `ZEVO_ORG_*` (classic `define view`, explicit fields, one-way associations) |
 | Service definition | `ZEVO_ORG` — in abapGit (`zevo_org.srvd.*`) |
-| Service binding | `ZEVO_ORG` — **OData V4 - Web API**. ADT bootstrap, or abapGit `SRVB` after [Standalone upgrade](#1b-upgrade-standalone-keep-one-report) ([§1c](#1c-service-bindings-srvb--abapgit-vs-adt)) |
+| Service binding | `ZEVO_ORG` — **OData V4 - Web API** in abapGit (`zevo_org.srvb.xml`); [abapGit ≥ 1.133.0](#prerequisite--abapgit-version) auto-publishes |
 | Reference | [`docs/ZEVO_ORG.md`](docs/ZEVO_ORG.md) · plan [`docs/ZEVO_ORG_PLAN.md`](docs/ZEVO_ORG_PLAN.md) |
 
 Eclipse / abapGit / ADT habits match **[C2P](#odata-v4-c2p-service-zevo_c2p)**. Use binding name **`ZEVO_ORG`** and activate all **`ZEVO_ORG_*`** + the SRVD.
@@ -1657,16 +1655,19 @@ instead of "since the last run":
 | `ZEVO_CL_ODATA_DPC` | class | SEGW helper: `EXECUTE_ACTION` (no Gateway inheritance) |
 | `ZEVO_C_*` (12) | CDS view (`define view`) | C2P document projections + lean BP with associations |
 | `ZEVO_C2P` | service definition | exposes the 12 C2P entity sets |
-| `ZEVO_C2P` | service binding | OData V4 Web API — ADT bootstrap or abapGit `SRVB` ([§1c](#1c-service-bindings-srvb--abapgit-vs-adt)) |
+| `ZEVO_C2P` | service binding | OData V4 Web API — `zevo_c2p.srvb.xml` ([abapGit ≥ 1.133](#prerequisite--abapgit-version)) |
 | `ZEVO_O_*` (9) | CDS view (`define view`) | C2C sales document projections + lean BP |
 | `ZEVO_C2C` | service definition | exposes the 9 C2C entity sets |
-| `ZEVO_C2C` | service binding | OData V4 Web API — ADT bootstrap or abapGit `SRVB` ([§1c](#1c-service-bindings-srvb--abapgit-vs-adt)) |
+| `ZEVO_C2C` | service binding | OData V4 Web API — `zevo_c2c.srvb.xml` |
 | `ZEVO_FI_*` | CDS view (`define view`) | General Ledger line + FI org masters |
 | `ZEVO_GENERALLEDGER` | service definition | exposes GL line item + FI masters |
-| `ZEVO_GENERALLEDGER` | service binding | OData V4 Web API — ADT bootstrap or abapGit `SRVB` ([§1c](#1c-service-bindings-srvb--abapgit-vs-adt)) |
+| `ZEVO_GENERALLEDGER` | service binding | OData V4 Web API — `zevo_generalledger.srvb.xml` |
 | `ZEVO_M_*` | CDS view (`define view`) | Cross-scenario masters (BP, DEX roles, Customer/Supplier, bank, product) |
 | `ZEVO_MD` | service definition | exposes master-data entity sets |
-| `ZEVO_MD` | service binding | OData V4 Web API — ADT bootstrap or abapGit `SRVB` ([§1c](#1c-service-bindings-srvb--abapgit-vs-adt)) |
+| `ZEVO_MD` | service binding | OData V4 Web API — `zevo_md.srvb.xml` |
+| `ZEVO_ORG_*` | CDS view (`define view`) | Canonical org masters + assignments + texts |
+| `ZEVO_ORG` | service definition | exposes org entity sets |
+| `ZEVO_ORG` | service binding | OData V4 Web API — `zevo_org.srvb.xml` |
 
 Full OData documentation: see **[OData CDS extract service](#odata-cds-extract-service)** above (also [`docs/ZEVO_ODATA_EXTRACT.md`](docs/ZEVO_ODATA_EXTRACT.md)).  
 OData V4 C2P: **[section above](#odata-v4-c2p-service-zevo_c2p)** · [`docs/ZEVO_C2P.md`](docs/ZEVO_C2P.md).  
@@ -1825,47 +1826,46 @@ to serialize them as ABAP objects.
 ## Installing & importing with abapGit
 
 This repo is serialized in [abapGit](https://abapgit.org) format (`src/` layout, prefix folder
-logic).
+logic). It includes CDS (`ZEVO_*`), service definitions (`SRVD`), and OData V4 **service bindings** (`SRVB`) so a new system can pull a complete stack.
 
-### 1. Install abapGit (one-time) — Standalone
+### Prerequisite — abapGit version
 
-Prefer the **Standalone** install: **one** report, not the multi-file source zip from GitHub.
+Pull this repository with **abapGit v1.133.0** (17 February 2026) or later. **v1.134.0** (10 July 2026) is the current release. From **1.133.0** on, the pull **publishes** the service bindings. An older abapGit creates the bindings and leaves them **unpublished**.
 
-1. Download **`zabapgit_standalone.prog.abap`** only:
-   - [abapGit releases](https://github.com/abapGit/abapGit/releases), or
-   - raw build: [`zabapgit_standalone.prog.abap`](https://raw.githubusercontent.com/abapGit/build/main/zabapgit_standalone.prog.abap)
-2. In the SAP system create report **`ZABAPGIT_STANDALONE`** (`SE38`), paste/upload the source, activate.
-3. Run `ZABAPGIT_STANDALONE`.
+1. Open the abapGit repository list and read the version under **About** (or **Utilities → Debug Info** → *abapGit version*).
+2. **Upgrade abapGit before the ZEVO pull** when the version is older than **1.133.0**.
 
-Do **not** import the release’s many `.clas.abap` / package files by hand — that tree is the **Developer Version** (install as an abapGit repo later if you want). For ZEVO pull/push, Standalone is enough.
+### 1. Install or upgrade Standalone abapGit
 
-### 1a. Check abapGit version
+Standalone abapGit is report **`ZABAPGIT_STANDALONE`**. Prefer upgrading via the **build repository** (server-side write). Do **not** paste the ~37 000-line source into the SAP GUI editor or ADT — that fails.
 
-1. Run `ZABAPGIT_STANDALONE`.
-2. Open **Utilities → Debug Info** (or equivalent utilities menu).
-3. Read **abapGit version** (e.g. `1.121.0`) and confirm **Standalone Version**.
+#### Upgrade when `ZABAPGIT_STANDALONE` already runs (recommended)
 
-On **SAP S/4HANA 2025** (`SAP_BASIS` **816**), use a current Standalone build so `SRVD` / `SRVB` serialize and pull reliably. **≥ 1.133** also auto-publishes service bindings after deserialize; older builds still support `SRVB` but you **Publish** once in ADT after pull.
+1. Copy the existing report (keep the copy as a fallback), then run the copy for the upgrade session if you prefer.
+2. In abapGit: **+ New Online** → URL **`https://github.com/abapGit/build.git`** → package that **already exists** (e.g. `$ABAPGIT`).
+3. The build repository contains **PROG `ZABAPGIT_STANDALONE`**. If that program already lives in another package, move it into the pull package (`SE38` → **Goto → Object Directory Entry**) and pull again.
+4. **Pull** → **Activate** the report.
+5. **About** / Debug Info shows **v1.133.0** or later.
 
-### 1b. Upgrade Standalone (keep one report)
+#### First install only (no abapGit program yet)
 
-When Debug Info shows an old version, upgrade **in place** — still one file, no ADT project and no multi-object import:
+The [abapGit upgrade page](https://docs.abapgit.org/user-guide/getting-started/upgrade.html) describes an `SE38` upload of [`zabapgit_standalone.prog.abap`](https://raw.githubusercontent.com/abapGit/build/main/zabapgit_standalone.prog.abap). Use that upload **only when no abapGit program runs**, and switch the editor to the **back-end / text-based editor** first (`SE38` → **Utilities → Settings → ABAP Editor**; on newer systems the label is **Text-Based Editor**). Activate, then prefer the **build.git** pull path above for later upgrades.
 
-1. Download the latest **`zabapgit_standalone.prog.abap`** (same links as above).
-2. `SE38` → `ZABAPGIT_STANDALONE` → change mode → **Utilities → More Utilities → Upload/Download → Upload** (or paste over the source).
-3. **Activate**.
-4. Run again → **Debug Info** → confirm the new version.
+#### Developer Version (optional)
 
-Optional later: install the **Developer Version** as an online abapGit repository if you want abapGit itself under Git / to contribute upstream. That is separate from upgrading Standalone for day-to-day ZEVO work.
+The developer version is the package of classes started with transaction **`ZABAPGIT`**. Pull **`https://github.com/abapGit/abapGit`** into that package if you want abapGit itself under Git / to contribute upstream. Not required for ZEVO.
 
-### 1c. Service bindings (`SRVB`) — abapGit vs ADT
+### 1a. Service bindings (`SRVB`) in this repo
 
-| Approach | When |
-|----------|------|
-| **ADT create + Publish** | First system / bootstrap; or until `SRVB` objects are committed to this repo |
-| **abapGit serialize / pull** | On S/4HANA 2025 with a recent Standalone: stage existing bindings from a working system into Git, then pull on other systems |
+| Binding | Type | Path after publish |
+|---------|------|--------------------|
+| `ZEVO_C2P` | OData V4 **Web API** | `/sap/opu/odata4/sap/zevo_c2p/srvd_a2x/sap/zevo_c2p/0001/` |
+| `ZEVO_C2C` | OData V4 **Web API** | `/sap/opu/odata4/sap/zevo_c2c/srvd_a2x/sap/zevo_c2c/0001/` |
+| `ZEVO_GENERALLEDGER` | OData V4 **Web API** | `/sap/opu/odata4/sap/zevo_generalledger/srvd_a2x/sap/zevo_generalledger/0001/` |
+| `ZEVO_MD` | OData V4 **Web API** | `/sap/opu/odata4/sap/zevo_md/srvd_a2x/sap/zevo_md/0001/` |
+| `ZEVO_ORG` | OData V4 **Web API** | `/sap/opu/odata4/sap/zevo_org/srvd_a2x/sap/zevo_org/0001/` |
 
-Hand-written `zevo_*.srvb.xml` is unreliable — always **export from the system via abapGit** (stage local `SRVB` / related `G4BA`). Until bindings are in `src/`, keep creating them in ADT and **uncheck** abapGit **Delete local** for those `SRVB` / `G4BA` objects.
+With abapGit **≥ 1.133.0**, pull activates and **publishes** these bindings. On older abapGit, open each binding in ADT and **Publish** once. If a binding fails to import, fix abapGit version first; as a fallback create that binding in ADT (same name, **OData V4 - Web API**) and stage the serialized `SRVB` back to Git.
 
 ### 2. Trust GitHub TLS in `STRUST` (one-time)
 
@@ -1922,9 +1922,9 @@ Activate in this order (or select all and mass-activate so dependencies resolve)
 2. `ZEVO_CL_*` classes (including OData helpers; MPC/DPC need Gateway `/IWBEP/*`).
 3. `ZEVO_CL_CATALOG` then `ZEVO_CDS_EXPLORER_2_FILE`. The report calls `GET_VIEWS` dynamically so it still activates if the class is one pull behind; activate the class for **Include non-released DEX** to take effect.
 4. For **OData V2** (`ExtractCds`): register/activate per **[OData CDS extract service](#odata-cds-extract-service)** above.
-5. For **OData V4** services (`ZEVO_C2P` / `C2C` / `GENERALLEDGER` / `MD` / `ORG`): activate matching `ZEVO_*` DDLS + service definitions (`SRVD`).  
-   - If `SRVB` is **in Git**: pull/activate the binding (Publish in ADT if your abapGit build is older than **1.133**).  
-   - If `SRVB` is **not** in Git yet: create/publish once in **Eclipse ADT** (see each V4 section). Prefer upgrading Standalone ([§1b](#1b-upgrade-standalone-keep-one-report)) and serializing bindings ([§1c](#1c-service-bindings-srvb--abapgit-vs-adt)) over repeating ADT on every system.  
+5. For **OData V4** services (`ZEVO_C2P` / `C2C` / `GENERALLEDGER` / `MD` / `ORG`): activate matching `ZEVO_*` DDLS + service definitions (`SRVD`) + **service bindings** (`SRVB` in `src/zevo_*.srvb.xml`).  
+   - With abapGit **≥ 1.133.0**, pull **publishes** the bindings ([prerequisite](#prerequisite--abapgit-version)).  
+   - Older abapGit: activate bindings, then **Publish** once in ADT.  
    - If SRVD import fails (e.g. `SRVDSRV ZEVO_C2C does not exist`): create the definition in ADT from the matching `src/zevo_*.srvd.srvdsrv`.
 
 After a rename from older `Z_CDS_*` / `ZCL_DXF_*` / `ZDXF_*` objects: delete the old objects (or let abapGit remove them), then pull/activate the `ZEVO*` ones.
@@ -1939,8 +1939,8 @@ If activation says **"The REPORT/PROGRAM statement is missing, or the program ty
 
 ### 7. Getting later updates
 
-- **This ZEVO repo:** open it in abapGit → **Pull** → mass-activate the changed objects.
-- **abapGit itself:** upgrade Standalone per [§1b](#1b-upgrade-standalone-keep-one-report) (one file into `ZABAPGIT_STANDALONE`) — not the multi-file GitHub source zip.
+- **This ZEVO repo:** open it in abapGit → **Pull** → mass-activate the changed objects (bindings republish on ≥ 1.133.0).
+- **abapGit itself:** upgrade via **`https://github.com/abapGit/build.git`** per [§1](#1-install-or-upgrade-standalone-abapgit) — not the multi-file `abapGit/abapGit` source zip into Standalone.
 
 ## License
 
