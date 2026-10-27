@@ -5,7 +5,7 @@ Typed **OData V4** service (CDS service definition + Web API binding) for the P2
 | Item | Value |
 |------|--------|
 | Service definition | `ZEVO_C2P` (abapGit: `zevo_c2p.srvd.*`) |
-| Service binding | Create in **ADT** as `ZEVO_C2P` — **OData V4 — Web API** (not shipped via abapGit; hand-written SRVB XML fails import) |
+| Service binding | `ZEVO_C2P` — **OData V4 — Web API**. ADT bootstrap, or abapGit `SRVB` after Standalone upgrade (see root README §1b / §1c) — do not hand-write SRVB XML |
 | Style | Read-only typed entity sets + navigation |
 | CDS form | Classic `define view` with explicit field lists; delta field Semantics annotations are **inline** (no DDLX) |
 | Out of scope (v1) | GL / journal, cost/profit center, product, full BP / bank / supplier role (see `ZEVO_MD`), ref-doc texts |

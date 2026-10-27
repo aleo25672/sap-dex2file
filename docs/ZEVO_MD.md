@@ -7,7 +7,7 @@ This is **not** `ZEVO_C2P` / `ZEVO_C2C` (documents) and **not** `ZEVO_GENERALLED
 | Item | Value |
 |------|--------|
 | Service definition | `ZEVO_MD` (`zevo_md.srvd.*`) |
-| Service binding | Create in **ADT** as `ZEVO_MD` — **OData V4 — Web API** (not in abapGit) |
+| Service binding | `ZEVO_MD` — **OData V4 — Web API**. ADT bootstrap, or abapGit `SRVB` after Standalone upgrade (root README §1b / §1c) |
 | CDS prefix | `ZEVO_M_*` |
 | CDS form | Classic `define view`, explicit fields, one-way associations |
 

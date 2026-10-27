@@ -5,7 +5,7 @@ Typed **OData V4** service for the sales / contract-to-cash extract graph. This 
 | Item | Value |
 |------|--------|
 | Service definition | `ZEVO_C2C` (abapGit: `zevo_c2c.srvd.*`) |
-| Service binding | Create in **ADT** as `ZEVO_C2C` — **OData V4 — Web API** (not in abapGit) |
+| Service binding | `ZEVO_C2C` — **OData V4 — Web API**. ADT bootstrap, or abapGit `SRVB` after Standalone upgrade (root README §1b / §1c) |
 | CDS prefix | `ZEVO_O_*` |
 | CDS form | Classic `define view`, explicit fields, one-way associations |
 | Masters | Lean `BusinessPartner` for `$expand` only; roles / banks / product → [`ZEVO_MD`](ZEVO_MD.md) |
