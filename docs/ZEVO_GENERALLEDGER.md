@@ -7,7 +7,7 @@ This is **not** `ZEVO_C2P` (P2P graph) and **not** the V2 `ExtractCds` wrapper. 
 | Item | Value |
 |------|--------|
 | Service definition | `ZEVO_GENERALLEDGER` (`zevo_generalledger.srvd.*`) |
-| Service binding | Create in **ADT** as `ZEVO_GENERALLEDGER` — **OData V4 — Web API** (not in abapGit) |
+| Service binding | `ZEVO_GENERALLEDGER` — **OData V4 — Web API**. ADT bootstrap, or abapGit `SRVB` after Standalone upgrade (root README §1b / §1c) |
 | CDS form | Classic `define view`, explicit fields, one-way associations |
 | Activation notes | `GLAccount` cast to `abap.char(10)` (SAKO search-help). `GLAccountType` aliased to `GLAccountTypeCode` (OData V4 EDM clash with entity type `GLAccountType`). `I_GLAccount` is company-code dependent — keys include `CompanyCode` so `_GLAccount` expand stays 0..1. No direct `Ledger` column on this stack — use key `SourceLedger` and nav `_Ledger`. `I_HouseBank` / `I_ProfitCenter` omit fields not on the local CDS. |
 
