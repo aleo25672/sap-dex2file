@@ -7,7 +7,7 @@ This is **not** `ZEVO_C2P` (P2P graph) and **not** the V2 `ExtractCds` wrapper. 
 | Item | Value |
 |------|--------|
 | Service definition | `ZEVO_GENERALLEDGER` (`zevo_generalledger.srvd.*`) |
-| Service binding | `ZEVO_GENERALLEDGER` — **OData V4 — Web API**. ADT bootstrap, or abapGit `SRVB` after Standalone upgrade (root README §1b / §1c) |
+| Service binding | `ZEVO_GENERALLEDGER` — **OData V4 — Web API** (`src/zevo_generalledger.srvb.xml`); abapGit ≥ 1.133.0 (root README prerequisite) |
 | CDS form | Classic `define view`, explicit fields, one-way associations |
 | Activation notes | `GLAccount` cast to `abap.char(10)` (SAKO search-help). `GLAccountType` aliased to `GLAccountTypeCode` (OData V4 EDM clash with entity type `GLAccountType`). `I_GLAccount` is company-code dependent — keys include `CompanyCode` so `_GLAccount` expand stays 0..1. No direct `Ledger` column on this stack — use key `SourceLedger` and nav `_Ledger`. `I_HouseBank` / `I_ProfitCenter` omit fields not on the local CDS. |
 
@@ -69,14 +69,13 @@ GET {base}/GLAccount
 
 ---
 
-## Activate & publish (ADT)
+## Activate & publish
 
-Same pattern as C2P — see root README **[OData V4 General Ledger](../README.md#odata-v4-general-ledger-zevo_generalledger)** for entity sets, sample URLs, design choices, and troubleshooting (Eclipse/abapGit habits match [C2P](../README.md#odata-v4-c2p-service-zevo_c2p)).
+Same pattern as C2P — see root README **[OData V4 General Ledger](../README.md#odata-v4-general-ledger-zevo_generalledger)** and [abapGit ≥ 1.133.0](../README.md#prerequisite--abapgit-version).
 
-1. abapGit pull `main` — activate all `ZEVO_FI_*` + SRVD `ZEVO_GENERALLEDGER`.
-2. **Do not** delete local SRVB/G4BA if you recreate the binding later.
-3. ADT: New Service Binding **`ZEVO_GENERALLEDGER`**, type **OData V4 - Web API**, definition `ZEVO_GENERALLEDGER` → Activate → Publish.
-4. URL shape:
+1. abapGit pull `main` — activate all `ZEVO_FI_*` + SRVD `ZEVO_GENERALLEDGER` + SRVB (`zevo_generalledger.srvb.xml`).
+2. ADT fallback if binding missing: New Service Binding **`ZEVO_GENERALLEDGER`**, type **OData V4 - Web API** → Activate → Publish.
+3. URL shape:
 
 ```text
 /sap/opu/odata4/sap/zevo_generalledger/srvd_a2x/sap/zevo_generalledger/0001/

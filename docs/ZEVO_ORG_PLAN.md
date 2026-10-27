@@ -1,6 +1,6 @@
 # ZEVO_ORG — Organizational structure service (plan)
 
-**Status:** Phase 1 **implemented** in abapGit (`ZEVO_ORG_*` + `zevo_org.srvd.*`) — ADT binding still created locally.  
+**Status:** Phase 1 **shipped** in abapGit (`ZEVO_ORG_*` + `zevo_org.srvd.*` + `zevo_org.srvb.xml`). Pull with abapGit ≥ 1.133.0 for auto-publish.  
 **Reference:** [`ZEVO_ORG.md`](ZEVO_ORG.md).  
 **Decision:** canonical org masters + relationships. Existing copies on other services **stay**.
 
