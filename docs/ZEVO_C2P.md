@@ -121,7 +121,7 @@ Short checklist:
 3. **ADT** — Service Binding `ZEVO_C2P`, type **OData V4 - Web API**, definition `ZEVO_C2P` → **Activate** → **Publish** (republish after CDS/SRVD changes).
 4. URL shape: `/sap/opu/odata4/sap/zevo_c2p/srvd_a2x/sap/zevo_c2p/0001/`
 
-> DDLX (`*_D`) and `zevo_c2p.srvb.xml` are **not** in the repo — they broke abapGit import. Delta Semantics are inline on the views; create/publish the binding in ADT.
+> DDLX (`*_D`) is not in the repo (Delta Semantics are inline). Do not hand-write `zevo_c2p.srvb.xml` — bootstrap the binding in ADT, or serialize via abapGit after Standalone upgrade (root README §1b / §1c).
 
 ---
 
