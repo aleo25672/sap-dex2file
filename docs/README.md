@@ -1,8 +1,8 @@
 # Session readme
 
-Record of the work done in this session: four sample-data use cases, and the SAP GUI path used to take one live purchase requisition through approval, purchase order, goods receipt, supplier invoice, and payment.
+Record of the work done in this session: four sample-data use cases, the SAP GUI path used to take one live purchase requisition through approval, purchase order, goods receipt, supplier invoice, and payment, and the master data checked so company code **1710** can sell stock to company code **1010**.
 
-Company code throughout the live process is **1710**.
+Company code throughout the live requisition process is **1710**. The intercompany scenario uses both **1710** and **1010**.
 
 ## Repository use cases
 
@@ -150,6 +150,174 @@ Transaction **F-53**, Post Outgoing Payment.
 4. **Process open items**, select the invoice, and post when the balance is **0**.
 
 The payment document type is **KZ**. It debits the vendor and clears the invoice.
+
+## Open periods for company codes 1710 and 1010
+
+A posting date in October 2026 needs three calendars open in the company code that posts. They are independent. Finance can be open through 2030 while materials management is still in 2025 and Asset Accounting is still in 2019.
+
+These programs are not in this system: **AJRW**, **FAA_FISCAL_YEAR_CHANGE**, **RAJAWE00**. Year-end closing is **RAJABS00**. The step that raises **Highest F.Year** is **FAGLGVTR**.
+
+### 1. Finance posting periods — OB52
+
+1. In **SE16**, table **T001**, read **OPVAR** for the company code. That is its posting period variant.
+2. Run **OB52** and find that variant.
+3. For account types **+**, **A**, **D**, **K**, **M**, **S**, and **V**, the first interval must include the posting period. For a calendar year, period **1** through **12** of the fiscal year. The second interval is special periods **13** through **16**.
+
+Company code **1010** uses variant **1010**. On the screen we checked, every account type was already open from period **1 / 2000** through period **12 / 2030**, and special periods **13 / 2000** through **16 / 2030**. **2026** is inside that range, so **OB52** was left unchanged. Check company code **1710** the same way before relying on it. The asset invoice in **1710** was blocked by the asset year, not by **OB52**.
+
+### 2. Materials management period — MMRV, then MMPV
+
+1. Run **MMRV** for the company code. **Current period** is the open materials period. **Previous period** is also open when **Allow posting to previous per.** is selected.
+2. A goods movement whose posting date is outside those two periods is rejected. Roll the period forward with **MMPV**.
+3. In **MMPV**, enter the company code in **From** and **To**. Enter the period you want to become the new current period, and its fiscal year. Leave **Date** empty. Select **Close period**. Execute.
+4. **MMPV** moves one month at a time. Repeat until **MMRV** shows the month you need.
+5. The message **The specified year is not the current calendar year** is a warning. Execute anyway when you are rolling an old period forward.
+
+Company code **1010** started at current period **11 / 2025**, previous period **10 / 2025**, last period of the previous year **12 / 2024**. To post a goods movement in October 2026, the last **MMPV** entry is period **10**, fiscal year **2026**. The sequence is **12 / 2025**, then **01 / 2026** through **10 / 2026**. Period **9 / 2026** only opens September.
+
+Check **MMRV** for company code **1710** the same way before a goods receipt dated in 2026.
+
+### 3. Asset fiscal year — OAAQ, AFAB, RAJABS00, FAGLGVTR
+
+1. Run **OAAQ**. Open the company code and ledger **0L**. Read **Highest F.Year** and **Cl.FY** on each depreciation area. An asset posting in 2026 fails while **Highest F.Year** is below **2026**. The message is **You cannot post to asset in company code … fiscal year 2026**.
+2. The next year to close is the year after **Cl.FY** on area **01**.
+3. Run **AFAB** for that company code and fiscal year, through period **12**. A test run can be online. The update run must be **Program → Execute in Background**. Online update returns **This processing can only be carried out as background processing**. Follow the job in **SM37** until it is **Finished**.
+4. Run **RAJABS00** for that year with **Test Run** selected.
+   - **Contains assets with depreciation not posted completely** means **AFAB** is still required. Do not remove the test flag.
+   - **Other error** = **No** and an empty detail list means the test is clean. **Close carried out** stays **No** on a test. Run **RAJABS00** again with **Test Run** cleared.
+5. If one depreciation area is still behind the others, tick **Select** on that row in **OAAQ** and choose **Close** (the button above the table, next to **Reopen**).
+6. Run **FAGLGVTR** and carry balances into the next year. This raises **Highest F.Year** by one. Warnings that did not block **1710**: predictive ledgers **0C** and **0E** are skipped; postings during the run may lead to incorrect results; `ACDOCA-GLACCOUNT_TYPE` differs from G/L master data.
+7. Refresh **OAAQ**. Repeat the close and the carryforward, one year at a time, until **Highest F.Year** is **2026**. The last close is fiscal year **2025**. The last carryforward is **into 2026**.
+8. Repeat for ledger **2L** when that ledger is posted.
+
+#### Company code 1710
+
+| Check | Starting point | What we did |
+|-------|----------------|-------------|
+| Asset ledger **0L** | **Highest F.Year 2024**. Area **01** closed through **2022**. Areas **90**–**93** closed through **2024**. | **AFAB** for the open year (40 assets, no errors), then **RAJABS00**. Area **01** closed through **2023**, then **Close** on area **01** through **2024**. **FAGLGVTR** raised **Highest F.Year** from **2024** to **2025**. Carry forward once more **into 2026** and confirm both ledgers before an asset invoice dated in 2026. |
+| Finance **OB52** | Not the error on the asset invoice. | Confirm the variant in **T001-OPVAR** and that 2026 is inside the open interval. |
+| Materials **MMRV** | Not checked in this session. | Run **MMRV** before a 2026 goods receipt and roll forward with **MMPV** if the current period is earlier. |
+
+The goods receipt of an asset can post before the asset year is open. The invoice posts the asset value, and that is where fiscal year **2026** was rejected.
+
+#### Company code 1010
+
+| Check | Starting point | Result |
+|-------|----------------|--------|
+| Finance variant **1010** | **OB52** intervals **1 / 2000–12 / 2030** and special periods **13–16** for account types **+**, **A**, **D**, **K**, **M**, **S**, **V**. | Already covered 2026. No change. |
+| Materials | **MMRV** current period **11 / 2025**, previous **10 / 2025**, previous-year last period **12 / 2024**. Posting to the previous period is allowed. | Roll **MMPV** one month at a time. Last entry for an October 2026 goods movement is period **10 / 2026**. |
+| Asset ledger **0L** | **Highest F.Year 2019**. Areas **01** (book depreciation) and **15** (local tax) closed through **12/31/2017**. Fiscal year variant **K4**. | The 2018 close test was clean with no depreciation error. Close each year with **RAJABS00**, then **FAGLGVTR** into the next year. Finished state: **Highest F.Year 2026**, areas **01** and **15** closed through **12/31/2025**. |
+| Asset ledger **2L** | Present in the **OAAQ** tree. | Confirm **Highest F.Year 2026** before a posting updates that ledger. |
+
+## Intercompany resale: buy in 1710, sell to 1010 with a markup
+
+Company code **1710** buys trading good **TG11** from US vendor **1000559** (EVOLVER DOMESTIC SUPPLIER 1, stored as **0001000559**) into plant **1710**, then sells that piece to company code **1010**, plant **1010**. The transfer price is the purchase price plus **10%**.
+
+| | Purchase | Resale |
+|--|----------|--------|
+| Buyer | Company **1710** | Company **1010** |
+| Seller | Vendor **1000559** | Company **1710** sales order to customer **10411010**. Company **1010** buys from vendor **BP1710** |
+| Material | **TG11**, Trad.Good 11, PD, Reg.Trading | Same piece |
+| Quantity | **1 PC** | **1 PC** |
+| Plant / storage location | **1710 / 171A** | Supply **1710 / 171A**, receive **1010** |
+| Price | **13.50 USD**, the price on PO **4500002146** item 00010 | **14.85 USD** (13.50 × 1.10) |
+| Markup in 1710 | | **1.35 USD** |
+
+**TG20** from the same vendor is a serial-number material. **TG11** is the material for this run. Create a new purchase order. Leave PO **4500002146** unchanged so the contract-to-payment sample stays intact.
+
+Company **1710** posts in **USD**. Company **1010** posts in **EUR**. The sales order and the customer invoice are in **USD** at **14.85**. The purchase order in **1010** uses **USD** when the header allows it. When that currency stays **EUR**, convert **14.85 USD** at the exchange rate on the purchase-order header.
+
+The resale document in company **1710** is a sales order. Create it in **VA01**. The delivery and the customer invoice follow that sales order. Billing type is **F2**, the same type as billing document **0090005785**.
+
+The master data below was checked in transaction **BP**. These documents have not been posted yet.
+
+### Who is the vendor and who is the customer
+
+| Role | Business partner | What it represents | Who uses it |
+|------|------------------|--------------------|-------------|
+| Vendor | **BP1710**, Plant 1, Palo Alto CA 94304 | Supplying plant **1710** | Company code **1010** on the purchase order |
+| Customer | **10411010**, Werk 1010 als Geschäftspartner, 69190 Walldorf | Receiving plant **1010** | Company code **1710** on the sales order, the delivery, and the invoice |
+
+Supplier **BP1010** (name WERK 1, supplier plant 1010 in the business-partner extract) is a separate partner. The customer assigned to plant 1010 in the system is **10411010**.
+
+### Vendor BP1710
+
+| Where | What is on the screen |
+|-------|------------------------|
+| Role **Supplier**, **Supplier: General Data**, Additional General Data | **Plant 1710**, Plant 1 US. Account group **SUPL**. |
+| Role **Supplier (Fin. Accounting)** | Company code **1010** is open. Customer and supplier on that view are both **BP1710**. |
+| Role **Supplier**, purchasing organization **1010** | Order currency **EUR**. Payment terms **0001** (pay immediately without deduction). Incoterms **EXW**, location **Vendor**. Minimum order value **0.00**. |
+
+Company code **1010** can order from this vendor and post the vendor invoice. The same supplier row in the extract has `SUPPLIERPLANT` **1710**.
+
+### Customer 10411010
+
+| Where | What is on the screen |
+|-------|------------------------|
+| Role **Customer**, **Customer: General Data** | **Plant 1010**. Delivery date rule **On Requested Date or Later**. |
+| Role **FI Customer** (`FLCU00`, Customer Fin. Accounting) | This role was missing. It was added for company code **1710**. Customer and supplier on that view are both **10411010**. |
+
+On **Customer: Account Management** the reconciliation account first shown was **12100100**, Receivables Domestic - One Time Accounts. Save **12120000** instead. That is the receivable cleared by customer receipt **1400000000** in company code **1710**. On **Customer: Payment Transactions**, enter payment terms **0001**, then save.
+
+Journal lines in company **1710** already carry customer **0010411010** with plant **1710**. That is this same business partner.
+
+### Still required before the resale
+
+1. On **10411010**, role **Customer**, **Sales Areas**: sales organization **1710**, distribution channel **10**, division **00**, payment terms **0001**, and no billing block. Sold-to, ship-to, bill-to, and payer are **10411010**.
+2. **MM03** for **TG11**, Sales org. **1710**, distribution channel **10**. The sales views have to exist before **VA01**. Plant **1710** already has the material. Plant **1010** needs it too: when **MM03** has no plant **1010**, extend it with **MM01**, copy plant **1710**, views Purchasing, General Plant Data / Storage, and Accounting. Use a storage location that exists in plant **1010**.
+3. **MM03**, plant **1710**, Accounting 1. Read the material price. The sales-order price is that price plus 10%. The last invoice price is **13.50 USD**, so the sales price is **14.85 USD** when the material price is still 13.50.
+4. **MMRV** for both company codes. The posting date **13.10.2026** has to fall in the current or previous materials period. Company **1010** started at **11/2025**; roll it with **MMPV** through period **10/2026** as described above. Company **1710** has not been checked. The purchase goods receipt and the sales goods issue both post in **1710**, so check **1710** first.
+
+### 1. Buy TG11 in company 1710
+
+**ME21N**
+
+- Vendor **1000559**, document type **NB**, purchasing organization **1710**, purchasing group **001**, company code **1710**.
+- Material **TG11**, quantity **1**, net price **13.50 USD**, delivery date **13.10.2026**.
+- Plant **1710**, storage location **171A**. Leave account assignment and item category empty so the piece goes into stock.
+- Save and keep the purchase-order number.
+
+**MIGO.** Goods receipt for that purchase order. Movement **101**, plant **1710**, storage location **171A**. Post.
+
+**MIRO.** Invoice date and posting date **13.10.2026**, company code **1710**, the purchase-order number, amount **13.50 USD**. Post. Reference the invoice so it stays distinct from **5100001599**.
+
+**F-53**, company code **1710**, bank G/L **11002000**, vendor **1000559**, amount **13.50**. Process open items, select this invoice, and post. Document type **KZ**.
+
+### 2. Sales order in company 1710
+
+**VA01**
+
+- Order type **OR** (standard order, stored as type **TA**, the same type as sales order **6321**).
+- Sales organization **1710**, distribution channel **10**, division **00**.
+- Sold-to party **10411010**.
+- Customer reference: the purchase-order number from company **1010**, once that order exists. Create the sales order first and come back to this field, or enter the purchase order first and put its number here before saving.
+- Material **TG11**, order quantity **1**, plant **1710**.
+- Item price **14.85 USD**. On the item **Conditions** tab, set condition **PR00** to **14.85** when the proposed price is different.
+- Save and keep the sales-order number.
+
+**VL01N.** Shipping point **1710**, the sales-order number. Picking quantity **1**, storage location **171A**. **Post Goods Issue**. Movement **601** issues the piece from plant **1710** at the material price (**13.50** when that is still the valuation price).
+
+**VF01.** Enter the delivery number. Billing type **F2**. Save. The receivable posts to customer **10411010** in company code **1710** for **14.85 USD**. Revenue is **14.85** and the stock relief is **13.50**, so the markup is **1.35**.
+
+### 3. Purchase order in company 1010
+
+**ME21N**
+
+- Vendor **BP1710**, document type **NB**, purchasing organization **1010**, purchasing group **001**, company code **1010**.
+- Header currency **USD**, net price **14.85**. When the currency remains **EUR**, read the exchange rate on the header and enter the euro amount of **14.85 USD**.
+- Material **TG11**, quantity **1**, delivery date **13.10.2026**, plant **1010**, the **1010** storage location.
+- Leave the item category empty. This is a standard purchase, with vendor **BP1710** standing for company **1710**.
+- Your reference, or the item text: the sales-order number from **VA01**.
+- Save.
+
+**MIGO.** Goods receipt for this purchase order. Movement **101**, plant **1010**. Post. Plant **1010** takes the piece into stock at the transfer price.
+
+**MIRO.** Invoice date and posting date **13.10.2026**, company code **1010**, this purchase-order number, amount **14.85 USD** or its euro equivalent. Post. This credits vendor **BP1710**. Match the amount to billing document **F2**.
+
+### 4. Clear the intercompany pair
+
+- Company **1010**, transaction **F-53**: pay vendor **BP1710** for the transfer-price invoice.
+- Company **1710**, transaction **F-28**: post the incoming payment from customer **10411010** for **14.85 USD**. Bank G/L **11002000**.
 
 ## Requisition to Payment 1
 
