@@ -12,10 +12,7 @@ define view ZEVO_O_BillingDocumentItem
 {
   key BillingDocument,
   key BillingDocumentItem,
-      SalesDocumentItemCategory,
-      CreatedByUser,
-      CreationDate,
-      CreationTime,
+      // CreatedByUser / Creation* live on delivery header via _OutboundDelivery on this BasicDEX
       BillingDocumentType as BillingDocumentTypeCode,
       SDDocumentCategory,
       Material,

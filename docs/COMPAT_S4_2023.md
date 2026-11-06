@@ -21,7 +21,7 @@ Requires [abapGit ≥ 1.133.0](../README.md#prerequisite--abapgit-version) for `
 | `ZEVO_M_BPSupplier` | `I_BusinessPartnerSupplierDEX` | `I_BusinessPartnerSupplier` (slimmer fields) |
 | `ZEVO_C_PurchRequisitionItem` | full DEX field list | omit 108-missing qty/block/quota fields |
 | `ZEVO_O_OutboundDelivery` | `C_OutboundDeliveryDEX` | `I_DeliveryDocument` (`where` category `J`; key aliased) |
-| `ZEVO_O_BillingDocumentItem` | `I_BillingDocumentItemDEX` | `C_BillingDocumentItemBasicDEX` |
+| `ZEVO_O_BillingDocumentItem` | `I_BillingDocumentItemDEX` | `C_BillingDocumentItemBasicDEX` (no `CreatedByUser` / creation stamp on item — use `_OutboundDelivery` if needed) |
 | Sales contract / SO item / schedule | org + partner fields | those columns omitted (not on local CDS) |
 
 ## Behaviour changes for clients
