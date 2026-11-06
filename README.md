@@ -1856,7 +1856,7 @@ The [abapGit upgrade page](https://docs.abapgit.org/user-guide/getting-started/u
 
 The developer version is the package of classes started with transaction **`ZABAPGIT`**. Pull **`https://github.com/abapGit/abapGit`** into that package if you want abapGit itself under Git / to contribute upstream. Not required for ZEVO.
 
-### 1a. Service bindings (`SRVB`) in this repo
+### 1a. Service bindings (`SRVB`)
 
 | Binding | Type | Path after publish |
 |---------|------|--------------------|
@@ -1866,7 +1866,9 @@ The developer version is the package of classes started with transaction **`ZABA
 | `ZEVO_MD` | OData V4 **Web API** | `/sap/opu/odata4/sap/zevo_md/srvd_a2x/sap/zevo_md/0001/` |
 | `ZEVO_ORG` | OData V4 **Web API** | `/sap/opu/odata4/sap/zevo_org/srvd_a2x/sap/zevo_org/0001/` |
 
-With abapGit **≥ 1.133.0**, pull activates and **publishes** these bindings. On older abapGit, open each binding in ADT and **Publish** once. If a binding fails to import, fix abapGit version first; as a fallback create that binding in ADT (same name, **OData V4 - Web API**) and stage the serialized `SRVB` back to Git.
+**`compat/s4-2023`:** `SRVB` XML is **not** in Git (deserialize fails on that stack). Create each binding in **ADT** (name = service definition, **OData V4 - Web API** → Activate → Publish). Uncheck abapGit **Delete local** for `SRVB`/`G4BA` on later pulls. See [`docs/COMPAT_S4_2023.md`](docs/COMPAT_S4_2023.md).
+
+On `main`, sample `zevo_*.srvb.xml` may still fail deserialize — same ADT fallback; only commit `SRVB` that was **serialized from a working system** via abapGit.
 
 ### 2. Trust GitHub TLS in `STRUST` (one-time)
 
@@ -1923,9 +1925,8 @@ Activate in this order (or select all and mass-activate so dependencies resolve)
 2. `ZEVO_CL_*` classes (including OData helpers; MPC/DPC need Gateway `/IWBEP/*`).
 3. `ZEVO_CL_CATALOG` then `ZEVO_CDS_EXPLORER_2_FILE`. The report calls `GET_VIEWS` dynamically so it still activates if the class is one pull behind; activate the class for **Include non-released DEX** to take effect.
 4. For **OData V2** (`ExtractCds`): register/activate per **[OData CDS extract service](#odata-cds-extract-service)** above.
-5. For **OData V4** services (`ZEVO_C2P` / `C2C` / `GENERALLEDGER` / `MD` / `ORG`): activate matching `ZEVO_*` DDLS + service definitions (`SRVD`) + **service bindings** (`SRVB` in `src/zevo_*.srvb.xml`).  
-   - With abapGit **≥ 1.133.0**, pull **publishes** the bindings ([prerequisite](#prerequisite--abapgit-version)).  
-   - Older abapGit: activate bindings, then **Publish** once in ADT.  
+5. For **OData V4** services (`ZEVO_C2P` / `C2C` / `GENERALLEDGER` / `MD` / `ORG`): activate matching `ZEVO_*` DDLS + service definitions (`SRVD`).  
+   - **Bindings:** create/publish in **ADT** if `SRVB` is missing or deserialize failed ([§1a](#1a-service-bindings-srvb); [`COMPAT_S4_2023.md`](docs/COMPAT_S4_2023.md) on the 108 line).  
    - If SRVD import fails (e.g. `SRVDSRV ZEVO_C2C does not exist`): create the definition in ADT from the matching `src/zevo_*.srvd.srvdsrv`.
 
 After a rename from older `Z_CDS_*` / `ZCL_DXF_*` / `ZDXF_*` objects: delete the old objects (or let abapGit remove them), then pull/activate the `ZEVO*` ones.
