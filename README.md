@@ -46,6 +46,8 @@ Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the ge
 | [Using ZEVO_CDS_EXPLORER_2_FILE](#using-zevo_cds_explorer_2_file) | Selection screen & file extract |
 | [External file interface](#external-file-interface) | AL11 / jobs / `.ok` sidecar |
 | [Installing & importing with abapGit](#installing--importing-with-abapgit) | abapGit ≥ 1.133, Standalone upgrade via build.git, `SRVB` pull |
+| [S/4HANA 2023 compat (`S4CORE` 108)](docs/COMPAT_S4_2023.md) | Branch **`compat/s4-2023`** — CDS substitutes when DEX / fields missing |
+| [Agent skill: install on a new SAP](.cursor/skills/sap-dex2file-install/SKILL.md) | End-to-end greenfield checklist (branch, abapGit, activate, SEGW V2, smoke) |
 
 ---
 
@@ -1866,6 +1868,8 @@ The developer version is the package of classes started with transaction **`ZABA
 | `ZEVO_ORG` | OData V4 **Web API** | `/sap/opu/odata4/sap/zevo_org/srvd_a2x/sap/zevo_org/0001/` |
 
 With abapGit **≥ 1.133.0**, pull activates and **publishes** these bindings. On older abapGit, open each binding in ADT and **Publish** once. If a binding fails to import, fix abapGit version first; as a fallback create that binding in ADT (same name, **OData V4 - Web API**) and stage the serialized `SRVB` back to Git.
+
+Prefer **system-serialized** `SRVB`/`G4BA` only — hand-written binding XML often fails deserialize. On **S4CORE 108**, pull branch **`compat/s4-2023`** (see [`docs/COMPAT_S4_2023.md`](docs/COMPAT_S4_2023.md)). Full greenfield steps: [`.cursor/skills/sap-dex2file-install/SKILL.md`](.cursor/skills/sap-dex2file-install/SKILL.md).
 
 ### 2. Trust GitHub TLS in `STRUST` (one-time)
 
