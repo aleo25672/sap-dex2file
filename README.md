@@ -46,6 +46,7 @@ Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the ge
 | [Using ZEVO_CDS_EXPLORER_2_FILE](#using-zevo_cds_explorer_2_file) | Selection screen & file extract |
 | [External file interface](#external-file-interface) | AL11 / jobs / `.ok` sidecar |
 | [Installing & importing with abapGit](#installing--importing-with-abapgit) | abapGit ≥ 1.133, Standalone upgrade via build.git, `SRVB` pull |
+| [S/4HANA 2023 compat (`S4CORE` 108)](docs/COMPAT_S4_2023.md) | Branch **`compat/s4-2023`** — CDS substitutes when DEX / fields missing |
 
 ---
 

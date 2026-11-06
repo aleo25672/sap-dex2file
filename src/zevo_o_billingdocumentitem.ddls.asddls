@@ -1,16 +1,14 @@
 @AbapCatalog.sqlViewName: 'ZEVOOBILLITEM'
 @AbapCatalog.compiler.compareFilter: true
 @AccessControl.authorizationCheck: #CHECK
-@EndUserText.label: 'Billing Document Item DEX (C2C)'
+@EndUserText.label: 'Billing Document Item (C2C)'
 @ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #TRANSACTIONAL }
+@Metadata.ignorePropagatedAnnotations: true
 define view ZEVO_O_BillingDocumentItem
-  as select from I_BillingDocumentItemDEX
+  // S/4 2023 (108): I_BillingDocumentItemDEX missing — classic ODP Basic DEX
+  as select from C_BillingDocumentItemBasicDEX
   association [0..1] to ZEVO_O_OutboundDelivery as _OutboundDelivery
     on $projection.ReferenceSDDocument = _OutboundDelivery.OutboundDelivery
-  association [0..1] to ZEVO_O_BusinessPartner as _SoldToParty
-    on $projection.SoldToParty = _SoldToParty.BusinessPartner
-  association [0..1] to ZEVO_O_BusinessPartner as _BillToParty
-    on $projection.BillToParty = _BillToParty.BusinessPartner
 {
   key BillingDocument,
   key BillingDocumentItem,
@@ -19,35 +17,20 @@ define view ZEVO_O_BillingDocumentItem
       CreationDate,
       CreationTime,
       BillingDocumentType as BillingDocumentTypeCode,
-      BillingDocumentCategory,
       SDDocumentCategory,
       Material,
-      Product,
       Plant,
       BillingQuantity,
       BillingQuantityUnit,
       NetAmount,
-      GrossAmount,
       TaxAmount,
       TransactionCurrency,
-      PricingDate,
       BillingDocumentDate,
-      SalesOrganization,
-      DistributionChannel,
-      SoldToParty,
-      ShipToParty,
-      BillToParty,
-      PayerParty,
       CompanyCode,
       SalesDocument,
       SalesDocumentItem,
       ReferenceSDDocument,
       ReferenceSDDocumentItem,
       ReferenceSDDocumentCategory,
-      OverallSDProcessStatus,
-      OverallBillingStatus,
-      CancelledBillingDocument,
-      _OutboundDelivery,
-      _SoldToParty,
-      _BillToParty
+      _OutboundDelivery
 }

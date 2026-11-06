@@ -3,6 +3,7 @@
 @AccessControl.authorizationCheck: #CHECK
 @EndUserText.label: 'Sales Document Schedule Line DEX (C2C)'
 @ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #TRANSACTIONAL }
+@Metadata.ignorePropagatedAnnotations: true
 define view ZEVO_O_SalesDocSchedLine
   as select from C_SalesDocumentSchedLineDEX
 {
@@ -17,15 +18,9 @@ define view ZEVO_O_SalesDocSchedLine
       SalesDocumentType as SalesDocumentTypeCode,
       SalesDocumentItemCategory,
       ScheduleLineCategory,
-      SalesOrganization,
-      DistributionChannel,
-      Division,
+      // S/4 2023 (108): org / partner columns omitted if missing on local DEX
       Material,
       Product,
-      SoldToParty,
-      ShipToParty,
-      BillToParty,
-      PayerParty,
       ScheduleLineOrderQuantity,
       OrderQuantityUnit,
       ConfdOrderQtyByMatlAvailCheck,

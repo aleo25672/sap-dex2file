@@ -3,6 +3,7 @@
 @AccessControl.authorizationCheck: #CHECK
 @EndUserText.label: 'Sales Document Item DEX (C2C)'
 @ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #TRANSACTIONAL }
+@Metadata.ignorePropagatedAnnotations: true
 define view ZEVO_O_SalesDocumentItem
   as select from C_SalesDocumentItemDEX
   association [0..*] to ZEVO_O_SalesDocSchedLine as _ScheduleLine
@@ -14,8 +15,6 @@ define view ZEVO_O_SalesDocumentItem
   association [0..*] to ZEVO_O_BillingDocumentItem as _BillingDocumentItem
     on $projection.SalesDocument = _BillingDocumentItem.SalesDocument
    and $projection.SalesDocumentItem = _BillingDocumentItem.SalesDocumentItem
-  association [0..1] to ZEVO_O_BusinessPartner as _SoldToParty
-    on $projection.SoldToParty = _SoldToParty.BusinessPartner
 {
   key SalesDocument,
   key SalesDocumentItem,
@@ -26,15 +25,10 @@ define view ZEVO_O_SalesDocumentItem
       CreationTime,
       @Semantics.systemDate.lastChangedAt: true
       LastChangeDate,
-      SalesOrganization,
-      DistributionChannel,
-      Division,
+      // S/4 2023 (108): SalesOrganization, DistributionChannel, Division,
+      // SoldToParty, ShipToParty, BillToParty, PayerParty not on local DEX
       Material,
       Product,
-      SoldToParty,
-      ShipToParty,
-      BillToParty,
-      PayerParty,
       SalesDocumentDate,
       OrderQuantity,
       OrderQuantityUnit,
@@ -44,6 +38,5 @@ define view ZEVO_O_SalesDocumentItem
       ReferenceSDDocumentCategory,
       _ScheduleLine,
       _OutboundDeliveryItem,
-      _BillingDocumentItem,
-      _SoldToParty
+      _BillingDocumentItem
 }

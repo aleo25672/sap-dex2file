@@ -3,8 +3,10 @@
 @AccessControl.authorizationCheck: #CHECK
 @EndUserText.label: 'Business Partner Customer Role (Master Data)'
 @ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #MASTER }
+@Metadata.ignorePropagatedAnnotations: true
 define view ZEVO_M_BPCustomer
-  as select from I_BusinessPartnerCustomerDEX
+  // S/4 2023 (108): I_BusinessPartnerCustomerDEX not available — use released I_* 
+  as select from I_BusinessPartnerCustomer
   association [0..1] to ZEVO_M_Customer as _Customer
     on $projection.Customer = _Customer.Customer
 {
@@ -22,65 +24,8 @@ define view ZEVO_M_BPCustomer
       BillingIsBlockedForCustomer,
       OrderIsBlockedForCustomer,
       IsNaturalPerson,
-      BusinessPartnerGrouping,
       AuthorizationGroup,
-      DeliveryDateTypeRule,
-      IsActiveEntity,
-      ExpressTrainStationName,
-      TrainStationName,
-      CityLocationCoordinatesCode,
-      Plant,
       CustomerCorporateGroup,
-      DataExchangeInstructionKey,
-      IndustryCode1,
-      IndustryCode2,
-      IndustryCode3,
-      IsCompetitor,
-      IsSalesPartner,
-      IsDefaultSoldToParty,
-      IsConsumer,
-      FiscalAddress,
-      CustomerConditionGroup1,
-      CustomerConditionGroup2,
-      CustomerConditionGroup3,
-      CustomerConditionGroup4,
-      CustomerConditionGroup5,
-      AddressID,
-      InternationalLocationNumber1,
-      InternationalLocationNumber2,
-      InternationalLocationNumber3,
-      CityCode,
-      County,
-      CustomerHasUnloadingPoint,
-      CustomerWorkingTimeCalendar,
-      IsBusinessPurposeCompleted,
-      BPIsEqualizationTaxSubject,
-      Country,
-      Region,
       DeletionIndicator,
-      Language,
-      SalesIsBlockedForCustomer,
-      PaymentReason,
-      CustomerCentralDeletionIsBlock,
-      AlternativePayerIsAllowed,
-      CustomerTradingPartnerId as TradingPartner,
-      FiscalYearVariant,
-      AccountTaxType,
-      IndustryCode4,
-      IndustryCode5,
-      TaxInvoiceRepresentativeName,
-      BusinessType,
-      IndustryType,
-      DataControllerSet,
-      DataController1,
-      DataController2,
-      DataController3,
-      DataController4,
-      DataController5,
-      DataController6,
-      DataController7,
-      DataController8,
-      DataController9,
-      DataController10,
       _Customer
 }

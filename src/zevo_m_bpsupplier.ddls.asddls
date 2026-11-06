@@ -3,68 +3,25 @@
 @AccessControl.authorizationCheck: #CHECK
 @EndUserText.label: 'Business Partner Supplier Role (Master Data)'
 @ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #MASTER }
+@Metadata.ignorePropagatedAnnotations: true
 define view ZEVO_M_BPSupplier
-  as select from I_BusinessPartnerSupplierDEX
+  // S/4 2023 (108): I_BusinessPartnerSupplierDEX not available — use released I_*
+  as select from I_BusinessPartnerSupplier
   association [0..1] to ZEVO_M_Supplier as _Supplier
     on $projection.Supplier = _Supplier.Supplier
 {
   key BusinessPartner,
   key Supplier,
       BusinessPartnerUUID,
-      BusinessPartnerCategory,
       SupplierAccountGroup,
-      TitleSupplier,
-      InternationalLocationNumber1,
-      InternationalLocationNumber2,
-      InternationalLocationNumber3,
-      ReferenceAccountGroup,
-      SupplierAlternativePayee,
       Customer,
       PostingIsBlocked,
       PurchasingIsBlocked,
       VATLiability,
       PaymentIsBlockedForSupplier,
-      SuplrProofOfDelivRlvtCode,
-      BR_TaxIsSplit,
-      IsActiveEntity,
       AuthorizationGroup,
-      IsToBeAcceptedAtOrigin,
       SupplierCorporateGroup,
-      ResponsibleType,
-      FiscalAddress,
-      SupplierProcurementBlock,
-      DataExchangeInstructionKey,
-      BPIsEqualizationTaxSubject,
-      BRSpcfcTaxBasePercentageCode,
-      DataMediumExchangeIndicator,
-      TranspServiceAgentStstcGrp,
-      TaxNumberResponsible,
-      TaxNumberType,
-      SuplrQualityManagementSystem,
-      SuplrQltyInProcmtCertfnValidTo,
-      SupplierIsSubrangeRelevant,
-      TrainStationName,
-      AlternativePayeeIsAllowed,
-      PaytSlipWthRefSubscriber,
-      SupplierIsPlantRelevant,
-      FactoryCalendar,
-      SupplierPlant,
       DeletionIndicator,
-      IsBusinessPurposeCompleted,
-      PaymentReason,
-      SupplierCentralDeletionIsBlock,
-      DataControllerSet,
-      DataController1,
-      DataController2,
-      DataController3,
-      DataController4,
-      DataController5,
-      DataController6,
-      DataController7,
-      DataController8,
-      DataController9,
-      DataController10,
       IsOneTimeAccount,
-      BusinessPartnerPanNumber,
       _Supplier
 }
