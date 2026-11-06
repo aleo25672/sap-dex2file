@@ -1,10 +1,12 @@
 @AbapCatalog.sqlViewName: 'ZEVOOOUTBDEL'
 @AbapCatalog.compiler.compareFilter: true
 @AccessControl.authorizationCheck: #CHECK
-@EndUserText.label: 'Outbound Delivery Header DEX (C2C)'
+@EndUserText.label: 'Outbound Delivery Header (C2C)'
 @ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #TRANSACTIONAL }
+@Metadata.ignorePropagatedAnnotations: true
 define view ZEVO_O_OutboundDelivery
-  as select from C_OutboundDeliveryDEX
+  // S/4 2023 (108): C_OutboundDeliveryDEX missing — I_DeliveryDocument + category J
+  as select from I_DeliveryDocument
   association [0..*] to ZEVO_O_OutboundDelivItem as _Item
     on $projection.OutboundDelivery = _Item.OutboundDelivery
   association [0..*] to ZEVO_O_GoodsMovementDoc as _GoodsMovement
@@ -14,7 +16,7 @@ define view ZEVO_O_OutboundDelivery
   association [0..1] to ZEVO_O_BusinessPartner as _ShipToParty
     on $projection.ShipToParty = _ShipToParty.BusinessPartner
 {
-  key OutboundDelivery,
+  key DeliveryDocument as OutboundDelivery,
       SDDocumentCategory,
       DeliveryDocumentType as DeliveryDocumentTypeCode,
       CreatedByUser,
@@ -35,8 +37,6 @@ define view ZEVO_O_OutboundDelivery
       OverallGoodsMovementStatus,
       OverallPickingStatus,
       OverallSDProcessStatus,
-      TransactionCurrency,
-      TotalNetAmount,
       DocumentDate,
       DeliveryBlockReason,
       ShippingCondition,
@@ -45,3 +45,4 @@ define view ZEVO_O_OutboundDelivery
       _SoldToParty,
       _ShipToParty
 }
+where SDDocumentCategory = 'J'

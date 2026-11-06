@@ -101,13 +101,9 @@ define view ZEVO_C_PurchRequisitionItem
       ExtFixedSupplierForPurg,
       ExtMaterialForPurg,
       RequestedQuantity,
-      PurReqnPriceQuantity,
       BaseUnit,
-      IsPurReqnCmplt,
-      PurReqnItemBlockingReasonText,
-      InventorySpecialStockType,
-      QuotaArrangement,
-      QuotaArrangementItem,
+      // S/4 2023 (108): PurReqnPriceQuantity, IsPurReqnCmplt, PurReqnItemBlockingReasonText,
+      // InventorySpecialStockType, QuotaArrangement, QuotaArrangementItem not on this DEX
       _PurchaseOrderItem,
       _PurchaseContractItem,
       _Supplier

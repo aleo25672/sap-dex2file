@@ -21,9 +21,9 @@ Typed **OData V4** service for the sales / contract-to-cash extract graph. This 
 | `SalesContractItem` | `ZEVO_O_SalesContractItem` | `I_SalesContractItem` |
 | `SalesDocumentItem` | `ZEVO_O_SalesDocumentItem` | `C_SalesDocumentItemDEX` |
 | `SalesDocumentScheduleLine` | `ZEVO_O_SalesDocSchedLine` | `C_SalesDocumentSchedLineDEX` (not `…ScheduleLine…`; newer alt `…DEX_1`) |
-| `OutboundDelivery` | `ZEVO_O_OutboundDelivery` | `C_OutboundDeliveryDEX` |
+| `OutboundDelivery` | `ZEVO_O_OutboundDelivery` | `C_OutboundDeliveryDEX` (`main`); on **108** → `I_DeliveryDocument` — [`COMPAT_S4_2023.md`](COMPAT_S4_2023.md) |
 | `OutboundDeliveryItem` | `ZEVO_O_OutboundDelivItem` | `I_DeliveryDocumentItem` (alias keys; `where` category `J`) — **not** `C_OutboundDeliveryItemDEX` (no `ReferenceSDDocument*`) |
-| `BillingDocumentItem` | `ZEVO_O_BillingDocumentItem` | `I_BillingDocumentItemDEX` |
+| `BillingDocumentItem` | `ZEVO_O_BillingDocumentItem` | `I_BillingDocumentItemDEX` (`main`); on **108** → `C_BillingDocumentItemBasicDEX` |
 | `GoodsMovementDocument` | `ZEVO_O_GoodsMovementDoc` | `I_GoodsMovementDocumentDEX` (full DEX; **no CDS `WHERE`**) |
 | `BusinessPartner` | `ZEVO_O_BusinessPartner` | `I_BusinessPartner` (lean) |
 

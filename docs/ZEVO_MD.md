@@ -18,8 +18,8 @@ This is **not** `ZEVO_C2P` / `ZEVO_C2C` (documents) and **not** `ZEVO_GENERALLED
 | Entity set | CDS view | Source CDS |
 |------------|----------|------------|
 | `BusinessPartner` | `ZEVO_M_BusinessPartner` | `I_BusinessPartner` |
-| `BusinessPartnerSupplier` | `ZEVO_M_BPSupplier` | `I_BusinessPartnerSupplierDEX` |
-| `BusinessPartnerCustomer` | `ZEVO_M_BPCustomer` | `I_BusinessPartnerCustomerDEX` |
+| `BusinessPartnerSupplier` | `ZEVO_M_BPSupplier` | `I_BusinessPartnerSupplierDEX` (`main`); on **108** → `I_BusinessPartnerSupplier` — see [`COMPAT_S4_2023.md`](COMPAT_S4_2023.md) |
+| `BusinessPartnerCustomer` | `ZEVO_M_BPCustomer` | `I_BusinessPartnerCustomerDEX` (`main`); on **108** → `I_BusinessPartnerCustomer` |
 | `BusinessPartnerBank` | `ZEVO_M_BPBank` | `I_BusinessPartnerBank` |
 | `Supplier` | `ZEVO_M_Supplier` | `I_Supplier` (rich / extensive) |
 | `Customer` | `ZEVO_M_Customer` | `I_Customer` (rich / extensive) |

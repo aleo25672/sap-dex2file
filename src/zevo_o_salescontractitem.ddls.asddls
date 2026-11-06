@@ -3,10 +3,9 @@
 @AccessControl.authorizationCheck: #CHECK
 @EndUserText.label: 'Sales Contract Item (C2C)'
 @ObjectModel.usageType: { serviceQuality: #D, sizeCategory: #XL, dataClass: #TRANSACTIONAL }
+@Metadata.ignorePropagatedAnnotations: true
 define view ZEVO_O_SalesContractItem
   as select from I_SalesContractItem
-  association [0..1] to ZEVO_O_BusinessPartner as _SoldToParty
-    on $projection.SoldToParty = _SoldToParty.BusinessPartner
 {
   key SalesContract,
   key SalesContractItem,
@@ -25,14 +24,7 @@ define view ZEVO_O_SalesContractItem
       TargetQuantityUnit,
       NetAmount,
       TransactionCurrency,
-      SalesOrganization,
-      DistributionChannel,
-      OrganizationDivision,
-      SoldToParty,
-      ShipToParty,
-      BillToParty,
-      PayerParty,
+      // S/4 2023 (108): org / partner columns not on local I_SalesContractItem
       SalesContractValidityStartDate,
-      SalesContractValidityEndDate,
-      _SoldToParty
+      SalesContractValidityEndDate
 }
