@@ -199,7 +199,8 @@ def main() -> None:
     doc.add_heading("3. Materials period — MMRV, then MMPV", level=1)
     bullet(doc, "Run MMRV for the company code. Current period is the open materials period. Previous period is also open when Allow posting to previous per. is selected.")
     bullet(doc, "A goods movement whose posting date is outside those two periods is rejected.")
-    bullet(doc, "In MMPV, enter the company code in From and To. Enter the period you want to become the new current period, and its fiscal year. Leave Date empty. Select Close period. Execute.")
+    bullet(doc, "In MMPV, enter the company code in From and To. Enter the period after the one MMRV shows as current, and its fiscal year. That entry becomes the new current period. Leave Date empty. Select Close period. Execute.")
+    bullet(doc, "Example: MMRV shows 04 / 2025. The first MMPV entry is period 05, fiscal year 2025. Run MMRV again. It should show 05 / 2025. Then MMPV is 06 / 2025, and so on.")
     bullet(doc, "MMPV moves one month at a time. Repeat until MMRV shows the month you need.")
     bullet(doc, "The message The specified year is not the current calendar year is a warning. Execute anyway when you are rolling an old period forward.")
     add_para(
@@ -222,9 +223,10 @@ def main() -> None:
     add_para(
         doc,
         "Sequence to reach October 2026: 12 / 2025, then 01 / 2026 through 10 / 2026. "
-        "Company code 1710 was not read in MMRV at the start. Later goods receipts in "
-        "October 2026 did post in 1710, so the materials period was open by then. "
-        "Read MMRV again before relying on a 2026 goods movement.",
+        "Company code 1710 later returned Incorrect period in control rec. of CoCd 1710; "
+        "no conversion. The control record was 04 / 2025, so that run did not move the "
+        "period. The first MMPV entry for 1710 is 05 / 2025, then one month at a time "
+        "until MMRV shows the period you need.",
     )
 
     doc.add_heading("4. Asset year — the sequence that works", level=1)
