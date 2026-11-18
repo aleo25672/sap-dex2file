@@ -253,8 +253,8 @@ def main() -> None:
     bullet(doc, "Refresh OAAQ. Cl.FY on area 01 should now be the year you just closed.")
     bullet(doc, "If one area is still on the older year, tick Select on that row and choose Close. The button is above the table, next to Reopen.")
     add_para(doc, "Step E. Raise Highest F.Year by one.", bold=True, space_after=4)
-    bullet(doc, "Run FAGLGVTR. Company code. Carry the balances of the year you just closed into the next year.")
-    bullet(doc, "Refresh OAAQ. Highest F.Year should be one higher than before this step.")
+    bullet(doc, "Run FAGLGVTR. Company code and ledger. The fiscal year you enter is the year you are opening, not the year you just closed. After closing 2025, enter 2026. Entering 2025 again leaves Highest F.Year at 2025.")
+    bullet(doc, "Execute the update, not a test run. Refresh OAAQ. Highest F.Year should be the year you entered.")
     add_para(
         doc,
         "Then go back to Step A for the next year. For a posting in 2026, the last "
@@ -263,11 +263,13 @@ def main() -> None:
     )
     add_para(
         doc,
-        "Company 1710, ledger 0L, as read on the current OAAQ screen: Highest F.Year "
-        "2024, and areas 01, 90, 91, 92, and 93 closed through 2023. The year to close "
-        "now is 2024. RAJABS00 already returned: Contains assets with depreciation not "
-        "posted completely, and Closing of fiscal year 2024 failed for depreciation "
-        "area 01. Start at Step B for 2024. Do not press Close.",
+        "When RAJABS00 says Contains assets with incorrect depreciation calculations "
+        "(message AU268), run AFAR for that open fiscal year. AFAR cannot recalculate "
+        "a year that is not open: company 1710 returned Fiscal year not open in Asset "
+        "Accounting when AFAR was run for 2024 after Highest F.Year was already 2025. "
+        "AFAB reporting 0 fixed assets processed means there is nothing left to post "
+        "for that year and period. The RAJABS00 job log in SM37 only shows that the "
+        "job finished. Open the spool, or run RAJABS00 online, to see Close carried out.",
     )
     add_para(doc, "Warnings on FAGLGVTR that did not block company 1710:", bold=True, space_after=4)
     bullet(doc, "Predictive ledgers 0C and 0E are skipped.")
@@ -288,15 +290,17 @@ def main() -> None:
             ["AFAB", "Test run for the open year: 40 assets, no errors. Update run in background, then SM37."],
             ["RAJABS00", "First test: depreciation not posted completely. After AFAB, Other error = No and the detail list was empty. Then run without Test Run. Area 01 showed closed fiscal year 2023."],
             ["OAAQ Close", "Select row 1 Book Depreciation and choose Close. Area 01 then closed through 2024."],
-            ["FAGLGVTR", "Carryforward raised Highest F.Year from 2024 to 2025. The log had no errors."],
-            ["Still to confirm", "Carry forward once more, into 2026. In OAAQ, Highest F.Year must be 2026 on ledger 0L and ledger 2L before an asset invoice dated in 2026."],
+            ["FAGLGVTR", "Entering 2025 raised Highest F.Year from 2024 to 2025. Entering 2026 then raised it from 2025 to 2026. The parameter is the year being opened."],
+            ["Finished, ledger 0L", "Highest F.Year 2026. Areas 01, 90, 91, 92, and 93 closed through 12/31/2025. Fiscal year variant K4."],
+            ["Finished, ledger 2L", "Highest F.Year 2026. Area 32, IFRS in local currency, closed through 12/31/2025."],
         ],
     )
     add_para(
         doc,
-        "The supplier invoice was posted after this year-opening work, so the asset "
-        "year was far enough open for that posting. Confirm both ledgers at 2026 "
-        "before the next asset invoice.",
+        "Both ledgers are open for an asset invoice dated in 2026. Closing 2025 "
+        "required AFAR for the open year after RAJABS00 reported incorrect "
+        "depreciation calculations, then a RAJABS00 update run. The SM37 job log "
+        "for that update only showed that the job finished. OAAQ confirmed Cl.FY 2025.",
     )
 
     doc.add_heading("6. Company code 1010", level=1)
