@@ -39,7 +39,7 @@ Companion historically referenced as [`sap-dex2odata`](../sap-dex2odata); the ge
 | [Requisition to Payment 1 (Word)](docs/REQUISITION_TO_PAYMENT_1.docx) | Requisition 10001624 → PO 4500002147 → invoice 5100001600 → payment 1500000001. No contract |
 | [Requisition to Payment 2 (Word)](docs/REQUISITION_TO_PAYMENT_2.docx) | Requisition 10001634 → contract 4600000042 → PO 4500002148 → invoice 5100001601 → payment 1500000002 |
 | [Intercompany resale (Word)](docs/INTERCOMPANY_RESALE.docx) | Company 1710 sells TG11 to company 1010. Case 1 keeps the differences. Case 2 buys, then resells at 25.00 EUR |
-| [GL anomaly replication (Word)](docs/GL_ANOMALY_REPLICATION_GUIDE.docx) | How the posted company 1710 cases were created, from E01 through the purchase-to-pay faults |
+| [GL anomaly replication (Word)](docs/GL_ANOMALY_REPLICATION_GUIDE.docx) | Step-by-step: SAP transaction and field values for each posted company 1710 case |
 | [Open periods (Word)](docs/OPEN_PERIODS_GUIDE.docx) | Finance OB52, materials MMRV/MMPV, and the asset year for company codes 1710 and 1010 |
 | [Session readme](docs/README.md) | Use cases plus the live path from requisition 10001624 through invoice and payment |
 | [Source types](#source-types) | DEX / API CDS / Both (file report) |
@@ -396,7 +396,7 @@ See [Caller-managed delta](#caller-managed-delta) for how `DeltaSince` relates t
 > **Contract to Payment:** quantity contract `4600000041` and release PO `4500002146`, with the sample rows in the document — [`docs/CONTRACT_TO_PAYMENT.docx`](docs/CONTRACT_TO_PAYMENT.docx).  
 > **Order to Cash:** sales order `6321` through delivery, billing `0090005785`, and customer receipt `1400000000` — [`docs/ORDER_TO_CASH.docx`](docs/ORDER_TO_CASH.docx).  
 > **Intercompany resale:** company 1710 sells TG11 to company 1010 in two posted scenarios — [`docs/INTERCOMPANY_RESALE.docx`](docs/INTERCOMPANY_RESALE.docx).  
-> **GL anomaly replication:** transactions and document numbers for the cases posted in company 1710 — [`docs/GL_ANOMALY_REPLICATION_GUIDE.docx`](docs/GL_ANOMALY_REPLICATION_GUIDE.docx).  
+> **GL anomaly replication:** step-by-step transaction, field values, and document numbers for the cases posted in company 1710 — [`docs/GL_ANOMALY_REPLICATION_GUIDE.docx`](docs/GL_ANOMALY_REPLICATION_GUIDE.docx).  
 > **Open periods:** finance, materials, and asset year for company codes 1710 and 1010 — [`docs/OPEN_PERIODS_GUIDE.docx`](docs/OPEN_PERIODS_GUIDE.docx).
 
 #### 7. Multiple CDS (header → items → history)
