@@ -15,6 +15,7 @@ ZEVO writes one CDS view per file. The use cases show how to correlate those fil
 | Requisition to Payment 1 | [REQUISITION_TO_PAYMENT_1.docx](REQUISITION_TO_PAYMENT_1.docx) | Requisition **10001624**, PO **4500002147**. No contract | [samples/r2o](samples/r2o) |
 | Requisition to Payment 2 | [REQUISITION_TO_PAYMENT_2.docx](REQUISITION_TO_PAYMENT_2.docx) | Requisition **10001634**, contract **4600000042**, PO **4500002148** | [samples/rtp](samples/rtp) |
 | Intercompany resale | [INTERCOMPANY_RESALE.docx](INTERCOMPANY_RESALE.docx) | Case 1 billing **90005786**. Case 2 sales order **6323**, billing **90005787** | Posted in SAP. No extract pack |
+| GL anomaly replication | [GL_ANOMALY_REPLICATION_GUIDE.docx](GL_ANOMALY_REPLICATION_GUIDE.docx) | Manual journals **100000001** through **100000022**, plus the purchase-to-pay faults | Posted in SAP. No extract pack |
 
 The Word documents use the same 13 chapters: Purpose, Document flow, Business partner, Source document, Follow-on document, Goods movement, Invoice, Accounting, Quantity and amount reconciliation, Clearing, How the documents are correlated, Extract calls for this reference, and Sample-data files.
 
@@ -25,6 +26,7 @@ Download a document from GitHub while signed in to an account that can read this
 - https://github.com/aleo25672/sap-dex2file/blob/main/docs/REQUISITION_TO_PAYMENT_1.docx
 - https://github.com/aleo25672/sap-dex2file/blob/main/docs/REQUISITION_TO_PAYMENT_2.docx
 - https://github.com/aleo25672/sap-dex2file/blob/main/docs/INTERCOMPANY_RESALE.docx
+- https://github.com/aleo25672/sap-dex2file/blob/main/docs/GL_ANOMALY_REPLICATION_GUIDE.docx
 
 ### Contract to Payment
 
@@ -224,6 +226,7 @@ docs/ORDER_TO_CASH.docx                Order-to-Cash use case
 docs/REQUISITION_TO_PAYMENT_1.docx     Requisition to Payment 1, no contract
 docs/REQUISITION_TO_PAYMENT_2.docx     Requisition to Payment 2, via contract 4600000042
 docs/INTERCOMPANY_RESALE.docx          Company 1710 sells TG11 to company 1010, two scenarios
+docs/GL_ANOMALY_REPLICATION_GUIDE.docx How the posted company 1710 anomaly cases were created
 docs/samples/c2p/                      Contract 4600000041 / PO 4500002146
 docs/samples/o2c/                      Sales order 6321
 docs/samples/r2o/                      Requisition 10001624 / PO 4500002147
