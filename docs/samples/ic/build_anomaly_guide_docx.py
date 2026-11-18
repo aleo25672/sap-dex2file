@@ -138,11 +138,22 @@ def bullet(doc, text):
     set_run_font(run, size=11, color=BLACK)
 
 
-def case(doc, code, title, posted, steps):
-    doc.add_heading(f"{code} — {title}", level=2)
-    add_para(doc, posted)
-    for step in steps:
-        bullet(doc, step)
+def numbered(doc, steps):
+    for index, step in enumerate(steps, start=1):
+        paragraph = doc.add_paragraph()
+        paragraph.paragraph_format.space_after = Pt(2)
+        paragraph.paragraph_format.left_indent = Cm(0.75)
+        run = paragraph.add_run(f"{index}. {step}")
+        set_run_font(run, size=11, color=BLACK)
+
+
+def case(doc, code, title, txn, posted, fields, steps, level=2):
+    doc.add_heading(f"{code} — {title}", level=level)
+    add_para(doc, f"Transaction: {txn}. {posted}")
+    add_para(doc, "Data to enter", bold=True, space_after=4)
+    add_table(doc, ["Field", "Value"], fields, font=9)
+    add_para(doc, "Steps", bold=True, space_after=4)
+    numbered(doc, steps)
 
 
 def main() -> None:
@@ -161,7 +172,7 @@ def main() -> None:
     normal.font.name = "Calibri"
     normal.font.size = Pt(11)
     normal.font.color.rgb = BLACK
-    for style_name, size in (("Heading 1", 16), ("Heading 2", 13)):
+    for style_name, size in (("Heading 1", 16), ("Heading 2", 13), ("Heading 3", 12)):
         style = doc.styles[style_name]
         style.font.name = "Calibri"
         style.font.color.rgb = NAVY_RGB
@@ -195,10 +206,11 @@ def main() -> None:
     doc.add_heading("1. Purpose", level=1)
     add_para(
         doc,
-        "This guide is the recipe for the cases posted in the CAL system so that a "
-        "general-ledger anomaly test can find them. Each case is a normal SAP posting. "
-        "The test script IDs (E01, D08, and the others) are the names used while the "
-        "documents were created.",
+        "This is the step-by-step recipe for the cases posted in the CAL system. "
+        "Each case names the SAP transaction, the fields and values to enter, the "
+        "order of the steps, and the document number the system returned. The test "
+        "script IDs (E01, D08, and the others) are the names used while the documents "
+        "were created.",
     )
     add_para(
         doc,
@@ -287,234 +299,501 @@ def main() -> None:
     doc.add_heading("5. How to post each journal", level=1)
     add_para(
         doc,
-        "Unless a step says otherwise, run FB50 in company 1710, document type SA, currency USD. "
-        "Debit 52060000 and credit 54400000. Tax code I0 and cost center 17101101 on both lines. "
-        "Post only when the balance is 0.00.",
+        "Each case below is one posting. The transaction is the SAP code to open. "
+        "The table is the data to type. The numbered steps are the order. "
+        "Unless the case says otherwise, the journal is FB50, company 1710, document type SA, "
+        "currency USD, debit 52060000 and credit 54400000, tax code I0 and cost center 17101101 "
+        "on both lines. Post only when the balance is 0.00.",
     )
 
     case(
         doc,
         "E01 and D08",
         "Round amount, and a P&L reclassification",
+        "FB50",
         "Posted document 100000001. Both effects are in this one journal.",
         [
-            "Dates 20.10.2026. Reference E01.",
-            "Debit 52060000 and credit 54400000, amount 1000.00.",
-            "One line must be a debit and the other a credit. Two credits do not balance.",
+            ["Company code", "1710"],
+            ["Document type", "SA"],
+            ["Document date", "20.10.2026"],
+            ["Posting date", "20.10.2026"],
+            ["Currency", "USD"],
+            ["Reference", "E01"],
+            ["Line 1", "Debit 52060000, 1000.00, tax code I0, cost center 17101101"],
+            ["Line 2", "Credit 54400000, 1000.00, tax code I0, cost center 17101101"],
+        ],
+        [
+            "Open FB50 and enter the header fields.",
+            "Enter the debit line, then the credit line. One of the two lines must be a debit.",
+            "Post when the balance is 0.00.",
         ],
     )
     case(
         doc,
         "E09",
         "Patterned amount",
+        "FB50",
         "Posted document 100000002.",
-        ["Dates 20.10.2026. Reference E09. Amount 111111.00 on both lines."],
+        [
+            ["Company code / type / currency", "1710 / SA / USD"],
+            ["Document date and posting date", "20.10.2026"],
+            ["Reference", "E09"],
+            ["Line 1", "Debit 52060000, 111111.00, tax code I0, cost center 17101101"],
+            ["Line 2", "Credit 54400000, 111111.00, tax code I0, cost center 17101101"],
+        ],
+        ["Enter the header, then the two lines.", "Post when the balance is 0.00."],
     )
     case(
         doc,
         "F05",
         "Narrative that describes the entry",
+        "FB50",
         "Posted document 100000003.",
-        ["Dates 20.10.2026. Reference F05. Header text: plug to hit target. Amount 87.65."],
+        [
+            ["Company code / type / currency", "1710 / SA / USD"],
+            ["Document date and posting date", "20.10.2026"],
+            ["Reference", "F05"],
+            ["Header text", "plug to hit target"],
+            ["Line 1", "Debit 52060000, 87.65, tax code I0, cost center 17101101"],
+            ["Line 2", "Credit 54400000, 87.65, tax code I0, cost center 17101101"],
+        ],
+        ["Enter the header text exactly as shown.", "Post when the balance is 0.00."],
     )
     case(
         doc,
         "F04 and F06",
         "No reference and no description",
+        "FB50",
         "Posted document 100000004.",
-        ["Dates 20.10.2026. Leave the reference and the header text empty. Amount 53.17."],
+        [
+            ["Company code / type / currency", "1710 / SA / USD"],
+            ["Document date and posting date", "20.10.2026"],
+            ["Reference", "Leave empty"],
+            ["Header text", "Leave empty"],
+            ["Line 1", "Debit 52060000, 53.17, tax code I0, cost center 17101101"],
+            ["Line 2", "Credit 54400000, 53.17, tax code I0, cost center 17101101"],
+        ],
+        ["Do not type a reference or a header text.", "Post when the balance is 0.00."],
     )
     case(
         doc,
         "D07",
         "Revenue from a journal",
+        "FB50",
         "Posted document 100000005.",
         [
-            "Dates 20.10.2026. Reference D07. Amount 480.00.",
-            "Debit 54400000 with tax code I0 and cost center 17101101.",
-            "Credit 41000000 with tax code O0. Open Prof. segment and enter profit center YB600.",
-            "Do not rely on a cost center alone for the revenue line. KI248 means the assignment is only statistical.",
+            ["Company code / type / currency", "1710 / SA / USD"],
+            ["Document date and posting date", "20.10.2026"],
+            ["Reference", "D07"],
+            ["Line 1", "Debit 54400000, 480.00, tax code I0, cost center 17101101"],
+            ["Line 2", "Credit 41000000, 480.00, tax code O0 (letter O, then zero)"],
+            ["Revenue assignment", "Prof. segment, profit center YB600. A cost center alone returns KI248"],
+        ],
+        [
+            "Enter the debit line.",
+            "On the revenue line, choose the button beside Prof. segment and enter YB600.",
+            "Post when the balance is 0.00.",
         ],
     )
     case(
         doc,
         "D03",
         "Cash from a journal",
+        "FB50",
         "Posted document 100000006.",
         [
-            "Dates 20.10.2026. Reference D03. Amount 320.47.",
-            "Debit 11002000. Leave tax code and cost center empty. Value date 20.10.2026 if required.",
-            "Credit 54400000 with tax code I0 and cost center 17101101.",
+            ["Company code / type / currency", "1710 / SA / USD"],
+            ["Document date and posting date", "20.10.2026"],
+            ["Reference", "D03"],
+            ["Line 1", "Debit 11002000, 320.47. No tax code. No cost center. Value date 20.10.2026 if required"],
+            ["Line 2", "Credit 54400000, 320.47, tax code I0, cost center 17101101"],
         ],
+        ["Enter the bank line first.", "Enter the expense line.", "Post when the balance is 0.00."],
     )
     case(
         doc,
         "D02",
         "Posting against the normal balance",
+        "FB50",
         "Posted document 100000007. Revenue is normally a credit. This journal debits it.",
         [
-            "Dates 20.10.2026. Reference D02. Amount 275.40.",
-            "Debit 41000000, tax code O0, profitability segment profit center YB600.",
-            "Credit 54400000, tax code I0, cost center 17101101.",
+            ["Company code / type / currency", "1710 / SA / USD"],
+            ["Document date and posting date", "20.10.2026"],
+            ["Reference", "D02"],
+            ["Line 1", "Debit 41000000, 275.40, tax code O0, profit center YB600 on the profitability segment"],
+            ["Line 2", "Credit 54400000, 275.40, tax code I0, cost center 17101101"],
         ],
+        ["Enter the revenue line as a debit.", "Enter the expense line as a credit.", "Post when the balance is 0.00."],
     )
     case(
         doc,
         "B04 and B05",
         "Backdated document",
-        "Posted document 100000008.",
+        "FB50",
+        "Posted document 100000008. The period stays 10 because the posting date is in October.",
         [
-            "Reference B05. Document date 15.09.2026. Posting date 20.10.2026. Amount 64.80.",
-            "The posting period stays 10 because the posting date is in October.",
+            ["Company code / type / currency", "1710 / SA / USD"],
+            ["Document date", "15.09.2026"],
+            ["Posting date", "20.10.2026"],
+            ["Reference", "B05"],
+            ["Lines", "Debit 52060000 and credit 54400000, 64.80, tax code I0, cost center 17101101"],
         ],
+        ["Enter the document date and the posting date as two different dates.", "Post when the balance is 0.00."],
     )
     case(
         doc,
         "B01",
         "Weekend posting date",
+        "FB50",
         "Posted document 100000009.",
-        ["Reference B01. Document date and posting date 17.10.2026, a Saturday. Amount 41.20."],
+        [
+            ["Company code / type / currency", "1710 / SA / USD"],
+            ["Document date and posting date", "17.10.2026, a Saturday"],
+            ["Reference", "B01"],
+            ["Lines", "Debit 52060000 and credit 54400000, 41.20, tax code I0, cost center 17101101"],
+        ],
+        ["Use the Saturday as both dates.", "Post when the balance is 0.00."],
     )
     case(
         doc,
         "B03",
         "Period-end posting",
+        "FB50",
         "Posted document 100000010.",
-        ["Reference B03. Document date and posting date 30.10.2026. Amount 28.90."],
+        [
+            ["Company code / type / currency", "1710 / SA / USD"],
+            ["Document date and posting date", "30.10.2026"],
+            ["Reference", "B03"],
+            ["Lines", "Debit 52060000 and credit 54400000, 28.90, tax code I0, cost center 17101101"],
+        ],
+        ["Use the last Friday of October as both dates.", "Post when the balance is 0.00."],
     )
     case(
         doc,
         "B09",
         "Future posting date",
-        "Posted document 100000011.",
-        ["Reference B09. Document date and posting date 15.11.2026, period 11. Amount 19.40."],
+        "FB50",
+        "Posted document 100000011. Period 11.",
+        [
+            ["Company code / type / currency", "1710 / SA / USD"],
+            ["Document date and posting date", "15.11.2026"],
+            ["Reference", "B09"],
+            ["Lines", "Debit 52060000 and credit 54400000, 19.40, tax code I0, cost center 17101101"],
+        ],
+        ["Use the November date as both dates.", "Post when the balance is 0.00. If the period is not open, stop."],
     )
     case(
         doc,
         "F02",
         "Reversed in the next period",
+        "FB50, then FB08",
         "Original document 100000012. Reversal document 100000013.",
         [
-            "FB50. Reference F02. Document date and posting date 31.10.2026. Amount 73.15.",
-            "Then FB08. Document 100000012, company 1710, fiscal year 2026.",
-            "Reversal reason 02. Posting date 02.11.2026.",
+            ["FB50 company / type / currency", "1710 / SA / USD"],
+            ["FB50 document date and posting date", "31.10.2026"],
+            ["FB50 reference", "F02"],
+            ["FB50 lines", "Debit 52060000 and credit 54400000, 73.15, tax code I0, cost center 17101101"],
+            ["FB08 document", "100000012"],
+            ["FB08 company code and fiscal year", "1710 / 2026"],
+            ["FB08 reversal reason", "02"],
+            ["FB08 posting date", "02.11.2026"],
+        ],
+        [
+            "Post the journal in FB50 and note the document number.",
+            "Open FB08 and enter that document, company 1710, and year 2026.",
+            "Use reversal reason 02 and posting date 02.11.2026, then post.",
         ],
     )
     case(
         doc,
         "F03",
         "Accrual released with no invoice",
-        "Accrual document 100000014. Reversal document 100000015. Header text on the accrual: Accrual released w/o rep. Reference F03.",
+        "FBS1, then F.81",
+        "Accrual document 100000014. Reversal document 100000015. Do not post a supplier invoice for 88.20.",
         [
-            "FBS1, not FB50. Document type SA. Document date and posting date 31.10.2026.",
-            "Reversal reason 02 was stored on the posted document. Reversal date 02.11.2026. Amount 88.20.",
-            "Posting key 40 on 54400000. Posting key 50 on 52060000. Tax code I0 and cost center 17101101.",
-            "Do not post a supplier invoice for 88.20.",
-            "The header stores the reversal date. It does not post the reversal by itself. Run F.81 for company 1710, document 100000014, fiscal year 2026, without the test run. The reversal posted was 100000015.",
+            ["FBS1 company / type / currency", "1710 / SA / USD"],
+            ["FBS1 document date and posting date", "31.10.2026"],
+            ["FBS1 reference", "F03"],
+            ["FBS1 header text", "Accrual released w/o rep"],
+            ["FBS1 reversal reason", "02"],
+            ["FBS1 reversal date", "02.11.2026"],
+            ["FBS1 line 1", "Posting key 40, G/L 54400000, 88.20, tax code I0, cost center 17101101"],
+            ["FBS1 line 2", "Posting key 50, G/L 52060000, 88.20, tax code I0, cost center 17101101"],
+            ["F.81 company code", "1710"],
+            ["F.81 document and fiscal year", "100000014 / 2026"],
+            ["F.81 test run", "Off"],
+        ],
+        [
+            "Open FBS1. FB50 does not store a reversal date.",
+            "Enter the header, the reversal reason, the reversal date, and the two lines. Post.",
+            "The reversal date on the header does not post the reversal. Open F.81, enter the document, and run it with the test run off.",
         ],
     )
     case(
         doc,
         "F07",
         "Round trip that is not a reversal",
-        "October document 100000016, reference F07A. November document 100000017, reference F07B. Do not use FB08.",
+        "FB50, twice",
+        "October document 100000016. November document 100000017. Do not use FB08.",
         [
-            "First journal: dates 21.10.2026. Debit 52060000, credit 54400000, amount 56.40.",
-            "Second journal: dates 05.11.2026. Debit 54400000, credit 52060000, amount 56.40.",
+            ["Both journals, company / type / currency", "1710 / SA / USD"],
+            ["First journal dates", "21.10.2026"],
+            ["First journal reference", "F07A"],
+            ["First journal lines", "Debit 52060000 and credit 54400000, 56.40, tax code I0, cost center 17101101"],
+            ["Second journal dates", "05.11.2026"],
+            ["Second journal reference", "F07B"],
+            ["Second journal lines", "Debit 54400000 and credit 52060000, 56.40, tax code I0, cost center 17101101"],
+        ],
+        [
+            "Post the October journal.",
+            "Post a second journal in November with the debit and the credit swapped.",
+            "Leave both documents unreversed.",
         ],
     )
     case(
         doc,
         "E06",
         "Same non-round amount on three dates",
-        "Documents 100000018, 100000019, and 100000020. Reference E06. Amount 62.37.",
+        "FB50, three times",
+        "Documents 100000018, 100000019, and 100000020.",
+        [
+            ["Each journal, company / type / currency", "1710 / SA / USD"],
+            ["Reference on each journal", "E06"],
+            ["Lines on each journal", "Debit 52060000 and credit 54400000, 62.37, tax code I0, cost center 17101101"],
+            ["First dates", "21.10.2026"],
+            ["Second dates", "23.10.2026"],
+            ["Third dates", "27.10.2026"],
+        ],
         [
             "Post the same two lines three times.",
-            "Dates 21.10.2026, 23.10.2026, and 27.10.2026. Document date equals posting date on each journal.",
-            "Keep the dates a few days apart. A gap of one month with the same text looks like a recurring entry and is excluded by that test.",
+            "On each journal, set the document date equal to the posting date.",
+            "Keep the dates a few days apart. A gap of one month with the same text looks like a recurring entry.",
         ],
     )
     case(
         doc,
         "B07",
         "Special period",
-        "Posted document 100000021.",
+        "F-02",
+        "Posted document 100000021. FB50 derives the period from the posting date and will not offer period 13.",
         [
-            "Use F-02. FB50 derives the period from the posting date and will not offer period 13.",
-            "Document date and posting date 31.12.2026. Period 13. Fiscal year 2026. Reference B07. Amount 33.25.",
-            "Posting key 40 on 52060000. Posting key 50 on 54400000.",
-            "If the system says period 13 is not open, stop. Do not change OB52 unless that is the intended setup.",
+            ["Document date and posting date", "31.12.2026"],
+            ["Posting period", "13"],
+            ["Company code and fiscal year", "1710 / 2026"],
+            ["Currency and document type", "USD / SA"],
+            ["Reference", "B07"],
+            ["First line", "Posting key 40, G/L 52060000, 33.25, tax code I0, cost center 17101101"],
+            ["Second line", "Posting key 50, G/L 54400000, 33.25, tax code I0, cost center 17101101"],
+        ],
+        [
+            "Open F-02 and enter the header, including period 13.",
+            "Enter posting key 40 and account 52060000, then the amount and the assignments.",
+            "Enter posting key 50 and account 54400000, then the amount and the assignments.",
+            "Post when the balance is 0.00. If the system says period 13 is not open, stop.",
         ],
     )
     case(
         doc,
         "D01",
         "Cash against revenue",
+        "FB50",
         "Posted document 100000022.",
         [
-            "Dates 21.10.2026. Reference D01. Amount 91.15.",
-            "Debit 11002000. No tax code and no cost center. Value date 21.10.2026 if required.",
-            "Credit 41000000. Tax code O0, the letter O then zero. Jurisdiction CA00000000.",
+            ["Company code / type / currency", "1710 / SA / USD"],
+            ["Document date and posting date", "21.10.2026"],
+            ["Reference", "D01"],
+            ["Line 1", "Debit 11002000, 91.15. No tax code. No cost center. Value date 21.10.2026 if required"],
+            ["Line 2", "Credit 41000000, 91.15, tax code O0 (letter O, then zero), jurisdiction CA00000000"],
+            ["Revenue assignment", "Prof. segment, profit center YB600"],
+        ],
+        [
+            "Enter the bank debit.",
+            "On the revenue line, use tax code O0. The code 00 is rejected: TAXUSJ 00 does not exist.",
             "Open Prof. segment and enter profit center YB600.",
-            "The code 00, two zeros, is rejected: TAXUSJ 00 does not exist in T007A.",
+            "Post when the balance is 0.00.",
         ],
     )
 
     doc.add_heading("6. Purchase-to-pay cases", level=1)
+    add_para(
+        doc,
+        "These cases start from a purchase order. Post them in this order: the order, "
+        "the goods receipt, then the invoice. The document numbers below are the ones "
+        "returned in this session.",
+    )
 
     doc.add_heading("Trading good posted to an asset", level=2)
     add_para(
         doc,
         "Posted purchase order 4500002196, goods receipt 5000003090 on 23.10.2026, "
-        "and supplier invoice 5100001633 on 26.10.2026. The receipt quantity is 10 PC "
-        "and its value is 0.00. The invoice is 135.00 USD. Account assignment is A, so "
-        "the value is on the asset. The material is trading good TG11, which would "
-        "otherwise be stock. Vendor 1000559. Reference on the invoice screen was INV.TG11.001. "
-        "Tax code on the invoice line was I1 and the tax amount was 0.00.",
+        "and supplier invoice 5100001633 on 26.10.2026. The material is trading good TG11, "
+        "which would otherwise be stock. Account assignment A puts the invoice value on the asset.",
     )
-    bullet(doc, "ME21N. Vendor 1000559. Purchasing organization 1710, group 001, company 1710. Account assignment A. Material TG11. Plant 1710. Asset 600004.")
-    bullet(doc, "The posted order was 10 PC, not 1 PC. The invoice amount 135.00 is 10 times 13.50.")
-    bullet(doc, "MIGO, movement 101. The receipt carries quantity and no value.")
-    bullet(doc, "MIRO in company 1710 for the purchase order. Header amount 135.00 when tax stays 0.00.")
+    case(
+        doc,
+        "Order",
+        "ME21N",
+        "ME21N",
+        "Purchase order 4500002196.",
+        [
+            ["Vendor", "1000559"],
+            ["Purchasing organization / group / company", "1710 / 001 / 1710"],
+            ["Account assignment category", "A"],
+            ["Material", "TG11"],
+            ["Quantity and unit", "10 PC"],
+            ["Net price", "13.50 USD"],
+            ["Plant", "1710"],
+            ["Asset", "600004"],
+        ],
+        [
+            "Open ME21N and enter the header.",
+            "Enter one item with account assignment A, material TG11, and asset 600004.",
+            "Save. The order in this session was 10 PC, so the later invoice of 135.00 is 10 times 13.50.",
+        ],
+        level=3,
+    )
+    case(
+        doc,
+        "Receipt",
+        "MIGO",
+        "MIGO",
+        "Material document 5000003090. Quantity 10 PC. Value 0.00.",
+        [
+            ["Transaction", "Goods receipt for purchase order"],
+            ["Movement type", "101"],
+            ["Purchase order", "4500002196"],
+            ["Posting date", "23.10.2026"],
+        ],
+        [
+            "Open MIGO, select goods receipt for the purchase order, movement 101.",
+            "Enter the purchase order and check the quantity.",
+            "Post. The receipt carries quantity and no value because the item is assigned to an asset.",
+        ],
+        level=3,
+    )
+    case(
+        doc,
+        "Invoice",
+        "MIRO",
+        "MIRO",
+        "Invoice 5100001633. Header amount 135.00 USD. Tax 0.00.",
+        [
+            ["Company code", "1710"],
+            ["Invoice date", "26.10.2026"],
+            ["Reference", "INV.TG11.001"],
+            ["Amount", "135.00"],
+            ["Purchase order", "4500002196"],
+            ["Tax code on the line", "I1"],
+            ["Tax amount", "0.00"],
+        ],
+        [
+            "Open MIRO in company 1710.",
+            "Enter the header amount 135.00 and the purchase order.",
+            "Keep the tax at 0.00 and post. The value is on asset 600004, not on stock.",
+        ],
+        level=3,
+    )
 
     doc.add_heading("Cost center on the invoice differs from the purchase order", level=2)
     add_para(
         doc,
         "A valuated goods receipt posts the cost to the purchase-order cost center. "
         "MIRO then only clears the receipt, so a cost center typed on the invoice is ignored. "
-        "That happened on purchase order 4500002197: goods receipt 5000003091 posted 40.00 USD, "
-        "and invoice changes did not move the cost.",
+        "That happened on purchase order 4500002197: goods receipt 5000003091 posted 40.00 USD.",
     )
     add_para(
         doc,
-        "Use a non-valuated goods receipt so the invoice posts the cost. Purchase order "
-        "4500002198 was created for this, with cost center 17100100, amount 55.00 USD, and "
-        "GR non-valuated selected. Goods receipt 5000003092 was posted with no value.",
+        "To keep the invoice cost center, the goods receipt must be non-valuated. "
+        "Purchase order 4500002198 was created for this, cost center 17100100, amount 55.00 USD, "
+        "GR non-valuated selected. Goods receipt 5000003092 was posted with no value. "
+        "A later invoice, reference INV.OFF.SUPP.002, amount 250.00 USD, G/L 54400000, "
+        "showed cost center 17101101 while the purchase order still showed 17100100. "
+        "The purchase-order number and the posted invoice number for that 250.00 document "
+        "were not recorded. Confirm those two numbers in ME23N and MIR4 before citing them. "
+        "The steps below recreate the non-valuated pattern.",
     )
-    add_para(
+    case(
         doc,
-        "A later invoice screen, reference INV.OFF.SUPP.002, amount 250.00 USD, account "
-        "assignment K, G/L 54400000, showed cost center 17101101 while the purchase order "
-        "still showed 17100100. The purchase-order number and the posted invoice number for "
-        "that 250.00 document were not recorded. Confirm those two numbers in ME23N and MIR4 "
-        "before citing them.",
+        "Order",
+        "ME21N",
+        "ME21N",
+        "Purchase order 4500002198. Cost center 17100100.",
+        [
+            ["Vendor", "1000559"],
+            ["Purchasing organization / group / company", "1710 / 001 / 1710"],
+            ["Account assignment category", "K"],
+            ["Short text", "Office supplies"],
+            ["Amount", "55.00 USD"],
+            ["Plant", "1710"],
+            ["G/L account", "54400000"],
+            ["Cost center", "17100100"],
+            ["Item Delivery tab", "GR non-valuated selected"],
+        ],
+        [
+            "Open ME21N and enter a cost-center item.",
+            "On the item Delivery tab, select GR non-valuated before you save.",
+            "Save. Do not change the cost center later in ME22N.",
+        ],
+        level=3,
     )
-    bullet(doc, "ME21N. Account assignment K. Short text. Plant 1710. G/L 54400000. Cost center 17100100. On the item Delivery tab, select GR non-valuated.")
-    bullet(doc, "MIGO, movement 101. The amount on the receipt must be 0.00. Do not change the account assignment.")
-    bullet(doc, "MIRO. Layout All information. Scroll to Cost Center, or use the account-assignment icon. Replace 17100100 with 17101101. Do not change the purchase order in ME22N.")
-    bullet(doc, "After posting, display the invoice. The cost center on the posted item must be 17101101. If it has returned to 17100100, the system did not keep the change.")
+    case(
+        doc,
+        "Receipt",
+        "MIGO",
+        "MIGO",
+        "Material document 5000003092. Amount 0.00.",
+        [
+            ["Transaction", "Goods receipt for purchase order"],
+            ["Movement type", "101"],
+            ["Purchase order", "4500002198"],
+        ],
+        [
+            "Post the goods receipt.",
+            "Confirm the receipt amount is 0.00.",
+            "Do not change the account assignment on the receipt.",
+        ],
+        level=3,
+    )
+    case(
+        doc,
+        "Invoice",
+        "MIRO",
+        "MIRO",
+        "Reference INV.OFF.SUPP.002. Amount 250.00 USD. Cost center on the invoice 17101101.",
+        [
+            ["Company code", "1710"],
+            ["Reference", "INV.OFF.SUPP.002"],
+            ["Amount", "250.00"],
+            ["Account assignment", "K"],
+            ["G/L account", "54400000"],
+            ["Cost center proposed from the order", "17100100"],
+            ["Cost center to type on the invoice", "17101101"],
+            ["Layout", "All information"],
+        ],
+        [
+            "Open MIRO for the purchase order.",
+            "Set the layout to All information. Scroll to Cost Center, or open the account-assignment icon.",
+            "Replace 17100100 with 17101101. Leave the purchase order unchanged.",
+            "Post, then display the invoice. The posted cost center must still be 17101101.",
+        ],
+        level=3,
+    )
 
     doc.add_heading("Invoices reversed, then paid", level=2)
     add_para(
         doc,
-        "Purchase order 4500002197, one goods receipt of 40.00 USD, material document "
-        "5000003091. The logistics invoice history is two invoices and two reversals. "
-        "The financial documents of the invoices stayed open and were paid.",
+        "Purchase order 4500002197, goods receipt 5000003091, value 40.00 USD. "
+        "Two invoices were reversed in logistics and the financial items stayed open. "
+        "Those open invoices were then paid. Stop after the first payment to leave the "
+        "reversal items open. Continue through the clearing to reproduce the ledger as it ended.",
     )
+    add_para(doc, "Documents returned in this session", bold=True, space_after=4)
     add_table(
         doc,
         ["Document", "Date", "What it did"],
         [
+            ["4500002197", "—", "Purchase order. Valuated receipt of 40.00"],
+            ["5000003091", "—", "Goods receipt, value 40.00"],
             ["5100001634 / 5100000009", "22.10.2026", "First invoice, reference INV.OFF.SUPP.001, vendor credit 40.00"],
             ["5100001635 / 5100000010", "22.10.2026", "Reversal. Vendor line posting key 21, net 38.80 in the clearing screen"],
             ["5100001636 / 5100000011", "23.10.2026", "Second invoice, same reference, vendor credit 40.00"],
@@ -526,25 +805,155 @@ def main() -> None:
             ["100000025", "30.10.2026", "Clearing of the refund against the reversal items. Discount 2.40 and 2.40- cancel"],
         ],
     )
-    add_para(
+    case(
         doc,
-        "MR8M reversal message “Please manually clear FI documents” means the logistics "
-        "reversal exists and the vendor items are still open. SAP still allows F-53 to pay "
-        "the original invoice, posting key 31. Do not select the reversal lines, posting key 21.",
+        "Order and receipt",
+        "ME21N, then MIGO",
+        "ME21N, then MIGO",
+        "Purchase order 4500002197. Material document 5000003091, value 40.00.",
+        [
+            ["Vendor", "1000559"],
+            ["Company code", "1710"],
+            ["Purchasing organization / group", "1710 / 001"],
+            ["Account assignment category", "K"],
+            ["Cost center", "17100100"],
+            ["Amount", "40.00 USD"],
+            ["Goods receipt", "Valuated. Leave GR non-valuated blank"],
+            ["MIGO movement", "101"],
+        ],
+        [
+            "Create the purchase order in ME21N and save.",
+            "Post the goods receipt in MIGO. The receipt value must be 40.00.",
+        ],
+        level=3,
     )
-    add_para(
+    case(
         doc,
-        "Document 100000024 makes the bank look reimbursed. It is not a receipt from the "
-        "vendor. In reality only 1500000005 and 1500000006 moved money. The two reversal "
-        "items of 38.80 cannot clear each other because they have the same sign. They were "
-        "cleared against the 80.00 vendor credit on 100000024. The 2.40 gap is the discount "
-        "on the payment. Posting key 40 on that difference adds another 2.40 and turns it "
-        "into 4.80. Posting key 50 to 70040000 offsets it. On 100000025 the two discount "
-        "lines cancel, so no further discount remains.",
+        "First invoice and reversal",
+        "MIRO, then MR8M",
+        "MIRO, then MR8M",
+        "Invoice 5100001634, financial document 5100000009. Reversal 5100001635, financial document 5100000010.",
+        [
+            ["MIRO company code", "1710"],
+            ["Invoice date", "22.10.2026"],
+            ["Reference", "INV.OFF.SUPP.001"],
+            ["Amount", "40.00"],
+            ["Purchase order", "4500002197"],
+            ["MR8M document", "5100001634"],
+            ["MR8M reversal date", "22.10.2026"],
+        ],
+        [
+            "Post the invoice in MIRO.",
+            "Reverse it in MR8M on the same day.",
+            "The message “Please manually clear FI documents” means the logistics reversal exists and the vendor items are still open. Do not clear them.",
+        ],
+        level=3,
     )
-    bullet(doc, "To reproduce the unpaid-reversal fault, stop after 1500000005. Leave 5100000010 and 5100000012 open.")
-    bullet(doc, "To reproduce the ledger as it ended, also post the third invoice, pay it, post the 80.00 journal to the bank and the vendor, and clear with F-44.")
-    bullet(doc, "F-44, vendor 1000559, company 1710. Do not enter an amount. Select only the two reversal items and the 80.00 credit. Do not select other invoices, including a 130.95 item that appeared in the open-item list.")
+    case(
+        doc,
+        "Second invoice and reversal",
+        "MIRO, then MR8M",
+        "MIRO, then MR8M",
+        "Invoice 5100001636, financial document 5100000011. Reversal 5100001637, financial document 5100000012.",
+        [
+            ["MIRO company code", "1710"],
+            ["Invoice date", "23.10.2026"],
+            ["Reference", "INV.OFF.SUPP.001"],
+            ["Amount", "40.00"],
+            ["Purchase order", "4500002197"],
+            ["MR8M document", "5100001636"],
+            ["MR8M reversal date", "23.10.2026"],
+        ],
+        [
+            "Post a second invoice for the same purchase order and the same reference.",
+            "Reverse it in MR8M.",
+            "Leave both financial reversals open.",
+        ],
+        level=3,
+    )
+    case(
+        doc,
+        "Pay the reversed invoices",
+        "F-53",
+        "F-53",
+        "Payment 1500000005. Stop here to leave the reversal items open.",
+        [
+            ["Company code", "1710"],
+            ["Vendor", "1000559"],
+            ["Posting date", "26.10.2026"],
+            ["Bank account", "11002000"],
+            ["Items to select", "The two invoice credits, posting key 31, documents 5100000009 and 5100000011, 40.00 each"],
+            ["Items to leave open", "The two reversals, posting key 21, documents 5100000010 and 5100000012"],
+            ["Posted split", "Vendor 80.00, bank credit 77.60, discount account 70040000 credit 2.40"],
+        ],
+        [
+            "Open F-53 for vendor 1000559.",
+            "Select only the original invoice items. SAP still allows that payment after MR8M.",
+            "Post. Documents 5100000010 and 5100000012 stay open. That is the unpaid-reversal fault.",
+        ],
+        level=3,
+    )
+    case(
+        doc,
+        "Third invoice and payment",
+        "MIRO, then F-53",
+        "MIRO, then F-53",
+        "Invoice 5100001638, financial document 5100000013. Payment 1500000006. The bank split on this payment was not recorded.",
+        [
+            ["MIRO date", "28.10.2026"],
+            ["Reference", "INV.OFF.SUPP.001"],
+            ["Amount", "40.00"],
+            ["Purchase order", "4500002197"],
+            ["F-53 vendor and company", "1000559 / 1710"],
+            ["F-53 item", "5100000013"],
+        ],
+        [
+            "Post a third invoice in MIRO for the same purchase order.",
+            "Pay that invoice in F-53.",
+        ],
+        level=3,
+    )
+    case(
+        doc,
+        "Journal that looks like a refund",
+        "F-02",
+        "F-02",
+        "Document 100000024. No cash was received. Only payments 1500000005 and 1500000006 moved money.",
+        [
+            ["Document date and posting date", "30.10.2026"],
+            ["Company code / type / currency", "1710 / SA / USD"],
+            ["Line 1", "Posting key 40, G/L 11002000, 80.00. No tax code"],
+            ["Line 2", "Posting key 31, vendor 1000559, 80.00"],
+        ],
+        [
+            "Post the journal. The bank debit makes the account look reimbursed.",
+            "The vendor line is a credit of 80.00. It is not a receipt from the vendor.",
+        ],
+        level=3,
+    )
+    case(
+        doc,
+        "Clear the reversals",
+        "F-44",
+        "F-44",
+        "Clearing document 100000025. The two discount lines cancel, so no further discount remains.",
+        [
+            ["Vendor", "1000559"],
+            ["Company code", "1710"],
+            ["Amount on the selection screen", "Leave empty"],
+            ["Select", "5100000010 and 5100000012, posting key 21, net 38.80 each, and the 80.00 vendor credit on 100000024"],
+            ["Leave unselected", "Every other open item, including a 130.95 item that appeared in the list"],
+            ["Difference", "2.40. That is the discount taken on payment 1500000005"],
+            ["Difference line", "Posting key 50, account 70040000, 2.40"],
+        ],
+        [
+            "Open F-44. Do not enter an amount.",
+            "Select only the two reversal items and the 80.00 credit. The two reversals have the same sign, so they cannot clear each other.",
+            "The difference is 2.40. Posting key 40 on that difference adds another 2.40 and turns it into 4.80. Use posting key 50 to 70040000.",
+            "Post the clearing.",
+        ],
+        level=3,
+    )
 
     doc.add_heading("7. Cases the ledger will not store", level=1)
     add_para(
