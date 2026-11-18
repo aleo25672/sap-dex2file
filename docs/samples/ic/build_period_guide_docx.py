@@ -229,22 +229,45 @@ def main() -> None:
         "until MMRV shows the period you need.",
     )
 
-    doc.add_heading("4. Asset year — the sequence that works", level=1)
+    doc.add_heading("4. Asset year — one year at a time", level=1)
     add_para(
         doc,
-        "Run OAAQ. Open the company code and ledger 0L. Read Highest F.Year and Cl.FY "
-        "on each depreciation area. An asset posting in 2026 fails while Highest F.Year "
-        "is below 2026. The next year to close is the year after Cl.FY on area 01.",
+        "Do one fiscal year completely, then start the next. Do not press Close in "
+        "OAAQ while RAJABS00 says depreciation is not posted.",
     )
-    add_para(doc, "Repeat this pair, one year at a time.", bold=True, space_after=4)
-    bullet(doc, "AFAB for that company code and fiscal year, through period 12. A test run can be online. The update run must be Program → Execute in Background. Online update returns: This processing can only be carried out as background processing. Follow the job in SM37 until it is Finished.")
-    bullet(doc, "RAJABS00 for that year with Test Run selected. Contains assets with depreciation not posted completely means AFAB is still required. Do not remove the test flag. Other error = No and an empty detail list means the test is clean. Close carried out stays No on a test. Run RAJABS00 again with Test Run cleared.")
-    bullet(doc, "If one depreciation area is still behind the others, tick Select on that row in OAAQ and choose Close. The button is above the table, next to Reopen.")
-    bullet(doc, "FAGLGVTR carries balances into the next year and raises Highest F.Year by one.")
+    add_para(doc, "Step A. Read the year to close.", bold=True, space_after=4)
+    bullet(doc, "Run OAAQ. Company code, ledger 0L.")
+    bullet(doc, "The year to close is the year after Cl.FY on area 01. Example: Cl.FY 2023 means the year to close is 2024.")
+    bullet(doc, "Highest F.Year is a different number. It is raised later, by FAGLGVTR, and only by one year each time.")
+    add_para(doc, "Step B. Post depreciation for that year.", bold=True, space_after=4)
+    bullet(doc, "Run AFAB. Company code, fiscal year = the year from Step A, posting period 12.")
+    bullet(doc, "Select Test Run. Execute online. Read the log.")
+    bullet(doc, "Clear Test Run. Choose Program → Execute in Background. Online update stops with: This processing can only be carried out as background processing.")
+    bullet(doc, "Run SM37. Wait until the job status is Finished.")
+    add_para(doc, "Step C. Test the close.", bold=True, space_after=4)
+    bullet(doc, "Run RAJABS00. Same company code and same fiscal year. Select Test Run. Execute.")
+    bullet(doc, "Contains assets with depreciation not posted completely means go back to Step B. Leave Test Run selected.")
+    bullet(doc, "Other error = No and an empty detail list means the test is clean. Close carried out stays No. That is expected on a test.")
+    add_para(doc, "Step D. Close the year.", bold=True, space_after=4)
+    bullet(doc, "Run RAJABS00 again for the same year. Clear Test Run. Execute.")
+    bullet(doc, "Refresh OAAQ. Cl.FY on area 01 should now be the year you just closed.")
+    bullet(doc, "If one area is still on the older year, tick Select on that row and choose Close. The button is above the table, next to Reopen.")
+    add_para(doc, "Step E. Raise Highest F.Year by one.", bold=True, space_after=4)
+    bullet(doc, "Run FAGLGVTR. Company code. Carry the balances of the year you just closed into the next year.")
+    bullet(doc, "Refresh OAAQ. Highest F.Year should be one higher than before this step.")
     add_para(
         doc,
-        "The last close is fiscal year 2025. The last carryforward is into 2026. "
-        "Repeat for ledger 2L when that ledger is posted.",
+        "Then go back to Step A for the next year. For a posting in 2026, the last "
+        "close is 2025 and the last FAGLGVTR is into 2026. Repeat the same steps for "
+        "ledger 2L when a posting uses that ledger.",
+    )
+    add_para(
+        doc,
+        "Company 1710, ledger 0L, as read on the current OAAQ screen: Highest F.Year "
+        "2024, and areas 01, 90, 91, 92, and 93 closed through 2023. The year to close "
+        "now is 2024. RAJABS00 already returned: Contains assets with depreciation not "
+        "posted completely, and Closing of fiscal year 2024 failed for depreciation "
+        "area 01. Start at Step B for 2024. Do not press Close.",
     )
     add_para(doc, "Warnings on FAGLGVTR that did not block company 1710:", bold=True, space_after=4)
     bullet(doc, "Predictive ledgers 0C and 0E are skipped.")
